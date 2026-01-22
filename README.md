@@ -262,8 +262,6 @@ ralph-starter run "Create a SaaS dashboard with:
 ```
 
 
-
-
 ## Requirements
 
 - Node.js 18+
