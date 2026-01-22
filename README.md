@@ -6,6 +6,44 @@
 
 > **Ralph Wiggum made easy.** One command to run autonomous AI coding loops.
 
+## Summary
+
+**ralph-starter** is a production-ready CLI tool for running autonomous AI coding loops using the [Ralph Wiggum technique](https://ghuntley.com/ralph/). It makes autonomous coding accessible to both developers and non-developers.
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| 🧙 **Interactive Wizard** | Guided project creation with AI-refined specifications |
+| 🔄 **Multi-Agent Support** | Works with Claude Code, Cursor, Codex, OpenCode |
+| 📥 **Input Sources** | Fetch specs from URLs, files, GitHub, Todoist, Linear, Notion |
+| 🎯 **16+ Workflow Presets** | Pre-configured modes: feature, tdd, debug, review, and more |
+| 🔌 **Circuit Breaker** | Auto-stops stuck loops after repeated failures |
+| 📊 **Progress Tracking** | Logs iterations to `activity.md` |
+| ⏱️ **Rate Limiting** | Control API costs with `--rate-limit` |
+| 🎯 **Smart Exit Detection** | Semantic analysis + completion promises + file signals |
+| 🔧 **Git Automation** | Auto-commit, push, and PR creation |
+| ✅ **Backpressure Validation** | Run tests/lint/build after each iteration |
+| 🖥️ **MCP Server** | Use from Claude Desktop or any MCP client |
+
+### Quick Example
+
+```bash
+# Simple task
+ralph-starter run "build a todo app" --commit --validate
+
+# With preset
+ralph-starter run --preset tdd-red-green "add user authentication"
+
+# With safety controls
+ralph-starter run --rate-limit 50 --circuit-breaker-failures 3 "build X"
+
+# Interactive wizard
+ralph-starter
+```
+
+---
+
 ## What is Ralph Wiggum?
 
 Ralph Wiggum is a technique for running AI coding agents in autonomous loops until tasks are completed. Instead of prompting back and forth, you give the AI a task and let it iterate until done.
@@ -223,6 +261,81 @@ ralph-starter run "your task" --validate    # Run tests/lint/build after each it
 
 The `--validate` flag runs test, lint, and build commands (from AGENTS.md or package.json) after each iteration. If validation fails, the agent gets feedback to fix the issues.
 
+### Workflow Presets
+
+Pre-configured settings for common development scenarios:
+
+```bash
+# List all 16+ presets
+ralph-starter presets
+
+# Use a preset
+ralph-starter run --preset feature "build login"
+ralph-starter run --preset tdd-red-green "add tests"
+ralph-starter run --preset debug "fix the bug"
+ralph-starter run --preset refactor "clean up auth module"
+ralph-starter run --preset pr-review "review changes"
+```
+
+**Available Presets:**
+| Category | Presets |
+|----------|---------|
+| Development | `feature`, `feature-minimal`, `tdd-red-green`, `spec-driven`, `refactor` |
+| Debugging | `debug`, `incident-response`, `code-archaeology` |
+| Review | `review`, `pr-review`, `adversarial-review` |
+| Documentation | `docs`, `documentation-first` |
+| Specialized | `api-design`, `migration-safety`, `performance-optimization`, `scientific-method`, `research`, `gap-analysis` |
+
+### Circuit Breaker
+
+Automatically stops loops that are stuck:
+
+```bash
+# Stop after 3 consecutive failures (default)
+ralph-starter run "build X" --validate
+
+# Custom thresholds
+ralph-starter run "build X" --circuit-breaker-failures 2 --circuit-breaker-errors 3
+```
+
+The circuit breaker monitors:
+- **Consecutive failures**: Stops after N validation failures in a row
+- **Same error count**: Stops if the same error repeats N times
+
+### Progress Tracking
+
+Writes iteration logs to `activity.md`:
+
+```bash
+# Enabled by default
+ralph-starter run "build X"
+
+# Disable if not needed
+ralph-starter run "build X" --no-track-progress
+```
+
+Each iteration records:
+- Timestamp and duration
+- Status (completed, failed, blocked)
+- Validation results
+- Commit info
+
+### File-Based Completion
+
+The loop automatically checks for completion signals:
+- `RALPH_COMPLETE` file in project root
+- `.ralph-done` marker file
+- All tasks marked `[x]` in `IMPLEMENTATION_PLAN.md`
+
+### Rate Limiting
+
+Control API call frequency to manage costs:
+
+```bash
+# Limit to 50 calls per hour
+ralph-starter run --rate-limit 50 "build X"
+```
+
 ## Ralph Playbook Workflow
 
 ralph-starter follows the [Ralph Playbook](https://claytonfarr.github.io/ralph-playbook/) methodology:
@@ -257,12 +370,15 @@ This creates:
 | `ralph-starter plan` | Create implementation plan from specs |
 | `ralph-starter init` | Initialize Ralph Playbook in a project |
 | `ralph-starter wizard` | Explicit wizard command |
+| `ralph-starter presets` | List available workflow presets |
 | `ralph-starter mcp` | Start as MCP server |
 | `ralph-starter config <action>` | Manage source credentials |
 | `ralph-starter source <action>` | Manage input sources |
 | `ralph-starter skill add <repo>` | Install agent skills |
 
 ## Options for `run`
+
+### Core Options
 
 | Flag | Description |
 |------|-------------|
@@ -271,14 +387,68 @@ This creates:
 | `--push` | Push commits to remote |
 | `--pr` | Create pull request |
 | `--validate` | Run tests/lint/build (backpressure) |
+| `--agent <name>` | Specify agent to use |
+| `--max-iterations <n>` | Max loop iterations (default: 50) |
+
+### Workflow Presets
+
+| Flag | Description |
+|------|-------------|
+| `--preset <name>` | Use a workflow preset (feature, tdd-red-green, debug, etc.) |
+
+```bash
+# List all available presets
+ralph-starter presets
+
+# Use a preset
+ralph-starter run --preset feature "build login page"
+ralph-starter run --preset tdd-red-green "add user validation"
+ralph-starter run --preset debug "fix the auth bug"
+```
+
+### Exit Detection
+
+| Flag | Description |
+|------|-------------|
+| `--completion-promise <string>` | Custom string to detect task completion |
+| `--require-exit-signal` | Require explicit `EXIT_SIGNAL: true` for completion |
+
+```bash
+# Stop when agent outputs "FEATURE_DONE"
+ralph-starter run --completion-promise "FEATURE_DONE" "build X"
+
+# Require explicit exit signal
+ralph-starter run --require-exit-signal "build Y"
+```
+
+### Safety Controls
+
+| Flag | Description |
+|------|-------------|
+| `--rate-limit <n>` | Max API calls per hour (default: unlimited) |
+| `--circuit-breaker-failures <n>` | Max consecutive failures before stopping (default: 3) |
+| `--circuit-breaker-errors <n>` | Max same error occurrences before stopping (default: 5) |
+| `--track-progress` | Write progress to activity.md (default: true) |
+| `--no-track-progress` | Disable progress tracking |
+
+```bash
+# Limit to 50 API calls per hour
+ralph-starter run --rate-limit 50 "build X"
+
+# Stop after 2 consecutive failures
+ralph-starter run --circuit-breaker-failures 2 "build Y"
+```
+
+### Source Options
+
+| Flag | Description |
+|------|-------------|
 | `--from <source>` | Fetch spec from source |
 | `--project <name>` | Project filter for sources |
 | `--label <name>` | Label filter for sources |
 | `--status <status>` | Status filter for sources |
 | `--limit <n>` | Max items from source |
 | `--prd <file>` | Read tasks from markdown |
-| `--agent <name>` | Specify agent to use |
-| `--max-iterations <n>` | Max loop iterations (default: 50) |
 
 ## Config Commands
 
