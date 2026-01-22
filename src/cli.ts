@@ -9,6 +9,7 @@ import { planCommand } from './commands/plan.js';
 import { configCommand } from './commands/config.js';
 import { sourceCommand } from './commands/source.js';
 import { authCommand } from './commands/auth.js';
+import { integrationsCommand } from './commands/integrations.js';
 import { runWizard, runIdeaMode } from './wizard/index.js';
 import { startMcpServer } from './mcp/server.js';
 import { formatPresetsHelp, getPresetNames } from './presets/index.js';
@@ -138,6 +139,18 @@ program
   .option('--limit <n>', 'Max items to fetch', '10')
   .action(async (action: string, args: string[], options) => {
     await sourceCommand(action, args, options);
+  });
+
+// ralph-starter integrations - Manage integrations (unified architecture)
+program
+  .command('integrations <action> [args...]')
+  .description('Manage integrations (list, help, test, fetch)')
+  .option('--project <name>', 'Project/repo name')
+  .option('--label <name>', 'Label filter')
+  .option('--status <status>', 'Status filter')
+  .option('--limit <n>', 'Max items to fetch', '10')
+  .action(async (action: string, args: string[], options) => {
+    await integrationsCommand(action, args, options);
   });
 
 // ralph-starter mcp - Start as MCP server
