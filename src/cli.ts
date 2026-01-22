@@ -11,6 +11,7 @@ import { sourceCommand } from './commands/source.js';
 import { authCommand } from './commands/auth.js';
 import { runWizard, runIdeaMode } from './wizard/index.js';
 import { startMcpServer } from './mcp/server.js';
+import { formatPresetsHelp, getPresetNames } from './presets/index.js';
 
 const VERSION = '0.1.0';
 
@@ -51,6 +52,15 @@ program
   .option('--label <name>', 'Label filter for --from integrations')
   .option('--status <status>', 'Status filter for --from integrations')
   .option('--limit <n>', 'Max items to fetch for --from integrations', '20')
+  // New options
+  .option('--preset <name>', `Use a workflow preset (${getPresetNames().slice(0, 5).join(', ')}...)`)
+  .option('--completion-promise <string>', 'Custom completion promise string to detect task done')
+  .option('--require-exit-signal', 'Require explicit EXIT_SIGNAL: true for completion')
+  .option('--rate-limit <n>', 'Max API calls per hour (default: unlimited)')
+  .option('--track-progress', 'Write progress to activity.md (default: true)')
+  .option('--no-track-progress', 'Disable progress tracking')
+  .option('--circuit-breaker-failures <n>', 'Max consecutive failures before stopping (default: 3)')
+  .option('--circuit-breaker-errors <n>', 'Max same error occurrences before stopping (default: 5)')
   .action(runCommand);
 
 // ralph-starter init - Initialize Ralph in a project
@@ -134,6 +144,17 @@ program
   .description('Start as an MCP (Model Context Protocol) server for Claude Desktop/Code')
   .action(async () => {
     await startMcpServer();
+  });
+
+// ralph-starter presets - List available workflow presets
+program
+  .command('presets')
+  .description('List available workflow presets')
+  .action(() => {
+    console.log();
+    console.log(formatPresetsHelp());
+    console.log('Use with: ralph-starter run --preset <name> [task]');
+    console.log();
   });
 
 // Default action - launch interactive wizard

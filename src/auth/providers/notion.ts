@@ -3,19 +3,25 @@ import { BaseOAuthProvider, type OAuthTokens } from './base.js';
 /**
  * Notion OAuth Provider
  *
- * Notion's OAuth flow:
+ * Notion's OAuth flow requires a client secret (no PKCE support).
+ * For CLI apps, we recommend using manual API key configuration instead.
+ *
  * https://developers.notion.com/docs/authorization
  *
- * To use this, you need a Notion integration:
+ * Manual setup:
  * 1. Go to https://www.notion.so/my-integrations
- * 2. Create a new integration with OAuth enabled
- * 3. Set redirect URI to http://127.0.0.1:{port}/callback
+ * 2. Create a new integration
+ * 3. Copy the Internal Integration Secret
+ * 4. Run: ralph-starter config set notion.apiKey <secret>
  */
 export class NotionOAuthProvider extends BaseOAuthProvider {
   name = 'notion';
   displayName = 'Notion';
   authorizationUrl = 'https://api.notion.com/v1/oauth/authorize';
   tokenUrl = 'https://api.notion.com/v1/oauth/token';
+
+  // Notion doesn't support PKCE - requires client secret
+  supportsPKCE = false;
 
   // Notion doesn't use traditional scopes, but the owner field determines access
   scopes: string[] = [];

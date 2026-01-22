@@ -3,19 +3,25 @@ import { BaseOAuthProvider } from './base.js';
 /**
  * Todoist OAuth Provider
  *
- * Todoist's OAuth flow:
+ * Todoist's OAuth flow requires a client secret (no PKCE support).
+ * For CLI apps, we recommend using manual API key configuration instead.
+ *
  * https://developer.todoist.com/guides/#oauth
  *
- * To use this, you need a Todoist OAuth application:
- * 1. Go to https://developer.todoist.com/appconsole.html
- * 2. Create a new application
- * 3. Set redirect URI to http://127.0.0.1:{port}/callback
+ * Manual setup:
+ * 1. Go to https://todoist.com/prefs/integrations
+ * 2. Scroll to "API token" section
+ * 3. Copy your API token
+ * 4. Run: ralph-starter config set todoist.apiKey <token>
  */
 export class TodoistOAuthProvider extends BaseOAuthProvider {
   name = 'todoist';
   displayName = 'Todoist';
   authorizationUrl = 'https://todoist.com/oauth/authorize';
   tokenUrl = 'https://todoist.com/oauth/access_token';
+
+  // Todoist doesn't support PKCE - requires client secret
+  supportsPKCE = false;
 
   // Todoist scopes
   scopes = [

@@ -7,6 +7,7 @@ import { detectBestAgent, detectAvailableAgents, printAgentStatus, Agent } from 
 import { runLoop, LoopOptions } from '../loop/executor.js';
 import { isGitRepo, initGitRepo } from '../automation/git.js';
 import { fetchFromSource, detectSource } from '../sources/index.js';
+import { getPreset, getPresetNames, formatPresetsHelp, PresetConfig } from '../presets/index.js';
 
 export interface RunCommandOptions {
   auto?: boolean;
@@ -24,6 +25,14 @@ export interface RunCommandOptions {
   label?: string;
   status?: string;
   limit?: number;
+  // New options
+  preset?: string;
+  completionPromise?: string;
+  requireExitSignal?: boolean;
+  rateLimit?: number;
+  trackProgress?: boolean;
+  circuitBreakerFailures?: number;
+  circuitBreakerErrors?: number;
 }
 
 export async function runCommand(task: string | undefined, options: RunCommandOptions): Promise<void> {
@@ -214,22 +223,54 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     return;
   }
 
+  // Apply preset if specified
+  let preset: PresetConfig | undefined;
+  if (options.preset) {
+    preset = getPreset(options.preset);
+    if (!preset) {
+      console.log(chalk.red(`Unknown preset: ${options.preset}`));
+      console.log();
+      console.log(formatPresetsHelp());
+      process.exit(1);
+    }
+    console.log(chalk.cyan(`Using preset: ${preset.name}`));
+    console.log(chalk.dim(preset.description));
+  }
+
   // Run the loop
   const prTitle = isBuildMode
     ? 'Ralph: Implementation from plan'
     : `Ralph: ${finalTask.slice(0, 50)}`;
 
+  // Apply preset values with CLI overrides
   const loopOptions: LoopOptions = {
-    task: finalTask,
+    task: preset?.promptPrefix ? `${preset.promptPrefix}\n\n${finalTask}` : finalTask,
     cwd,
     agent,
-    maxIterations: options.maxIterations || 50,
+    maxIterations: options.maxIterations ?? preset?.maxIterations ?? 50,
     auto: options.auto,
-    commit: options.commit,
+    commit: options.commit ?? preset?.commit,
     push: options.push,
     pr: options.pr,
     prTitle,
-    validate: options.validate,
+    validate: options.validate ?? preset?.validate,
+    // New options
+    completionPromise: options.completionPromise ?? preset?.completionPromise,
+    requireExitSignal: options.requireExitSignal,
+    rateLimit: options.rateLimit ?? preset?.rateLimit,
+    trackProgress: options.trackProgress ?? true, // Default to true
+    checkFileCompletion: true, // Always check for file-based completion
+    circuitBreaker: preset?.circuitBreaker
+      ? {
+          maxConsecutiveFailures: options.circuitBreakerFailures ?? preset.circuitBreaker.maxConsecutiveFailures,
+          maxSameErrorCount: options.circuitBreakerErrors ?? preset.circuitBreaker.maxSameErrorCount,
+        }
+      : options.circuitBreakerFailures || options.circuitBreakerErrors
+        ? {
+            maxConsecutiveFailures: options.circuitBreakerFailures ?? 3,
+            maxSameErrorCount: options.circuitBreakerErrors ?? 5,
+          }
+        : undefined,
   };
 
   const result = await runLoop(loopOptions);
@@ -238,14 +279,27 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
   console.log();
   if (result.success) {
     console.log(chalk.green.bold('Loop completed!'));
+    console.log(chalk.dim(`Exit reason: ${result.exitReason}`));
     console.log(chalk.dim(`Iterations: ${result.iterations}`));
     if (result.commits.length > 0) {
       console.log(chalk.dim(`Commits: ${result.commits.length}`));
     }
+    if (result.stats) {
+      const durationSec = Math.round(result.stats.totalDuration / 1000);
+      console.log(chalk.dim(`Total duration: ${durationSec}s`));
+      if (result.stats.validationFailures > 0) {
+        console.log(chalk.dim(`Validation failures: ${result.stats.validationFailures}`));
+      }
+    }
   } else {
     console.log(chalk.red.bold('Loop failed'));
+    console.log(chalk.dim(`Exit reason: ${result.exitReason}`));
     if (result.error) {
       console.log(chalk.dim(result.error));
+    }
+    if (result.stats?.circuitBreakerStats) {
+      const cb = result.stats.circuitBreakerStats;
+      console.log(chalk.dim(`Circuit breaker: ${cb.consecutiveFailures} consecutive failures, ${cb.uniqueErrors} unique errors`));
     }
   }
 }

@@ -9,10 +9,10 @@ import {
 } from '../sources/config.js';
 import { openBrowser, getRandomPort } from '../auth/browser.js';
 import { startOAuthServer, getCallbackUrl } from '../auth/oauth-server.js';
+import { generatePKCE } from '../auth/pkce.js';
 import {
   getProvider,
   getProviderNames,
-  getConfiguredProviders,
   type OAuthProvider,
 } from '../auth/providers/index.js';
 
@@ -70,21 +70,26 @@ async function showAuthStatus(): Promise<void> {
     const credentials = getSourceCredentials(name);
     const hasToken = credentials?.token || credentials?.apiKey;
     const isConfigured = checkProviderConfigured(provider);
+    const authMethod = provider.supportsPKCE ? 'Browser OAuth (PKCE)' : 'Manual API key';
 
     if (hasToken) {
       console.log(`  ${chalk.green('✓')} ${chalk.bold(provider.displayName)} - Authenticated`);
-    } else if (isConfigured) {
-      console.log(`  ${chalk.yellow('○')} ${chalk.bold(provider.displayName)} - OAuth app configured, not authenticated`);
+    } else if (isConfigured && provider.supportsPKCE) {
+      // PKCE provider with client_id configured - ready for browser auth
+      console.log(`  ${chalk.yellow('○')} ${chalk.bold(provider.displayName)} - ${authMethod}`);
       console.log(chalk.dim(`      Run: ralph-starter auth ${name}`));
+    } else if (provider.supportsPKCE && !isConfigured) {
+      // PKCE provider but no client_id - needs env var
+      console.log(`  ${chalk.dim('○')} ${chalk.bold(provider.displayName)} - ${authMethod} (not configured)`);
+      console.log(chalk.dim(`      Set RALPH_${name.toUpperCase()}_CLIENT_ID env var`));
     } else {
-      console.log(`  ${chalk.dim('○')} ${chalk.bold(provider.displayName)} - Not configured`);
-      console.log(chalk.dim(`      Set RALPH_${name.toUpperCase()}_CLIENT_ID and RALPH_${name.toUpperCase()}_CLIENT_SECRET`));
+      // Non-PKCE provider - manual API key only
+      console.log(`  ${chalk.dim('○')} ${chalk.bold(provider.displayName)} - ${authMethod}`);
+      console.log(chalk.dim(`      Run: ralph-starter config set ${name}.apiKey <your-key>`));
+      console.log(chalk.dim(`      Get key: ${getApiKeyUrl(name)}`));
     }
   }
 
-  // Show manual config option
-  console.log(chalk.dim('\n  Or configure API keys manually:'));
-  console.log(chalk.dim('    ralph-starter config set <service>.apiKey <value>'));
   console.log();
 }
 
@@ -122,12 +127,20 @@ async function startOAuthFlow(service: string): Promise<void> {
     process.exit(1);
   }
 
+  // Check if this provider supports browser OAuth
+  if (!provider.supportsPKCE) {
+    console.log(chalk.yellow(`\n${provider.displayName} doesn't support browser OAuth.`));
+    console.log(chalk.dim('\nUse manual API key configuration instead:'));
+    console.log(chalk.cyan(`  ralph-starter config set ${service}.apiKey <your-api-key>`));
+    console.log(chalk.dim(`\nGet your API key from: ${getApiKeyUrl(service)}`));
+    return;
+  }
+
   // Check if OAuth is configured for this provider
   if (!checkProviderConfigured(provider)) {
     console.error(chalk.red(`OAuth not configured for ${provider.displayName}`));
-    console.error(chalk.dim('\nTo enable OAuth authentication, set these environment variables:'));
+    console.error(chalk.dim('\nTo enable browser OAuth, set this environment variable:'));
     console.error(chalk.cyan(`  RALPH_${service.toUpperCase()}_CLIENT_ID=<your-client-id>`));
-    console.error(chalk.cyan(`  RALPH_${service.toUpperCase()}_CLIENT_SECRET=<your-client-secret>`));
     console.error(chalk.dim('\nOr use manual API key configuration:'));
     console.error(chalk.cyan(`  ralph-starter config set ${service}.apiKey <your-api-key>`));
     console.error(chalk.dim(`\nGet API keys from: ${getApiKeyUrl(service)}`));
@@ -144,11 +157,14 @@ async function startOAuthFlow(service: string): Promise<void> {
   // Generate state for CSRF protection
   const state = crypto.randomBytes(16).toString('hex');
 
-  // Build authorization URL
-  const authUrl = provider.buildAuthUrl(redirectUri, state);
+  // Generate PKCE challenge
+  const pkce = generatePKCE();
+
+  // Build authorization URL with PKCE
+  const authUrl = provider.buildAuthUrl(redirectUri, state, pkce.challenge);
 
   console.log(chalk.dim(`Opening browser for authorization...`));
-  console.log(chalk.dim(`Callback URL: ${redirectUri}`));
+  console.log(chalk.dim(`Using PKCE for secure authentication`));
   console.log();
 
   // Start the callback server
@@ -182,8 +198,8 @@ async function startOAuthFlow(service: string): Promise<void> {
 
     spinner.text = 'Exchanging code for token...';
 
-    // Exchange code for token
-    const tokens = await provider.exchangeCode(result.code, redirectUri);
+    // Exchange code for token with PKCE verifier
+    const tokens = await provider.exchangeCode(result.code, redirectUri, pkce.verifier);
 
     // Save the token
     setSourceCredential(service, 'token', tokens.accessToken);
@@ -231,41 +247,41 @@ function getApiKeyUrl(service: string): string {
  */
 function showAuthHelp(): void {
   console.log(`
-${chalk.bold('ralph-starter auth')} - Browser-based OAuth authentication
+${chalk.bold('ralph-starter auth')} - Authentication for integrations
 
 ${chalk.bold('Usage:')}
-  ralph-starter auth <service>         Start OAuth flow for a service
+  ralph-starter auth <service>         Start OAuth flow (for supported services)
   ralph-starter auth --list            Show authentication status
   ralph-starter auth --logout <service> Remove credentials for a service
 
 ${chalk.bold('Services:')}
-  notion   - Notion workspace access
-  linear   - Linear project management
-  todoist  - Todoist task management
+  ${chalk.green('linear')}   - Browser OAuth (PKCE) - just run: ralph-starter auth linear
+  ${chalk.yellow('notion')}   - Manual API key required
+  ${chalk.yellow('todoist')}  - Manual API key required
 
 ${chalk.bold('Examples:')}
-  ralph-starter auth notion
+  ${chalk.dim('# Linear - browser OAuth (seamless!)')}
+  ralph-starter auth linear
+
+  ${chalk.dim('# Notion/Todoist - manual API key')}
+  ralph-starter config set notion.apiKey <your-key>
+  ralph-starter config set todoist.apiKey <your-key>
+
+  ${chalk.dim('# Check status')}
   ralph-starter auth --list
-  ralph-starter auth --logout notion
 
-${chalk.bold('Setup:')}
-  OAuth authentication requires registered OAuth applications.
-  Set these environment variables for each service:
-
-  ${chalk.dim('# Notion')}
-  RALPH_NOTION_CLIENT_ID=<client-id>
-  RALPH_NOTION_CLIENT_SECRET=<client-secret>
-
-  ${chalk.dim('# Linear')}
+${chalk.bold('Browser OAuth Setup (Linear):')}
+  Linear supports PKCE, so you just need a client ID:
   RALPH_LINEAR_CLIENT_ID=<client-id>
-  RALPH_LINEAR_CLIENT_SECRET=<client-secret>
 
-  ${chalk.dim('# Todoist')}
-  RALPH_TODOIST_CLIENT_ID=<client-id>
-  RALPH_TODOIST_CLIENT_SECRET=<client-secret>
+  Get it from: https://linear.app/settings/api/applications
 
-${chalk.bold('Manual Configuration:')}
-  You can also configure API keys manually without OAuth:
-  ralph-starter config set notion.apiKey <your-api-key>
+${chalk.bold('Manual API Keys (Notion, Todoist):')}
+  These services require manual API key configuration:
+
+  ${chalk.dim('Notion:')}  https://www.notion.so/my-integrations
+  ${chalk.dim('Todoist:')} https://todoist.com/prefs/integrations
+
+  Then run: ralph-starter config set <service>.apiKey <key>
 `);
 }
