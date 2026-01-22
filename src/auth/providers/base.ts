@@ -26,11 +26,14 @@ export interface OAuthProvider {
   /** Additional authorization URL parameters */
   authParams?: Record<string, string>;
 
+  /** Whether this provider supports PKCE (no client secret needed) */
+  supportsPKCE: boolean;
+
   /** Build the full authorization URL */
-  buildAuthUrl(redirectUri: string, state: string): string;
+  buildAuthUrl(redirectUri: string, state: string, codeChallenge?: string): string;
 
   /** Exchange authorization code for access token */
-  exchangeCode(code: string, redirectUri: string): Promise<OAuthTokens>;
+  exchangeCode(code: string, redirectUri: string, codeVerifier?: string): Promise<OAuthTokens>;
 }
 
 export interface OAuthTokens {
@@ -54,7 +57,10 @@ export abstract class BaseOAuthProvider implements OAuthProvider {
   clientSecret?: string;
   authParams?: Record<string, string>;
 
-  buildAuthUrl(redirectUri: string, state: string): string {
+  /** Override in subclass to enable PKCE flow */
+  supportsPKCE = false;
+
+  buildAuthUrl(redirectUri: string, state: string, codeChallenge?: string): string {
     const params = new URLSearchParams({
       client_id: this.clientId,
       redirect_uri: redirectUri,
@@ -62,6 +68,12 @@ export abstract class BaseOAuthProvider implements OAuthProvider {
       state,
       ...this.authParams,
     });
+
+    // Add PKCE challenge if provided
+    if (codeChallenge) {
+      params.set('code_challenge', codeChallenge);
+      params.set('code_challenge_method', 'S256');
+    }
 
     // Add scopes (format varies by provider)
     if (this.scopes.length > 0) {
@@ -71,12 +83,30 @@ export abstract class BaseOAuthProvider implements OAuthProvider {
     return `${this.authorizationUrl}?${params.toString()}`;
   }
 
-  async exchangeCode(code: string, redirectUri: string): Promise<OAuthTokens> {
-    if (!this.clientSecret) {
+  async exchangeCode(code: string, redirectUri: string, codeVerifier?: string): Promise<OAuthTokens> {
+    // For PKCE flow, we don't need client_secret
+    if (!this.supportsPKCE && !this.clientSecret) {
       throw new Error(
         `No client secret configured for ${this.displayName}. ` +
         `Set RALPH_${this.name.toUpperCase()}_CLIENT_SECRET environment variable.`
       );
+    }
+
+    const body: Record<string, string> = {
+      grant_type: 'authorization_code',
+      client_id: this.clientId,
+      code,
+      redirect_uri: redirectUri,
+    };
+
+    // Add client_secret for non-PKCE flow
+    if (this.clientSecret) {
+      body.client_secret = this.clientSecret;
+    }
+
+    // Add code_verifier for PKCE flow
+    if (codeVerifier) {
+      body.code_verifier = codeVerifier;
     }
 
     const response = await fetch(this.tokenUrl, {
@@ -85,13 +115,7 @@ export abstract class BaseOAuthProvider implements OAuthProvider {
         'Content-Type': 'application/x-www-form-urlencoded',
         Accept: 'application/json',
       },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-        code,
-        redirect_uri: redirectUri,
-      }).toString(),
+      body: new URLSearchParams(body).toString(),
     });
 
     if (!response.ok) {
