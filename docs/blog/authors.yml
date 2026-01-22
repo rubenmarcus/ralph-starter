@@ -3,3 +3,9 @@ ralph-starter:
   title: Maintainers
   url: https://github.com/rubenmarcus/ralph-starter
   image_url: https://github.com/rubenmarcus.png
+
+ralph:
+  name: Ralph Team
+  title: ralph-starter maintainers
+  url: https://github.com/rubenmarcus/ralph-starter
+  image_url: /img/small-logo.png

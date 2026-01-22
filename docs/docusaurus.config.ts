@@ -13,7 +13,7 @@ const config: Config = {
 
   // GitHub Pages URL
   url: 'https://rubenmarcus.github.io',
-  baseUrl: '/ralph-starter/',
+  baseUrl: '/',
 
   // GitHub pages deployment config
   organizationName: 'rubenmarcus',
@@ -83,7 +83,7 @@ const config: Config = {
   themeConfig: {
     image: 'img/ralph-starter-social-card.png',
     colorMode: {
-      defaultMode: 'dark',
+      defaultMode: 'light',
       respectPrefersColorScheme: true,
     },
     metadata: [
@@ -94,7 +94,7 @@ const config: Config = {
       title: 'ralph-starter',
       logo: {
         alt: 'ralph-starter Logo',
-        src: 'img/logo.svg',
+        src: 'img/small-logo.png',
       },
       items: [
         {
@@ -122,73 +122,35 @@ const config: Config = {
         {
           title: 'Docs',
           items: [
-            {
-              label: 'Getting Started',
-              to: '/docs/intro',
-            },
-            {
-              label: 'Interactive Wizard',
-              to: '/docs/wizard/overview',
-            },
-            {
-              label: 'MCP Integration',
-              to: '/docs/mcp/setup',
-            },
-          ],
-        },
-        {
-          title: 'Input Sources',
-          items: [
-            {
-              label: 'GitHub',
-              to: '/docs/sources/github',
-            },
-            {
-              label: 'Todoist',
-              to: '/docs/sources/todoist',
-            },
-            {
-              label: 'Linear',
-              to: '/docs/sources/linear',
-            },
-            {
-              label: 'Notion',
-              to: '/docs/sources/notion',
-            },
+            { label: 'Getting Started', to: '/docs/intro' },
+            { label: 'CLI Reference', to: '/docs/cli/run' },
+            { label: 'Integrations', to: '/docs/sources/overview' },
           ],
         },
         {
           title: 'Community',
           items: [
-            {
-              label: 'GitHub Discussions',
-              href: 'https://github.com/rubenmarcus/ralph-starter/discussions',
-            },
-            {
-              label: 'Issues',
-              href: 'https://github.com/rubenmarcus/ralph-starter/issues',
-            },
+            { label: 'GitHub', href: 'https://github.com/rubenmarcus/ralph-starter' },
+            { label: 'GitHub Discussions', href: 'https://github.com/rubenmarcus/ralph-starter/discussions' },
+            { label: 'Issues', href: 'https://github.com/rubenmarcus/ralph-starter/issues' },
           ],
         },
         {
           title: 'More',
           items: [
-            {
-              label: 'Blog',
-              to: '/blog',
-            },
-            {
-              label: 'Ralph Playbook',
-              href: 'https://claytonfarr.github.io/ralph-playbook/',
-            },
-            {
-              label: 'npm',
-              href: 'https://www.npmjs.com/package/ralph-starter',
-            },
+            { label: 'Blog', to: '/blog' },
+            { label: 'npm', href: 'https://www.npmjs.com/package/ralph-starter' },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} ralph-starter. Built with Docusaurus.`,
+      logo: {
+        alt: 'ralph-starter',
+        src: 'img/small-logo.png',
+        href: '/',
+        width: 60,
+        height: 60,
+      },
+      copyright: `Copyright © ${new Date().getFullYear()} ralph-starter`,
     },
     prism: {
       theme: prismThemes.github,

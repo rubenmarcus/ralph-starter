@@ -1,0 +1,349 @@
+/* Hero Section with Theme-Aware Background */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(180deg, #87CEEB 0%, #70D1FE 100%);
+}
+
+:global([data-theme='dark']) .hero {
+  background: transparent;
+}
+
+.heroBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 120%;
+  overflow: hidden;
+  transition: opacity 0.5s ease;
+}
+
+.bgImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: opacity 0.5s ease;
+}
+
+/* Light theme: show light bg, hide dark bg */
+.bgLight {
+  opacity: 0.6;
+}
+
+.bgDark {
+  opacity: 0;
+}
+
+/* Dark theme: hide light bg, show dark bg */
+:global([data-theme='dark']) .bgLight {
+  opacity: 0;
+}
+
+:global([data-theme='dark']) .bgDark {
+  opacity: 1;
+}
+
+/* Floating Ralph with parallax and entrance animation */
+.floatingRalph {
+  position: absolute;
+  top: 12%;
+  right: 10%;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(-50px) translateX(50px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.floatingRalph.visible {
+  opacity: 1;
+  transform: translateY(0) translateX(0);
+}
+
+.ralphImage {
+  width: 500px;
+  height: auto;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3));
+  animation: float 6s ease-in-out infinite;
+}
+
+:global([data-theme='dark']) .ralphImage {
+  filter: drop-shadow(0 20px 40px rgba(255, 213, 33, 0.2));
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-15px) rotate(3deg); }
+  50% { transform: translateY(-25px) rotate(0deg); }
+  75% { transform: translateY(-15px) rotate(-3deg); }
+}
+
+/* Content with entrance animations */
+.heroContent {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  padding: 2rem;
+  max-width: 900px;
+}
+
+.heroContent.visible .animateIn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.animateIn {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.delay1 { transition-delay: 0.1s; }
+.delay2 { transition-delay: 0.2s; }
+.delay3 { transition-delay: 0.3s; }
+.delay4 { transition-delay: 0.4s; }
+
+.logoContainer {
+  margin-bottom: 1.5rem;
+}
+
+/* Static large logo - no animation */
+.logo {
+  width: 450px;
+  max-width: 90vw;
+  height: auto;
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.02);
+}
+
+:global([data-theme='dark']) .logo {
+  filter: drop-shadow(0 10px 30px rgba(255, 213, 33, 0.3));
+}
+
+.tagline {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 0.5rem;
+  text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+}
+
+:global([data-theme='dark']) .tagline {
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.subtitle {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.15rem;
+  color: #333;
+  margin-bottom: 2rem;
+  font-weight: 600;
+}
+
+:global([data-theme='dark']) .subtitle {
+  color: #c0c0c0;
+}
+
+/* Terminal */
+.terminal {
+  background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  margin: 2rem auto;
+  max-width: 600px;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.terminal:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+}
+
+.terminalHeader {
+  background: linear-gradient(180deg, #3d3d3d 0%, #323232 100%);
+  padding: 0.75rem 1rem;
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.terminalDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.terminalDot:hover {
+  transform: scale(1.2);
+}
+
+.terminalDot.red { background: linear-gradient(135deg, #ff5f56 0%, #e04040 100%); }
+.terminalDot.yellow { background: linear-gradient(135deg, #ffbd2e 0%, #e0a020 100%); }
+.terminalDot.green { background: linear-gradient(135deg, #27c93f 0%, #20a030 100%); }
+
+.terminalBody {
+  padding: 1.5rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.terminalLine {
+  margin-bottom: 0.5rem;
+}
+
+.terminalPrompt {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.terminalCommand {
+  color: #70D1FE;
+}
+
+.terminalOutput {
+  color: #888;
+}
+
+.terminalOutput div {
+  margin: 0.25rem 0;
+}
+
+.terminalSuccess {
+  color: #FFD521 !important;
+  margin-top: 0.5rem !important;
+  font-weight: 600;
+}
+
+/* Buttons */
+.buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.button {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.buttonPrimary {
+  background: linear-gradient(135deg, #FF6B35 0%, #FFD521 100%);
+  color: #1a1a2e;
+  border: none;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+}
+
+.buttonPrimary:hover {
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 10px 30px rgba(255, 107, 53, 0.5);
+  color: #1a1a2e;
+  text-decoration: none;
+}
+
+.buttonSecondary {
+  background: rgba(26, 26, 46, 0.9);
+  color: white;
+  border: 2px solid #FFD521;
+}
+
+.buttonSecondary:hover {
+  background: #FFD521;
+  color: #1a1a2e;
+  text-decoration: none;
+  transform: scale(1.05) translateY(-2px);
+}
+
+/* Install command */
+.installCommand {
+  margin-top: 2rem;
+}
+
+.installCommand code {
+  background: rgba(26, 26, 46, 0.85);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #70D1FE;
+  border: 1px solid rgba(112, 209, 254, 0.3);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.installCommand code:hover {
+  background: rgba(26, 26, 46, 0.95);
+  border-color: rgba(112, 209, 254, 0.5);
+  transform: scale(1.02);
+}
+
+/* Responsive */
+@media screen and (max-width: 996px) {
+  .hero {
+    min-height: auto;
+    padding: 6rem 1rem 4rem;
+  }
+
+  .floatingRalph {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin-bottom: 1rem;
+  }
+
+  .floatingRalph.visible {
+    transform: translateY(0);
+  }
+
+  .ralphImage {
+    width: 300px;
+  }
+
+  .logo {
+    width: 280px;
+  }
+
+  .tagline {
+    font-size: 1.3rem;
+  }
+
+  .terminal {
+    margin: 1rem;
+  }
+
+  .terminalBody {
+    font-size: 0.75rem;
+    padding: 1rem;
+  }
+
+  .button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+}

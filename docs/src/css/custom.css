@@ -1,30 +1,552 @@
 /**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
+ * Ralph-starter custom styles
+ * Light theme default with dark mode support
  */
 
-/* You can override the default Infima variables here. */
-:root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
-  --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+/* Import supporting fonts from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap');
+
+/* Simpsons font - local file (kept for logo/special uses only) */
+@font-face {
+  font-family: 'Simpsons';
+  src: url('/Simpsonfont.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
+/* ============================================
+   LIGHT THEME (Default)
+   ============================================ */
+:root {
+  /* Ralph color palette */
+  --ralph-yellow: #FFD521;
+  --ralph-yellow-light: #FFE566;
+  --ralph-yellow-dark: #E5B800;
+
+  /* Sky Blue */
+  --ralph-blue: #70D1FE;
+  --ralph-blue-light: #87CEEB;
+  --ralph-blue-dark: #4ABDEC;
+
+  /* Accent colors */
+  --ralph-orange: #FF6B35;
+  --ralph-pink: #FF69B4;
+  --ralph-green: #4CAF50;
+  --ralph-purple: #9C27B0;
+
+  /* Dark tones */
+  --ralph-dark: #1a1a2e;
+  --ralph-dark-lighter: #16213e;
+
+  /* Typography */
+  --font-display: 'Simpsons', 'Bangers', cursive;
+  --font-body: 'Nunito', sans-serif;
+  --font-fun: 'Comic Neue', cursive;
+
+  /* Docusaurus theme overrides - LIGHT */
+  --ifm-color-primary: #FF6B35;
+  --ifm-color-primary-dark: #E55A2B;
+  --ifm-color-primary-darker: #D54F22;
+  --ifm-color-primary-darkest: #B5401A;
+  --ifm-color-primary-light: #FF7D4D;
+  --ifm-color-primary-lighter: #FF8F66;
+  --ifm-color-primary-lightest: #FFAF8F;
+
+  --ifm-font-family-base: var(--font-body);
+  --ifm-heading-font-family: var(--font-body);
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(255, 107, 53, 0.15);
+
+  --ifm-background-color: #f5f9fc;
+  --ifm-background-surface-color: #ffffff;
+  --ifm-navbar-background-color: var(--ralph-blue-light);
+  --ifm-footer-background-color: var(--ralph-blue);
+}
+
+/* ============================================
+   DARK THEME
+   ============================================ */
 [data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --ifm-color-primary: #FFD521;
+  --ifm-color-primary-dark: #E5B800;
+  --ifm-color-primary-darker: #CCa400;
+  --ifm-color-primary-darkest: #998200;
+  --ifm-color-primary-light: #FFE033;
+  --ifm-color-primary-lighter: #FFE566;
+  --ifm-color-primary-lightest: #FFF0A6;
+  --docusaurus-highlighted-code-line-bg: rgba(255, 213, 33, 0.15);
+
+  --ifm-background-color: var(--ralph-dark);
+  --ifm-background-surface-color: var(--ralph-dark-lighter);
+  --ifm-navbar-background-color: #0f0f1a;
+  --ifm-footer-background-color: #0a0a12;
+}
+
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+}
+
+/* Smooth transitions for theme switching */
+html,
+body,
+.navbar,
+.footer,
+main {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================
+   NAVBAR - Regular font, matching theme
+   ============================================ */
+.navbar {
+  background: linear-gradient(180deg, #87CEEB 0%, #70D1FE 100%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.navbar__link {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  color: #1a1a2e;
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.navbar__link:hover {
+  color: #FF6B35;
+  transform: translateY(-1px);
+}
+
+.navbar__title {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #1a1a2e;
+}
+
+.navbar__logo {
+  transition: transform 0.3s ease;
+}
+
+.navbar__logo:hover {
+  transform: scale(1.05);
+}
+
+/* Dark theme navbar */
+[data-theme='dark'] .navbar {
+  background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .navbar__link {
+  color: #e0e0e0;
+}
+
+[data-theme='dark'] .navbar__link:hover {
+  color: #FFD521;
+}
+
+[data-theme='dark'] .navbar__title {
+  color: #FFD521;
+}
+
+/* Homepage: hide navbar completely */
+.homepage .navbar {
+  display: none !important;
+}
+
+/* ============================================
+   FOOTER - Matching theme colors
+   ============================================ */
+.footer {
+  background: linear-gradient(180deg, #5BBCD9 0%, #4ABDEC 100%);
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.footer__copyright {
+  color: #1a1a2e;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+}
+
+.footer__copyright a {
+  color: #1a1a2e;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer__copyright a:hover {
+  color: #D84315;
+}
+
+/* Dark theme footer */
+[data-theme='dark'] .footer {
+  background: linear-gradient(180deg, #0a0a12 0%, #0f0f1a 100%);
+}
+
+[data-theme='dark'] .footer__copyright {
+  color: #a0a0a0;
+}
+
+[data-theme='dark'] .footer__copyright a {
+  color: #FFD521;
+}
+
+[data-theme='dark'] .footer__copyright a:hover {
+  color: #FF6B35;
+}
+
+/* ============================================
+   DOCS PAGE STYLING - Consistent theme
+   ============================================ */
+.main-wrapper {
+  background: var(--ifm-background-color);
+  transition: background-color 0.3s ease;
+}
+
+/* Sidebar styling */
+.menu {
+  background: transparent;
+}
+
+.menu__link {
+  font-family: 'Nunito', sans-serif;
+  transition: all 0.2s ease;
+}
+
+.menu__link:hover {
+  transform: translateX(3px);
+}
+
+.menu__link--active {
+  font-weight: 700;
+}
+
+/* ============================================
+   SCROLL ANIMATIONS
+   ============================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Animated elements on scroll */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.animate-on-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered animation delays */
+.animate-delay-1 { transition-delay: 0.1s; }
+.animate-delay-2 { transition-delay: 0.2s; }
+.animate-delay-3 { transition-delay: 0.3s; }
+.animate-delay-4 { transition-delay: 0.4s; }
+
+/* ============================================
+   FLOATING ANIMATIONS
+   ============================================ */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(2deg);
+  }
+}
+
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+
+.floating-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+/* Parallax container */
+.parallax-section {
+  position: relative;
+  overflow: hidden;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--ralph-yellow) 0%, var(--ralph-orange) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-blue {
+  background: linear-gradient(135deg, var(--ralph-blue) 0%, var(--ralph-purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card styles */
+.ralph-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ralph-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme='dark'] .ralph-card {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='dark'] .ralph-card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Button styles */
+.ralph-button {
+  font-family: var(--font-body);
+  font-weight: 700;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.ralph-button-primary {
+  background: linear-gradient(135deg, var(--ralph-orange) 0%, var(--ralph-yellow) 100%);
+  color: #1a1a2e;
+  border: none;
+}
+
+.ralph-button-primary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
+  color: #1a1a2e;
+}
+
+.ralph-button-secondary {
+  background: transparent;
+  color: #1a1a2e;
+  border: 2px solid var(--ralph-orange);
+}
+
+.ralph-button-secondary:hover {
+  background: var(--ralph-orange);
+  color: white;
+}
+
+[data-theme='dark'] .ralph-button-secondary {
+  color: white;
+  border-color: var(--ralph-yellow);
+}
+
+[data-theme='dark'] .ralph-button-secondary:hover {
+  background: var(--ralph-yellow);
+  color: #1a1a2e;
+}
+
+/* Code block styling */
+.ralph-code {
+  background: rgba(26, 26, 46, 0.9);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  color: var(--ralph-blue);
+  border: 1px solid rgba(112, 209, 254, 0.3);
+}
+
+/* Glow effects */
+.glow-yellow {
+  box-shadow: 0 0 60px rgba(255, 213, 33, 0.3);
+}
+
+.glow-orange {
+  box-shadow: 0 0 60px rgba(255, 107, 53, 0.3);
+}
+
+/* Terminal styling for code examples */
+.terminal {
+  background: #1e1e1e;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.terminal-header {
+  background: #323232;
+  padding: 0.75rem 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.terminal-dot.red { background: #ff5f56; }
+.terminal-dot.yellow { background: #ffbd2e; }
+.terminal-dot.green { background: #27c93f; }
+
+.terminal-body {
+  padding: 1.5rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #d4d4d4;
+}
+
+.terminal-prompt {
+  color: var(--ralph-green);
+}
+
+.terminal-command {
+  color: #ffffff;
+}
+
+.terminal-output {
+  color: #888;
+}
+
+/* Integration badges */
+.integration-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 50px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.integration-badge:hover {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(1.05);
+}
+
+[data-theme='dark'] .integration-badge {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .integration-badge:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Wave decoration */
+.wave-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.wave-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: rotate(180deg);
+}
+
+.wave-top svg,
+.wave-bottom svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 80px;
+}
+
+/* Simpsons title (only for special use cases) */
+.simpsons-title {
+  font-family: var(--font-display);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.simpsons-yellow-title {
+  font-family: 'Simpsons', 'Bangers', cursive;
+  color: #FFD521;
+  text-shadow:
+    2px 2px 0 #8B6914,
+    3px 3px 0 #5C4610,
+    4px 4px 8px rgba(0, 0, 0, 0.4);
+  letter-spacing: 2px;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+@media screen and (max-width: 996px) {
+  .simpsons-title {
+    font-size: 2rem;
+  }
+
+  .ralph-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
 }

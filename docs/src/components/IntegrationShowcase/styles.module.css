@@ -1,0 +1,256 @@
+/* Integration Showcase - Theme-aware */
+.showcase {
+  padding: 6rem 2rem;
+  background: linear-gradient(180deg, #70D1FE 0%, #87CEEB 100%);
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+:global([data-theme='dark']) .showcase {
+  background: linear-gradient(180deg, #16213e 0%, #1a1a2e 100%);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
+}
+
+.textSide {
+  flex: 1;
+}
+
+.imageSide {
+  flex: 0 0 40%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transform: translateX(50px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.imageSide.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Bigger stack Ralph */
+.ralphImage {
+  width: 420px;
+  height: auto;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.2));
+  animation: floatSlow 8s ease-in-out infinite;
+}
+
+:global([data-theme='dark']) .ralphImage {
+  filter: drop-shadow(0 20px 40px rgba(255, 213, 33, 0.15));
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(2deg); }
+}
+
+/* Animation classes */
+.animateIn {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.textSide.visible .animateIn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.delay1 { transition-delay: 0.1s; }
+.delay2 { transition-delay: 0.2s; }
+.delay3 { transition-delay: 0.5s; }
+
+/* Regular font title */
+.title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+  color: #1a1a2e;
+}
+
+:global([data-theme='dark']) .title {
+  color: #FFD521;
+  text-shadow: 0 2px 10px rgba(255, 213, 33, 0.3);
+}
+
+.subtitle {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.2rem;
+  color: #1a1a2e;
+  margin-bottom: 2rem;
+  max-width: 500px;
+}
+
+:global([data-theme='dark']) .subtitle {
+  color: #c0c0c0;
+}
+
+/* Grid */
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* Cards - horizontal layout */
+.card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 1rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateX(10px);
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 107, 53, 0.5);
+}
+
+:global([data-theme='dark']) .card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme='dark']) .card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 213, 33, 0.3);
+}
+
+.cardIcon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.cardInfo {
+  flex: 1;
+}
+
+.cardName {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: #1a1a2e;
+}
+
+:global([data-theme='dark']) .cardName {
+  color: #ffffff;
+}
+
+.cardDescription {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.9rem;
+  color: #333;
+  margin: 0;
+}
+
+:global([data-theme='dark']) .cardDescription {
+  color: #a0a0a0;
+}
+
+/* CTA */
+.cta {
+  margin-top: 1.5rem;
+}
+
+.ctaLink {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #D84315;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.ctaLink:hover {
+  color: #BF360C;
+  text-decoration: none;
+  transform: translateX(5px);
+}
+
+:global([data-theme='dark']) .ctaLink {
+  color: #FF6B35;
+}
+
+:global([data-theme='dark']) .ctaLink:hover {
+  color: #FFD521;
+}
+
+/* Responsive */
+@media screen and (max-width: 996px) {
+  .content {
+    flex-direction: column-reverse;
+    text-align: center;
+  }
+
+  .imageSide {
+    flex: none;
+    margin-bottom: 2rem;
+  }
+
+  .imageSide.visible {
+    transform: translateY(0);
+  }
+
+  .ralphImage {
+    width: 280px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    max-width: 100%;
+  }
+
+  .card {
+    justify-content: center;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .showcase {
+    padding: 4rem 1rem;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .ralphImage {
+    width: 220px;
+  }
+}
