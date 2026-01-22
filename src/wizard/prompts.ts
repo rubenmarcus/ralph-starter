@@ -1,5 +1,6 @@
 import inquirer from 'inquirer';
 import type { ProjectType, Complexity, TechStack, RefinedIdea } from './types.js';
+import type { ProjectInfo, RalphPlaybookInfo } from '../commands/init.js';
 
 /**
  * Ask if user has an idea or needs help brainstorming
@@ -365,4 +366,81 @@ export async function askWorkingDirectory(
   ]);
 
   return directory;
+}
+
+/**
+ * Ask what to do when an existing project is detected
+ */
+export type ExistingProjectAction = 'enhance' | 'subfolder' | 'different';
+
+export async function askExistingProjectAction(
+  projectInfo: ProjectInfo
+): Promise<ExistingProjectAction> {
+  const projectTypeLabel = projectInfo.type === 'unknown' ? 'project' : projectInfo.type;
+
+  const { action } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'action',
+      message: `Found an existing ${projectTypeLabel} project. What would you like to do?`,
+      choices: [
+        {
+          name: 'Add features to this existing project',
+          value: 'enhance'
+        },
+        {
+          name: 'Create new project in a subfolder',
+          value: 'subfolder'
+        },
+        {
+          name: 'Choose a different directory',
+          value: 'different'
+        },
+      ],
+    },
+  ]);
+
+  return action;
+}
+
+/**
+ * Ask what to do when a Ralph Playbook is detected
+ */
+export type RalphPlaybookAction = 'continue' | 'fresh' | 'different';
+
+export async function askRalphPlaybookAction(): Promise<RalphPlaybookAction> {
+  const { action } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'action',
+      message: 'This project is already set up for Ralph. What would you like to do?',
+      choices: [
+        { name: 'Continue working on this project', value: 'continue' },
+        { name: 'Start fresh (will overwrite existing Ralph files)', value: 'fresh' },
+        { name: 'Choose a different directory', value: 'different' },
+      ],
+    },
+  ]);
+  return action;
+}
+
+/**
+ * Ask what action to take when continuing on an existing Ralph project
+ */
+export type ContinueAction = 'run' | 'plan' | 'add_spec';
+
+export async function askContinueAction(): Promise<ContinueAction> {
+  const { action } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'action',
+      message: 'What would you like to do?',
+      choices: [
+        { name: 'Run the build loop', value: 'run' },
+        { name: 'Regenerate the implementation plan', value: 'plan' },
+        { name: 'Add a new spec to the project', value: 'add_spec' },
+      ],
+    },
+  ]);
+  return action;
 }

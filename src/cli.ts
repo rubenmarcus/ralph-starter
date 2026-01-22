@@ -8,6 +8,7 @@ import { skillCommand } from './commands/skill.js';
 import { planCommand } from './commands/plan.js';
 import { configCommand } from './commands/config.js';
 import { sourceCommand } from './commands/source.js';
+import { authCommand } from './commands/auth.js';
 import { runWizard, runIdeaMode } from './wizard/index.js';
 import { startMcpServer } from './mcp/server.js';
 
@@ -103,6 +104,16 @@ program
   .description('Manage source configuration (list, get, set, delete)')
   .action(async (action: string, args: string[]) => {
     await configCommand(action, args);
+  });
+
+// ralph-starter auth - Browser-based OAuth authentication
+program
+  .command('auth [service]')
+  .description('Browser-based OAuth authentication for integrations')
+  .option('--list', 'Show authentication status for all services')
+  .option('--logout <service>', 'Remove credentials for a service')
+  .action(async (service: string | undefined, options: { list?: boolean; logout?: string }) => {
+    await authCommand(service, options);
   });
 
 // ralph-starter source - Manage input sources

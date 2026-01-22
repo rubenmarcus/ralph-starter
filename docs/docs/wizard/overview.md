@@ -113,6 +113,51 @@ $ ralph-starter
   Start over with a different idea
 ```
 
+## Existing Project Detection
+
+The wizard automatically detects existing projects when you select a working directory.
+
+### Ralph Playbook Projects
+
+If the directory contains Ralph Playbook files (like AGENTS.md, IMPLEMENTATION_PLAN.md), the wizard recognizes it as an existing Ralph project:
+
+```
+  Ralph Playbook detected!
+  ────────────────────────────────────────
+
+  Directory: /path/to/my-project
+
+  Found files:
+    ✓ AGENTS.md
+    ✓ IMPLEMENTATION_PLAN.md
+    ✓ PROMPT_build.md
+    ✓ PROMPT_plan.md
+    ✓ specs/
+
+  ────────────────────────────────────────
+
+? This project is already set up for Ralph. What would you like to do?
+❯ Continue working on this project
+  Start fresh (will overwrite existing Ralph files)
+  Choose a different directory
+```
+
+When you choose **"Continue working"**, you can:
+- **Run the build loop** - Execute tasks from the implementation plan
+- **Regenerate the implementation plan** - Re-analyze specs and update tasks
+- **Add a new spec** - Add additional requirements to the project
+
+### Language Projects
+
+If the directory contains a language project file (package.json, pyproject.toml, Cargo.toml, go.mod) but no Ralph Playbook, the wizard offers:
+
+- **Add features to this existing project** - Set up Ralph in the existing project
+- **Create new project in a subfolder** - Keep the existing project separate
+- **Choose a different directory** - Pick a different location
+
+### Compatibility
+
+
 ## Non-Developer Friendly
 
 The wizard uses plain language instead of technical jargon:

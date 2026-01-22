@@ -11,9 +11,9 @@ interface InitOptions {
   name?: string;
 }
 
-type ProjectType = 'nodejs' | 'python' | 'rust' | 'go' | 'unknown';
+export type ProjectType = 'nodejs' | 'python' | 'rust' | 'go' | 'unknown';
 
-interface ProjectInfo {
+export interface ProjectInfo {
   type: ProjectType;
   name: string;
   testCmd?: string;
@@ -21,7 +21,7 @@ interface ProjectInfo {
   lintCmd?: string;
 }
 
-function detectProject(cwd: string): ProjectInfo {
+export function detectProject(cwd: string): ProjectInfo {
   // Node.js
   if (existsSync(join(cwd, 'package.json'))) {
     try {
@@ -72,6 +72,63 @@ function detectProject(cwd: string): ProjectInfo {
   }
 
   return { type: 'unknown', name: 'project' };
+}
+
+export interface RalphPlaybookInfo {
+  hasPlaybook: boolean;
+  files: {
+    agentsMd: boolean;
+    implementationPlan: boolean;
+    promptBuild: boolean;
+    promptPlan: boolean;
+    specsDir: boolean;
+    ralphConfig: boolean;
+  };
+  readme?: {
+    exists: boolean;
+    description?: string;
+  };
+}
+
+export function detectRalphPlaybook(cwd: string): RalphPlaybookInfo {
+  const files = {
+    agentsMd: existsSync(join(cwd, 'AGENTS.md')),
+    implementationPlan: existsSync(join(cwd, 'IMPLEMENTATION_PLAN.md')),
+    promptBuild: existsSync(join(cwd, 'PROMPT_build.md')),
+    promptPlan: existsSync(join(cwd, 'PROMPT_plan.md')),
+    specsDir: existsSync(join(cwd, 'specs')),
+    ralphConfig: existsSync(join(cwd, '.ralph', 'config.yaml')),
+  };
+
+  // Consider it a playbook if AGENTS.md exists (primary marker)
+  const hasPlaybook = files.agentsMd;
+
+  // Check for README.md and extract first paragraph as description
+  let readme: RalphPlaybookInfo['readme'];
+  const readmePath = join(cwd, 'README.md');
+  if (existsSync(readmePath)) {
+    try {
+      const content = readFileSync(readmePath, 'utf-8');
+      // Extract first non-heading, non-empty paragraph
+      const lines = content.split('\n');
+      let description: string | undefined;
+      for (const line of lines) {
+        const trimmed = line.trim();
+        // Skip empty lines, headings, and blockquotes
+        if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('>')) {
+          continue;
+        }
+        // Found first content paragraph
+        description = trimmed;
+        break;
+      }
+      readme = { exists: true, description };
+    } catch {
+      readme = { exists: true };
+    }
+  }
+
+  return { hasPlaybook, files, readme };
 }
 
 function generateAgentsMd(project: ProjectInfo): string {

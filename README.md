@@ -1,5 +1,9 @@
 # ralph-starter
 
+<p align="center">
+  <img src="ralph.png" alt="Ralph Wiggum" width="200" />
+</p>
+
 > **Ralph Wiggum made easy.** One command to run autonomous AI coding loops.
 
 ## What is Ralph Wiggum?
@@ -62,6 +66,30 @@ ralph-starter run --from github --project myorg/myrepo --label "ready"
 ralph-starter run --from todoist --project "My App"
 ```
 
+### Working with Existing Projects
+
+ralph-starter automatically detects existing projects when you run the wizard:
+
+**Ralph Playbook Project** (has AGENTS.md, IMPLEMENTATION_PLAN.md, etc.):
+```bash
+cd my-ralph-project
+ralph-starter
+```
+The wizard will detect the Ralph Playbook files and let you:
+- Continue working (run the build loop)
+- Regenerate the implementation plan
+- Add new specs
+
+**Language Project** (has package.json, pyproject.toml, Cargo.toml, go.mod):
+```bash
+cd my-existing-app
+ralph-starter
+```
+The wizard will detect the project type and let you:
+- Add features to the existing project
+- Create a new project in a subfolder
+
+
 ## Features
 
 ### Interactive Wizard
@@ -78,27 +106,73 @@ ralph-starter ideas
 ```
 
 ### Input Sources
-Fetch specs from anywhere:
+Fetch specs from anywhere - URLs, files, or your favorite project management tools:
 
 ```bash
-# URLs and files
+# URLs (public markdown, HTML)
 ralph-starter run --from https://example.com/spec.md
-ralph-starter run --from ./requirements.pdf
+ralph-starter run --from https://gist.githubusercontent.com/user/id/raw/spec.md
 
-# GitHub Issues
+# Local files (markdown, PDF)
+ralph-starter run --from ./requirements.pdf
+ralph-starter run --from ./specs/feature.md
+
+# GitHub Issues (uses gh CLI - no API key needed if logged in)
 ralph-starter run --from github --project owner/repo --label "sprint-1"
 
-# Todoist
-ralph-starter config set todoist.apiKey <your-key>
+# Todoist tasks
 ralph-starter run --from todoist --project "My App"
 
-# Linear
-ralph-starter config set linear.apiKey <your-key>
+# Linear issues
 ralph-starter run --from linear --label "in-progress"
 
-# Notion
-ralph-starter config set notion.apiKey <your-key>
+# Notion pages
 ralph-starter run --from notion --project "Product Specs"
+```
+
+#### Setting Up Integrations
+
+**GitHub** - Uses the `gh` CLI tool (no API key required):
+```bash
+# Install and authenticate gh CLI
+gh auth login
+# Test it works
+ralph-starter source test github
+```
+
+**Todoist** - Get your API key from [todoist.com/app/settings/integrations/developer](https://todoist.com/app/settings/integrations/developer):
+```bash
+ralph-starter config set todoist.apiKey your_api_key_here
+ralph-starter source test todoist
+```
+
+**Linear** - Get your API key from [linear.app/settings/api](https://linear.app/settings/api):
+```bash
+ralph-starter config set linear.apiKey lin_api_xxxxx
+ralph-starter source test linear
+```
+
+**Notion** - Create an integration at [notion.so/my-integrations](https://www.notion.so/my-integrations):
+1. Create a new integration and copy the secret
+2. Share your database/page with the integration
+3. Configure ralph-starter:
+```bash
+ralph-starter config set notion.apiKey secret_xxxxx
+ralph-starter source test notion
+```
+
+#### Testing Integrations
+
+```bash
+# List all available sources
+ralph-starter source list
+
+# Test connectivity for a source
+ralph-starter source test todoist
+
+# Preview items without running
+ralph-starter source preview github --project owner/repo --limit 5
+ralph-starter source preview todoist --project "My App"
 ```
 
 ### MCP Server
@@ -261,6 +335,104 @@ ralph-starter run "Create a SaaS dashboard with:
 # ✓ Created PR #1: "Build SaaS dashboard"
 ```
 
+## Testing ralph-starter
+
+### Quick Test (No API Keys)
+
+You can test ralph-starter with public URLs - no API keys required:
+
+```bash
+# Test with a public GitHub gist or raw markdown
+ralph-starter run --from https://raw.githubusercontent.com/rubenmarcus/ralph-starter/main/README.md
+
+# Test with GitHub issues (requires gh CLI login)
+gh auth login
+ralph-starter run --from github --project rubenmarcus/ralph-starter --label "enhancement"
+```
+
+### Testing the Wizard
+
+```bash
+# Launch the interactive wizard
+ralph-starter
+
+# Or test idea mode
+ralph-starter ideas
+```
+
+### Testing with Your Own Specs
+
+```bash
+# Create a simple spec file
+echo "Build a simple counter app with React" > my-spec.md
+
+# Run with local file
+ralph-starter run --from ./my-spec.md
+```
+
+### Verifying Source Connectivity
+
+Before using an integration, verify it's working:
+
+```bash
+# Check what sources are available
+ralph-starter source list
+
+# Test each source
+ralph-starter source test github
+ralph-starter source test todoist
+ralph-starter source test linear
+ralph-starter source test notion
+
+# Preview items (dry run)
+ralph-starter source preview todoist --project "My App" --limit 3
+```
+
+## API Key Configuration
+
+### Option 1: Environment Variables (Recommended for Developers)
+
+Set environment variables in your shell profile or `.env` file:
+
+```bash
+# Add to ~/.bashrc, ~/.zshrc, or .env file
+export TODOIST_API_KEY=your_api_key
+export LINEAR_API_KEY=lin_api_xxxxx
+export NOTION_API_KEY=secret_xxxxx
+export GITHUB_TOKEN=ghp_xxxxx
+```
+
+Environment variables take precedence over the config file.
+
+### Option 2: Config Command
+
+Use the CLI to store credentials:
+
+```bash
+ralph-starter config set todoist.apiKey your_api_key
+ralph-starter config set linear.apiKey lin_api_xxxxx
+ralph-starter config set notion.apiKey secret_xxxxx
+ralph-starter config set github.token ghp_xxxxx
+```
+
+Credentials are stored in `~/.ralph-starter/sources.json`.
+
+### Environment Variable Reference
+
+| Source | Environment Variable | Config Key |
+|--------|---------------------|------------|
+| Todoist | `TODOIST_API_KEY` | `todoist.apiKey` |
+| Linear | `LINEAR_API_KEY` | `linear.apiKey` |
+| Notion | `NOTION_API_KEY` | `notion.apiKey` |
+| GitHub | `GITHUB_TOKEN` | `github.token` |
+
+### Managing Config
+
+```bash
+ralph-starter config list           # View all config
+ralph-starter config get todoist    # View specific source
+ralph-starter config delete todoist.apiKey  # Remove a key
+```
 
 ## Requirements
 
@@ -268,6 +440,16 @@ ralph-starter run "Create a SaaS dashboard with:
 - At least one coding agent installed (Claude Code, Cursor, etc.)
 - Git (for automation features)
 - GitHub CLI `gh` (for PR creation and GitHub source)
+
+## Documentation
+
+Full documentation available at: https://rubenmarcus.github.io/ralph-starter/
+
+## Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+For creating custom sources, agents, or using the programmatic API, see the [Developer Extension Guide](https://rubenmarcus.github.io/ralph-starter/docs/guides/extending-ralph-starter).
 
 ## License
 

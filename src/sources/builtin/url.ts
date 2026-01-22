@@ -1,5 +1,14 @@
 import { BuiltinSource } from '../base.js';
 import type { SourceResult, SourceOptions } from '../types.js';
+import {
+  detectGitHubUrl,
+  parseGitHubIssue,
+  parseGitHubIssueList,
+  parseGitHubBlob,
+  issueToMarkdown,
+  issueListToMarkdown,
+  fileToMarkdown,
+} from './github-scraper.js';
 
 /**
  * URL source - fetches specs from remote URLs
@@ -8,6 +17,8 @@ import type { SourceResult, SourceOptions } from '../types.js';
  * - Raw markdown files (GitHub raw, etc.)
  * - HTML pages (basic conversion)
  * - JSON responses
+ * - GitHub issues and files (specialized parsing)
+ * - Notion public pages (specialized parsing)
  */
 export class UrlSource extends BuiltinSource {
   name = 'url';
@@ -24,6 +35,17 @@ export class UrlSource extends BuiltinSource {
       url = new URL(identifier);
     } catch {
       this.error(`Invalid URL: ${identifier}`);
+    }
+
+    // Check for GitHub URL - use specialized parsing
+    const githubInfo = detectGitHubUrl(url);
+    if (githubInfo.type && githubInfo.type !== 'raw') {
+      return this.fetchGitHub(url, githubInfo, options);
+    }
+
+    // Check for Notion public page
+    if (this.isNotionUrl(url)) {
+      return this.fetchNotion(url, options);
     }
 
     // Fetch content
@@ -72,6 +94,239 @@ export class UrlSource extends BuiltinSource {
         statusCode: response.status,
       },
     };
+  }
+
+  /**
+   * Fetch and parse GitHub URLs (issues, blobs, etc.)
+   */
+  private async fetchGitHub(
+    url: URL,
+    githubInfo: { type: string | null; match: RegExpMatchArray | null },
+    options?: SourceOptions
+  ): Promise<SourceResult> {
+    const headers: Record<string, string> = {
+      'User-Agent': 'ralph-starter/0.1.0',
+      Accept: 'text/html',
+      ...options?.headers,
+    };
+
+    const response = await fetch(url.toString(), { headers });
+
+    if (!response.ok) {
+      this.error(`GitHub HTTP error ${response.status}: ${response.statusText}`);
+    }
+
+    const html = await response.text();
+
+    if (githubInfo.type === 'issue' && githubInfo.match) {
+      const [, owner, repo, issueNum] = githubInfo.match;
+      const issue = parseGitHubIssue(html, parseInt(issueNum, 10));
+      return {
+        content: issueToMarkdown(issue),
+        source: url.toString(),
+        title: `${issue.title} (#${issue.number})`,
+        metadata: {
+          type: 'github',
+          format: 'issue',
+          owner,
+          repo,
+          issueNumber: issue.number,
+          state: issue.state,
+        },
+      };
+    }
+
+    if (githubInfo.type === 'issues' && githubInfo.match) {
+      const [, owner, repo] = githubInfo.match;
+      const { issues } = parseGitHubIssueList(html, owner, repo);
+      return {
+        content: issueListToMarkdown(issues, owner, repo),
+        source: url.toString(),
+        title: `Issues: ${owner}/${repo}`,
+        metadata: {
+          type: 'github',
+          format: 'issue-list',
+          owner,
+          repo,
+          count: issues.length,
+        },
+      };
+    }
+
+    if (githubInfo.type === 'blob' && githubInfo.match) {
+      const [, owner, repo, branch, filepath] = githubInfo.match;
+      const file = parseGitHubBlob(html, filepath);
+
+      // For markdown files, just return the content directly
+      if (file.language === 'markdown') {
+        return {
+          content: file.content,
+          source: url.toString(),
+          title: filepath,
+          metadata: {
+            type: 'github',
+            format: 'file',
+            owner,
+            repo,
+            branch,
+            filepath,
+          },
+        };
+      }
+
+      return {
+        content: fileToMarkdown(file),
+        source: url.toString(),
+        title: filepath,
+        metadata: {
+          type: 'github',
+          format: 'file',
+          owner,
+          repo,
+          branch,
+          filepath,
+          language: file.language,
+        },
+      };
+    }
+
+    // Fallback to basic HTML parsing
+    return {
+      content: this.htmlToMarkdown(html),
+      source: url.toString(),
+      title: this.getTitleFromUrl(url),
+      metadata: {
+        type: 'github',
+        format: 'html',
+      },
+    };
+  }
+
+  /**
+   * Check if URL is a Notion public page
+   */
+  private isNotionUrl(url: URL): boolean {
+    return (
+      url.hostname === 'notion.so' ||
+      url.hostname === 'www.notion.so' ||
+      url.hostname.endsWith('.notion.site')
+    );
+  }
+
+  /**
+   * Fetch and parse Notion public pages
+   */
+  private async fetchNotion(url: URL, options?: SourceOptions): Promise<SourceResult> {
+    const headers: Record<string, string> = {
+      'User-Agent': 'ralph-starter/0.1.0',
+      Accept: 'text/html',
+      ...options?.headers,
+    };
+
+    const response = await fetch(url.toString(), { headers });
+
+    if (!response.ok) {
+      this.error(`Notion HTTP error ${response.status}: ${response.statusText}`);
+    }
+
+    const html = await response.text();
+
+    // Extract title from Notion page
+    const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i);
+    let title = titleMatch ? titleMatch[1].trim() : 'Notion Page';
+    // Clean up Notion title (remove " | Notion" suffix)
+    title = title.replace(/\s*\|\s*Notion\s*$/i, '').trim();
+
+    // Notion renders content client-side, so we get limited content from HTML
+    // Look for the page content in the HTML
+    const content = this.parseNotionHtml(html);
+
+    return {
+      content,
+      source: url.toString(),
+      title,
+      metadata: {
+        type: 'notion',
+        format: 'public-page',
+      },
+    };
+  }
+
+  /**
+   * Parse Notion public page HTML
+   * Note: Notion uses client-side rendering, so public pages have limited HTML content
+   */
+  private parseNotionHtml(html: string): string {
+    // Extract title
+    const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i);
+    let title = titleMatch ? titleMatch[1].trim() : 'Notion Page';
+    title = title.replace(/\s*\|\s*Notion\s*$/i, '').trim();
+
+    const lines: string[] = [`# ${title}`, ''];
+
+    // Try to extract content from notion-page-content or similar
+    // Notion SSR includes some content in data attributes
+
+    // Look for preloaded content in __NEXT_DATA__ or similar
+    const nextDataMatch = html.match(
+      /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/
+    );
+    if (nextDataMatch) {
+      try {
+        const data = JSON.parse(nextDataMatch[1]);
+        // Navigate to page content if available
+        const pageContent = this.extractNotionContent(data);
+        if (pageContent) {
+          lines.push(pageContent);
+        }
+      } catch {
+        // Failed to parse JSON
+      }
+    }
+
+    // Fallback: extract any visible text content
+    if (lines.length <= 2) {
+      // Remove scripts and styles
+      let content = html;
+      content = content.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+      content = content.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
+      // Try to find main content area
+      const mainMatch = content.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
+      if (mainMatch) {
+        lines.push(this.toMarkdown(mainMatch[1], 'html'));
+      }
+    }
+
+    // Add note about limitations
+    if (lines.length <= 2) {
+      lines.push('*Note: Notion pages are rendered client-side. For full content, use the Notion API integration.*');
+      lines.push('');
+      lines.push('Run `ralph-starter config set notion.token <your-token>` to enable full Notion support.');
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Extract content from Notion's preloaded data
+   */
+  private extractNotionContent(data: unknown): string | null {
+    // This is a simplified extraction - Notion's data structure is complex
+    // In practice, most useful content requires the API
+    try {
+      const props = (data as Record<string, unknown>)?.props as Record<string, unknown>;
+      const pageProps = props?.pageProps as Record<string, unknown>;
+
+      if (pageProps?.recordMap) {
+        // There's page content, but it's in Notion's block format
+        // Would need full Notion block parsing to extract
+        return '*This page has content that requires Notion API access to fully render.*';
+      }
+    } catch {
+      // Failed to navigate data structure
+    }
+    return null;
   }
 
   private isMarkdown(url: string, contentType: string): boolean {
@@ -232,14 +487,28 @@ Usage:
   ralph-starter run --from <url>
 
 Examples:
+  # Raw markdown files
   ralph-starter run --from https://raw.githubusercontent.com/user/repo/main/SPEC.md
+
+  # GitHub issues (no auth required for public repos!)
+  ralph-starter run --from https://github.com/owner/repo/issues/123
+  ralph-starter run --from https://github.com/owner/repo/issues
+
+  # GitHub files
+  ralph-starter run --from https://github.com/owner/repo/blob/main/README.md
+
+  # Notion public pages
+  ralph-starter run --from https://notion.so/My-Public-Page-abc123
+
+  # Any web page or API
   ralph-starter run --from https://api.example.com/project/spec
-  ralph-starter run --from https://notion.so/page (limited support)
 
 Supported formats:
   - Markdown files
+  - GitHub issues and files (specialized parsing)
+  - Notion public pages (limited - use API for full support)
   - JSON responses (converted to markdown)
-  - HTML pages (basic extraction)
+  - HTML pages (content extraction)
 `.trim();
   }
 }

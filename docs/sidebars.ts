@@ -48,6 +48,15 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Guides',
+      collapsed: false,
+      items: [
+        'guides/testing-integrations',
+        'guides/extending-ralph-starter',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Advanced',
       collapsed: true,
       items: [

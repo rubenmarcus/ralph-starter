@@ -7,6 +7,52 @@ const CONFIG_DIR = join(homedir(), '.ralph-starter');
 const SOURCES_CONFIG_FILE = join(CONFIG_DIR, 'sources.json');
 
 /**
+ * Environment variable mappings for each source
+ * Format: { sourceName: { credentialKey: ENV_VAR_NAME } }
+ */
+const ENV_VAR_MAPPINGS: Record<string, Record<string, string>> = {
+  todoist: { apiKey: 'TODOIST_API_KEY' },
+  linear: { apiKey: 'LINEAR_API_KEY' },
+  notion: { apiKey: 'NOTION_API_KEY' },
+  github: { token: 'GITHUB_TOKEN' },
+};
+
+/**
+ * Get credentials from environment variables for a source
+ */
+function getEnvCredentials(sourceName: string): SourceCredentials | null {
+  const mappings = ENV_VAR_MAPPINGS[sourceName];
+  if (!mappings) return null;
+
+  const credentials: SourceCredentials = {};
+  let hasAny = false;
+
+  for (const [key, envVar] of Object.entries(mappings)) {
+    const value = process.env[envVar];
+    if (value) {
+      credentials[key] = value;
+      hasAny = true;
+    }
+  }
+
+  return hasAny ? credentials : null;
+}
+
+/**
+ * Get the environment variable name for a source credential
+ */
+export function getEnvVarName(sourceName: string, key: string): string | null {
+  return ENV_VAR_MAPPINGS[sourceName]?.[key] || null;
+}
+
+/**
+ * Get all environment variable names for credentials
+ */
+export function getAllEnvVarMappings(): Record<string, Record<string, string>> {
+  return ENV_VAR_MAPPINGS;
+}
+
+/**
  * Ensure config directory exists
  */
 function ensureConfigDir(): void {
@@ -63,10 +109,27 @@ export function setSourceConfig(sourceName: string, sourceConfig: SourceConfig):
 
 /**
  * Get credentials for a specific source
+ * Priority: Environment variables > Config file
  */
 export function getSourceCredentials(sourceName: string): SourceCredentials | null {
-  const sourceConfig = getSourceConfig(sourceName);
-  return sourceConfig?.credentials || null;
+  // Check environment variables first
+  const envCredentials = getEnvCredentials(sourceName);
+  const configCredentials = getSourceConfig(sourceName)?.credentials || null;
+
+  // Merge: env vars take precedence
+  if (envCredentials && configCredentials) {
+    return { ...configCredentials, ...envCredentials };
+  }
+
+  return envCredentials || configCredentials;
+}
+
+/**
+ * Check if credentials came from environment variables
+ */
+export function isCredentialFromEnv(sourceName: string, key: string): boolean {
+  const envVar = getEnvVarName(sourceName, key);
+  return envVar ? !!process.env[envVar] : false;
 }
 
 /**
