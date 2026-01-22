@@ -10,7 +10,6 @@
 
 ## High Priority
 
-- [ ] **Todoist** - Tasks (API key)
 - [ ] **Figma** - Design specs, components
 - [ ] **Jira** - Enterprise PM
 - [ ] **GitLab** - Self-hosted git
@@ -20,6 +19,7 @@
 
 - [ ] **Graphite** - Stacked PRs (via `gt` CLI)
 - [ ] **Asana** - Task management
+- [ ] **Todoist** - Tasks (API key)
 - [ ] **Slack** - Channel messages
 - [ ] **Bitbucket** - Atlassian git
 
@@ -40,7 +40,7 @@
 
 ## How to Contribute
 
-Want to add a new integration? See the [Creating Integrations Guide](docs/creating-integrations.md).
+Want to add a new integration? See the [Creating Integrations Guide](https://ralphstarter.ai/docs/guides/creating-integrations).
 
 Each integration lives in `src/integrations/<name>/` with:
 - `index.ts` - Main export

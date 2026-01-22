@@ -1,72 +1,103 @@
-# ralph-starter
-
 <p align="center">
   <img src="ralph.png" alt="Ralph Wiggum" />
 </p>
 
-> **Ralph Wiggum made easy.** One command to run autonomous AI coding loops.
+<h3 align="center">
+  <strong>Connect your tools. Run AI coding loops. Ship faster.</strong>
+</h3>
+
+<p align="center">
+  <em>Pull specs from GitHub, Linear, Notion, and more — then let AI build it autonomously.</em>
+</p>
+
+<p align="center">
+  <a href="#integrations">Integrations</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#features">Features</a> •
+  <a href="https://ralphstarter.ai">Docs</a> •
+  <a href="ROADMAP.md">Roadmap</a>
+</p>
+
+---
+
+## Why ralph-starter?
+
+Most AI coding tools work in isolation. You describe a task, AI builds it, done.
+
+**ralph-starter** is different. It **connects to your existing workflow** — pulling specs from GitHub issues, Linear tickets, Notion docs, or any URL — then runs autonomous AI loops until the task is complete.
+
+```bash
+# Build from a GitHub issue
+ralph-starter run --from github --project myorg/myrepo --label "ready"
+
+# Build from a Linear ticket
+ralph-starter run --from linear --project "Mobile App" --label "sprint-1"
+
+# Build from a Notion spec
+ralph-starter run --from notion --project "https://notion.so/Product-Spec-abc123"
+
+# Or just describe what you want
+ralph-starter run "build a todo app with React" --commit
+```
+
+---
+
+## Integrations
+
+ralph-starter integrates with your favorite tools out of the box:
+
+| Integration | Auth Method | What It Fetches |
+|-------------|-------------|-----------------|
+| **GitHub** | `gh` CLI (recommended) or API token | Issues, PRs, files |
+| **Linear** | `linear` CLI or API key | Issues by team/project |
+| **Notion** | None (public) or API token (private) | Pages, databases |
+| **URLs** | None | Any public markdown/HTML |
+| **Files** | None | Local markdown, PDF |
+
+```bash
+# Check available integrations
+ralph-starter integrations list
+
+# Test connectivity
+ralph-starter integrations test github
+ralph-starter integrations test linear
+
+# Preview data before running
+ralph-starter integrations fetch github owner/repo
+```
+
+> **Want more integrations?** Check the [Roadmap](ROADMAP.md) for upcoming integrations like Figma, Jira, GitLab, and more. PRs welcome!
+
+---
 
 ## Table of Contents
 
-- [Summary](#summary)
-- [What is Ralph Wiggum?](#what-is-ralph-wiggum)
-- [Installation](#installation)
+- [Why ralph-starter?](#why-ralph-starter)
+- [Integrations](#integrations)
 - [Quick Start](#quick-start)
-  - [For Everyone](#for-everyone-non-developers-welcome)
-  - [Don't Know What to Build?](#dont-know-what-to-build)
-  - [For Developers](#for-developers)
-  - [Working with Existing Projects](#working-with-existing-projects)
 - [Features](#features)
-  - [Interactive Wizard](#interactive-wizard)
-  - [Idea Mode](#idea-mode)
-  - [Input Sources](#input-sources)
-  - [MCP Server](#mcp-server)
-  - [Multi-Agent Support](#multi-agent-support)
-  - [Git Automation](#git-automation)
-  - [Backpressure Validation](#backpressure-validation)
-  - [Workflow Presets](#workflow-presets)
-  - [Circuit Breaker](#circuit-breaker)
-  - [Progress Tracking](#progress-tracking)
-  - [File-Based Completion](#file-based-completion)
-  - [Rate Limiting](#rate-limiting)
-  - [Cost Tracking](#cost-tracking)
 - [Ralph Playbook Workflow](#ralph-playbook-workflow)
 - [Commands](#commands)
-- [Options for `run`](#options-for-run)
-  - [Core Options](#core-options)
-  - [Workflow Presets](#workflow-presets-1)
-  - [Exit Detection](#exit-detection)
-  - [Safety Controls](#safety-controls)
-  - [Source Options](#source-options)
-- [Config Commands](#config-commands)
-- [Source Commands](#source-commands)
-- [Example: Build a SaaS Dashboard](#example-build-a-saas-dashboard)
-- [Testing ralph-starter](#testing-ralph-starter)
-- [API Key Configuration](#api-key-configuration)
-- [Requirements](#requirements)
-- [Documentation](#documentation)
+- [Options](#options-for-run)
+- [Configuration](#api-key-configuration)
 - [Contributing](#contributing)
-- [License](#license)
 
 ---
 
 ## Summary
 
-**ralph-starter** is a production-ready CLI tool for running autonomous AI coding loops using the [Ralph Wiggum technique](https://ghuntley.com/ralph/). It makes autonomous coding accessible to both developers and non-developers.
+**ralph-starter** is a production-ready CLI for running autonomous AI coding loops using the [Ralph Wiggum technique](https://ghuntley.com/ralph/). It makes autonomous coding accessible to everyone.
 
 ### Key Features
 
 | Feature | Description |
 |---------|-------------|
-| 🧙 **Interactive Wizard** | Guided project creation with AI-refined specifications |
+| 🔗 **Integrations** | Pull specs from GitHub, Linear, Notion, URLs, files |
 | 🔄 **Multi-Agent Support** | Works with Claude Code, Cursor, Codex, OpenCode |
-| 📥 **Input Sources** | Fetch specs from URLs, files, GitHub, Todoist, Linear, Notion |
+| 🧙 **Interactive Wizard** | Guided project creation with AI-refined specifications |
 | 🎯 **16+ Workflow Presets** | Pre-configured modes: feature, tdd, debug, review, and more |
 | 🔌 **Circuit Breaker** | Auto-stops stuck loops after repeated failures |
-| 📊 **Progress Tracking** | Logs iterations to `activity.md` |
-| ⏱️ **Rate Limiting** | Control API costs with `--rate-limit` |
 | 💰 **Cost Tracking** | Estimates token usage and cost per iteration |
-| 🎯 **Smart Exit Detection** | Semantic analysis + completion promises + file signals |
 | 🔧 **Git Automation** | Auto-commit, push, and PR creation |
 | ✅ **Backpressure Validation** | Run tests/lint/build after each iteration |
 | 🖥️ **MCP Server** | Use from Claude Desktop or any MCP client |
@@ -146,7 +177,7 @@ ralph-starter run "refactor auth" --commit --validate
 # Fetch specs from external sources
 ralph-starter run --from https://example.com/spec.md
 ralph-starter run --from github --project myorg/myrepo --label "ready"
-ralph-starter run --from todoist --project "My App"
+ralph-starter run --from linear --project "Mobile App"
 ```
 
 ### Working with Existing Projects
@@ -189,75 +220,53 @@ For users who don't know what to build yet:
 ralph-starter ideas
 ```
 
-### Input Sources
-Fetch specs from anywhere - URLs, files, or your favorite project management tools:
+### Integrations & Input Sources
+
+ralph-starter's superpower is **pulling specs from anywhere** — then building autonomously.
 
 ```bash
-# URLs (public markdown, HTML)
+# From GitHub issues
+ralph-starter run --from github --project owner/repo --label "ready"
+
+# From Linear tickets
+ralph-starter run --from linear --project "Mobile App"
+
+# From Notion pages (public pages work without auth!)
+ralph-starter run --from notion --project "https://notion.so/My-Spec-abc123"
+
+# From URLs
 ralph-starter run --from https://example.com/spec.md
-ralph-starter run --from https://gist.githubusercontent.com/user/id/raw/spec.md
 
-# Local files (markdown, PDF)
-ralph-starter run --from ./requirements.pdf
+# From local files
 ralph-starter run --from ./specs/feature.md
-
-# GitHub Issues (uses gh CLI - no API key needed if logged in)
-ralph-starter run --from github --project owner/repo --label "sprint-1"
-
-# Todoist tasks
-ralph-starter run --from todoist --project "My App"
-
-# Linear issues
-ralph-starter run --from linear --label "in-progress"
-
-# Notion pages
-ralph-starter run --from notion --project "Product Specs"
 ```
 
-#### Setting Up Integrations
+#### Quick Setup
 
-**GitHub** - Uses the `gh` CLI tool (no API key required):
-```bash
-# Install and authenticate gh CLI
-gh auth login
-# Test it works
-ralph-starter source test github
-```
+| Integration | Setup Command | Notes |
+|-------------|---------------|-------|
+| **GitHub** | `gh auth login` | Uses GitHub CLI (no API key needed) |
+| **Linear** | `linear auth login` or `ralph-starter config set linear.apiKey <key>` | CLI or API key |
+| **Notion** | None for public pages | Private pages need token |
 
-**Todoist** - Get your API key from [todoist.com/app/settings/integrations/developer](https://todoist.com/app/settings/integrations/developer):
-```bash
-ralph-starter config set todoist.apiKey your_api_key_here
-ralph-starter source test todoist
-```
-
-**Linear** - Get your API key from [linear.app/settings/api](https://linear.app/settings/api):
-```bash
-ralph-starter config set linear.apiKey lin_api_xxxxx
-ralph-starter source test linear
-```
-
-**Notion** - Create an integration at [notion.so/my-integrations](https://www.notion.so/my-integrations):
-1. Create a new integration and copy the secret
-2. Share your database/page with the integration
-3. Configure ralph-starter:
-```bash
-ralph-starter config set notion.apiKey secret_xxxxx
-ralph-starter source test notion
-```
-
-#### Testing Integrations
+#### Managing Integrations
 
 ```bash
-# List all available sources
-ralph-starter source list
+# List all integrations with status
+ralph-starter integrations list
 
-# Test connectivity for a source
-ralph-starter source test todoist
+# Test connectivity
+ralph-starter integrations test github
+ralph-starter integrations test linear
 
-# Preview items without running
-ralph-starter source preview github --project owner/repo --limit 5
-ralph-starter source preview todoist --project "My App"
+# Get help for specific integration
+ralph-starter integrations help notion
+
+# Preview data before running
+ralph-starter integrations fetch github owner/repo --limit 5
 ```
+
+> See the full [Integrations Guide](https://ralphstarter.ai/docs/integrations) for detailed setup instructions.
 
 ### MCP Server
 Use ralph-starter from Claude Desktop or any MCP client:
@@ -436,15 +445,15 @@ This creates:
 | Command | Description |
 |---------|-------------|
 | `ralph-starter` | Launch interactive wizard |
-| `ralph-starter ideas` | Brainstorm project ideas |
 | `ralph-starter run [task]` | Run an autonomous coding loop |
+| `ralph-starter integrations <action>` | Manage integrations (list, help, test, fetch) |
 | `ralph-starter plan` | Create implementation plan from specs |
 | `ralph-starter init` | Initialize Ralph Playbook in a project |
-| `ralph-starter wizard` | Explicit wizard command |
+| `ralph-starter ideas` | Brainstorm project ideas |
 | `ralph-starter presets` | List available workflow presets |
 | `ralph-starter mcp` | Start as MCP server |
-| `ralph-starter config <action>` | Manage source credentials |
-| `ralph-starter source <action>` | Manage input sources |
+| `ralph-starter config <action>` | Manage credentials |
+| `ralph-starter source <action>` | Manage input sources (legacy) |
 | `ralph-starter skill add <repo>` | Install agent skills |
 
 ## Options for `run`
@@ -527,20 +536,40 @@ ralph-starter run --circuit-breaker-failures 2 "build Y"
 
 ```bash
 # Set credentials
-ralph-starter config set todoist.apiKey <key>
 ralph-starter config set linear.apiKey <key>
-ralph-starter config set notion.apiKey <key>
+ralph-starter config set notion.token <token>
 ralph-starter config set github.token <token>
 
 # View config
 ralph-starter config list
-ralph-starter config get todoist.apiKey
+ralph-starter config get linear.apiKey
 
 # Remove
-ralph-starter config delete todoist.apiKey
+ralph-starter config delete linear.apiKey
 ```
 
-## Source Commands
+## Integration Commands
+
+```bash
+# List all integrations with auth status
+ralph-starter integrations list
+
+# Get help for a specific integration
+ralph-starter integrations help github
+ralph-starter integrations help linear
+ralph-starter integrations help notion
+
+# Test connectivity
+ralph-starter integrations test github
+ralph-starter integrations test linear
+
+# Fetch and preview data
+ralph-starter integrations fetch github owner/repo
+ralph-starter integrations fetch linear "Mobile App" --limit 10
+ralph-starter integrations fetch notion "https://notion.so/Page-abc123"
+```
+
+## Source Commands (Legacy)
 
 ```bash
 # List available sources
@@ -550,7 +579,7 @@ ralph-starter source list
 ralph-starter source help github
 
 # Test source connectivity
-ralph-starter source test todoist
+ralph-starter source test linear
 
 # Preview items from source
 ralph-starter source preview github --project owner/repo
@@ -619,17 +648,16 @@ ralph-starter run --from ./my-spec.md
 Before using an integration, verify it's working:
 
 ```bash
-# Check what sources are available
-ralph-starter source list
+# Check what integrations are available
+ralph-starter integrations list
 
-# Test each source
-ralph-starter source test github
-ralph-starter source test todoist
-ralph-starter source test linear
-ralph-starter source test notion
+# Test each integration
+ralph-starter integrations test github
+ralph-starter integrations test linear
+ralph-starter integrations test notion
 
 # Preview items (dry run)
-ralph-starter source preview todoist --project "My App" --limit 3
+ralph-starter integrations fetch linear "My Project" --limit 3
 ```
 
 ## API Key Configuration
@@ -640,7 +668,6 @@ Set environment variables in your shell profile or `.env` file:
 
 ```bash
 # Add to ~/.bashrc, ~/.zshrc, or .env file
-export TODOIST_API_KEY=your_api_key
 export LINEAR_API_KEY=lin_api_xxxxx
 export NOTION_API_KEY=secret_xxxxx
 export GITHUB_TOKEN=ghp_xxxxx
@@ -653,9 +680,8 @@ Environment variables take precedence over the config file.
 Use the CLI to store credentials:
 
 ```bash
-ralph-starter config set todoist.apiKey your_api_key
 ralph-starter config set linear.apiKey lin_api_xxxxx
-ralph-starter config set notion.apiKey secret_xxxxx
+ralph-starter config set notion.token secret_xxxxx
 ralph-starter config set github.token ghp_xxxxx
 ```
 
@@ -665,17 +691,16 @@ Credentials are stored in `~/.ralph-starter/sources.json`.
 
 | Source | Environment Variable | Config Key |
 |--------|---------------------|------------|
-| Todoist | `TODOIST_API_KEY` | `todoist.apiKey` |
 | Linear | `LINEAR_API_KEY` | `linear.apiKey` |
-| Notion | `NOTION_API_KEY` | `notion.apiKey` |
+| Notion | `NOTION_API_KEY` | `notion.token` |
 | GitHub | `GITHUB_TOKEN` | `github.token` |
 
 ### Managing Config
 
 ```bash
 ralph-starter config list           # View all config
-ralph-starter config get todoist    # View specific source
-ralph-starter config delete todoist.apiKey  # Remove a key
+ralph-starter config get linear     # View specific source
+ralph-starter config delete linear.apiKey  # Remove a key
 ```
 
 ## Requirements
@@ -687,13 +712,13 @@ ralph-starter config delete todoist.apiKey  # Remove a key
 
 ## Documentation
 
-Full documentation available at: https://rubenmarcus.github.io/ralph-starter/
+Full documentation available at: https://ralphstarter.ai
 
 ## Contributing
 
 Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-For creating custom sources, agents, or using the programmatic API, see the [Developer Extension Guide](https://rubenmarcus.github.io/ralph-starter/docs/guides/extending-ralph-starter).
+For creating custom integrations, agents, or using the programmatic API, see the [Developer Extension Guide](https://ralphstarter.ai/docs/guides/extending-ralph-starter).
 
 ## License
 
