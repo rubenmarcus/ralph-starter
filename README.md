@@ -1,7 +1,7 @@
 # ralph-starter
 
 <p align="center">
-  <img src="ralph.png" alt="Ralph Wiggum" width="400" />
+  <img src="ralph.png" alt="Ralph Wiggum" />
 </p>
 
 > **Ralph Wiggum made easy.** One command to run autonomous AI coding loops.
