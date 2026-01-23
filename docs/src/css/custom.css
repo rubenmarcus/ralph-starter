@@ -239,7 +239,7 @@ main {
   font-family: var(--font-body);
   font-weight: 800;
   font-size: 1rem;
-  color: var(--ralph-gray-800);
+  color: #ffffff;
   margin-bottom: var(--space-md);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -248,18 +248,18 @@ main {
 .footer__link-item {
   font-family: var(--font-body);
   font-weight: 600;
-  color: var(--ralph-gray-700);
+  color: rgba(255, 255, 255, 0.9);
   transition: all 0.2s ease;
   padding: var(--space-xs) 0;
 }
 
 .footer__link-item:hover {
-  color: var(--ralph-orange-dark);
+  color: #ffffff;
   transform: translateX(3px);
 }
 
 .footer__copyright {
-  color: var(--ralph-gray-700);
+  color: rgba(255, 255, 255, 0.85);
   font-family: var(--font-body);
   font-weight: 600;
   padding-top: var(--space-lg);
@@ -267,7 +267,7 @@ main {
 }
 
 .footer__copyright a {
-  color: var(--ralph-gray-800);
+  color: #ffffff;
   font-family: var(--font-body);
   font-weight: 700;
   text-decoration: none;
@@ -275,7 +275,7 @@ main {
 }
 
 .footer__copyright a:hover {
-  color: var(--ralph-orange-dark);
+  color: #FED7AA;
 }
 
 /* Dark theme footer */
