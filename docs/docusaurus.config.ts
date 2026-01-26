@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'ralph-starter',
-  tagline: 'Ralph Wiggum made easy. One command to run autonomous AI coding loops.',
+  tagline: 'Get specs from anywhere, run AI loops from zero to prod.',
   favicon: 'img/favicon.ico',
 
   future: {
@@ -83,20 +83,26 @@ const config: Config = {
   themeConfig: {
     image: 'img/ralph-starter-social-card.png',
     colorMode: {
-      defaultMode: 'light',
-      respectPrefersColorScheme: true,
+      defaultMode: 'dark',
+      disableSwitch: true,
+      respectPrefersColorScheme: false,
     },
     metadata: [
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'og:type', content: 'website' },
     ],
     navbar: {
-      title: 'ralph-starter',
+      title: '',
       logo: {
-        alt: 'ralph-starter Logo',
+        alt: 'ralph-starter',
         src: 'img/small-logo.png',
       },
       items: [
+        {
+          type: 'html',
+          position: 'left',
+          value: '<span class="navbar__slash">/</span><a href="/" class="navbar__brand-stack"><span class="navbar__brand-title">ralph starter</span></a>',
+        },
         {
           type: 'docSidebar',
           sidebarId: 'docsSidebar',
@@ -144,16 +150,16 @@ const config: Config = {
         },
       ],
       logo: {
-        alt: 'ralph-starter',
-        src: 'img/small-logo.png',
-        href: '/',
-        width: 60,
-        height: 60,
+        alt: 'MultiVM Labs',
+        src: 'img/multivm-logo.png',
+        href: 'https://multivmlabs.com',
+        width: 130,
+        height: 29,
       },
-      copyright: `Copyright © ${new Date().getFullYear()} ralph-starter`,
+      copyright: `Copyright © ${new Date().getFullYear()} MultiVM Labs. All rights reserved.`,
     },
     prism: {
-      theme: prismThemes.github,
+      theme: prismThemes.dracula,
       darkTheme: prismThemes.dracula,
       additionalLanguages: ['bash', 'json', 'typescript'],
     },

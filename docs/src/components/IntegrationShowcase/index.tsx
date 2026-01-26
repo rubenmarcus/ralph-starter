@@ -12,17 +12,17 @@ interface Integration {
 const integrations: Integration[] = [
   {
     name: 'GitHub',
-    icon: '🐙',
-    description: 'Issues, PRs & files',
+    icon: '⬡',
+    description: 'Issues, PRs & repository files',
   },
   {
     name: 'Linear',
-    icon: '📐',
-    description: 'Project management',
+    icon: '◇',
+    description: 'Project & issue tracking',
   },
   {
     name: 'Notion',
-    icon: '📝',
+    icon: '▣',
     description: 'Pages & databases',
   },
 ];
@@ -53,6 +53,9 @@ export default function IntegrationShowcase(): React.ReactElement {
       <div className={styles.container}>
         <div className={styles.content}>
           <div className={`${styles.textSide} ${isVisible ? styles.visible : ''}`}>
+            <p className={`${styles.sectionLabel} ${styles.animateIn}`}>
+              Integrations
+            </p>
             <h2 className={`${styles.title} ${styles.animateIn}`}>Works With Your Stack</h2>
             <p className={`${styles.subtitle} ${styles.animateIn} ${styles.delay1}`}>
               Pull specs from where your work lives. Connect your favorite tools and let Ralph build from them.
@@ -79,7 +82,7 @@ export default function IntegrationShowcase(): React.ReactElement {
                 to="https://github.com/rubenmarcus/ralph-starter"
                 className={styles.ctaLink}
               >
-                Want to add your own integration? Contribute on GitHub →
+                Contribute on GitHub →
               </Link>
             </div>
           </div>

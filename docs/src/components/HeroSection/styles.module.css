@@ -1,4 +1,4 @@
-/* Hero Section with Theme-Aware Background */
+/* Hero Section - Quantum Dark Theme */
 .hero {
   position: relative;
   min-height: 100vh;
@@ -6,60 +6,28 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: linear-gradient(180deg, #BAE6FD 0%, #7DD3FC 50%, #38BDF8 100%);
+  background: #08080A;
 }
 
-:global([data-theme='dark']) .hero {
-  background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
-}
-
-.heroBackground {
+/* Grid background */
+.gridBackground {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 120%;
-  overflow: hidden;
-  transition: opacity 0.4s ease;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(152, 152, 159, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(152, 152, 159, 0.04) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  pointer-events: none;
 }
 
-.bgImage {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-  transition: opacity 0.4s ease;
-}
-
-/* Light theme: show light bg, hide dark bg */
-.bgLight {
-  opacity: 0.5;
-}
-
-.bgDark {
-  opacity: 0;
-}
-
-/* Dark theme: hide light bg, show dark bg */
-:global([data-theme='dark']) .bgLight {
-  opacity: 0;
-}
-
-:global([data-theme='dark']) .bgDark {
-  opacity: 0.9;
-}
-
-/* Floating Ralph with parallax and entrance animation */
+/* Floating Ralph with glow effect */
 .floatingRalph {
   position: absolute;
-  top: 12%;
-  right: 10%;
+  top: 10%;
+  right: 8%;
   z-index: 2;
   opacity: 0;
-  transform: translateY(-50px) translateX(50px);
+  transform: translateY(-30px) translateX(30px);
   transition: opacity 0.8s ease, transform 0.8s ease;
 }
 
@@ -69,30 +37,26 @@
 }
 
 .ralphImage {
-  width: 500px;
+  width: 420px;
   height: auto;
-  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 0 60px rgba(200, 200, 205, 0.15));
   animation: float 6s ease-in-out infinite;
-}
-
-:global([data-theme='dark']) .ralphImage {
-  filter: drop-shadow(0 20px 40px rgba(255, 213, 33, 0.2));
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
-  25% { transform: translateY(-15px) rotate(3deg); }
-  50% { transform: translateY(-25px) rotate(0deg); }
-  75% { transform: translateY(-15px) rotate(-3deg); }
+  25% { transform: translateY(-12px) rotate(2deg); }
+  50% { transform: translateY(-20px) rotate(0deg); }
+  75% { transform: translateY(-12px) rotate(-2deg); }
 }
 
-/* Content with entrance animations */
+/* Content */
 .heroContent {
   position: relative;
   z-index: 3;
   text-align: center;
   padding: 2rem;
-  max-width: 900px;
+  max-width: 800px;
 }
 
 .heroContent.visible .animateIn {
@@ -102,7 +66,7 @@
 
 .animateIn {
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(20px);
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
@@ -110,17 +74,18 @@
 .delay2 { transition-delay: 0.2s; }
 .delay3 { transition-delay: 0.3s; }
 .delay4 { transition-delay: 0.4s; }
+.delay5 { transition-delay: 0.5s; }
 
+/* Logo */
 .logoContainer {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-/* Static large logo - no animation */
 .logo {
-  width: 450px;
-  max-width: 90vw;
+  width: 380px;
+  max-width: 85vw;
   height: auto;
-  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 0 40px rgba(200, 200, 205, 0.2));
   transition: transform 0.3s ease;
 }
 
@@ -128,117 +93,160 @@
   transform: scale(1.02);
 }
 
-:global([data-theme='dark']) .logo {
-  filter: drop-shadow(0 10px 30px rgba(255, 213, 33, 0.3));
+/* Section label */
+.sectionLabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #98989F;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  margin-bottom: 1rem;
 }
 
+/* Tagline */
 .tagline {
-  font-family: 'Nunito', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #1E293B;
-  margin-bottom: 0.75rem;
-  text-shadow: 0 1px 2px rgba(255,255,255,0.3);
-  letter-spacing: -0.02em;
-}
-
-:global([data-theme='dark']) .tagline {
-  color: #F8FAFC;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #E8E8EA;
+  margin-bottom: 1rem;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  text-shadow: 0 0 40px rgba(200, 200, 205, 0.1);
 }
 
 .subtitle {
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Instrument Sans', sans-serif;
   font-size: 1.1rem;
-  color: #475569;
-  margin-bottom: 2rem;
-  font-weight: 600;
-  line-height: 1.6;
-  max-width: 600px;
+  color: #808088;
+  margin-bottom: 2.5rem;
+  font-weight: 500;
+  line-height: 1.7;
+  max-width: 550px;
   margin-left: auto;
   margin-right: auto;
 }
 
-:global([data-theme='dark']) .subtitle {
-  color: #94A3B8;
+/* Integration logos */
+.integrations {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.integrationLabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #606068;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.integrationLogos {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.integrationLogo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  opacity: 0.5;
+  filter: grayscale(100%) brightness(2);
+  transition: all 0.3s ease;
+}
+
+.integrationLogo:hover {
+  opacity: 0.8;
+  filter: grayscale(0%) brightness(1);
 }
 
 /* Terminal */
 .terminal {
-  background: linear-gradient(145deg, #1E293B 0%, #0F172A 100%);
-  border-radius: 16px;
+  background: linear-gradient(145deg, #121218 0%, #0A0A0F 100%);
+  border: 1px solid #28282E;
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(40, 40, 46, 0.3),
+    0 20px 50px -20px rgba(0, 0, 0, 0.5);
   margin: 2rem auto;
-  max-width: 580px;
+  max-width: 560px;
   text-align: left;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: all 0.4s ease;
 }
 
 .terminal:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.45);
+  border-color: #38383F;
+  box-shadow:
+    0 0 0 1px rgba(152, 152, 159, 0.1),
+    0 25px 60px -20px rgba(0, 0, 0, 0.6),
+    0 0 40px -20px rgba(200, 200, 205, 0.1);
+  transform: translateY(-3px);
 }
 
 .terminalHeader {
-  background: linear-gradient(180deg, rgba(51, 65, 85, 0.6) 0%, rgba(30, 41, 59, 0.8) 100%);
-  padding: 0.875rem 1.125rem;
+  background: rgba(40, 40, 46, 0.5);
+  padding: 0.875rem 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid #28282E;
 }
 
 .terminalDot {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   transition: transform 0.15s ease;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .terminalDot:hover {
-  transform: scale(1.15);
+  transform: scale(1.2);
 }
 
-.terminalDot.red { background: linear-gradient(135deg, #F87171 0%, #EF4444 100%); }
-.terminalDot.yellow { background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%); }
-.terminalDot.green { background: linear-gradient(135deg, #4ADE80 0%, #22C55E 100%); }
+.terminalDot.red { background: #F87171; }
+.terminalDot.yellow { background: #FBBF24; }
+.terminalDot.green { background: #4ADE80; }
 
 .terminalBody {
   padding: 1.25rem 1.5rem;
-  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
-  font-size: 0.85rem;
-  line-height: 1.75;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  line-height: 1.8;
 }
 
 .terminalLine {
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.5rem;
 }
 
 .terminalPrompt {
   color: #4ADE80;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .terminalCommand {
-  color: #7DD3FC;
+  color: #E8E8EA;
 }
 
 .terminalOutput {
-  color: #94A3B8;
+  color: #808088;
 }
 
 .terminalOutput div {
-  margin: 0.375rem 0;
+  margin: 0.35rem 0;
   opacity: 0.9;
 }
 
 .terminalSuccess {
-  color: #FBBF24 !important;
-  margin-top: 0.625rem !important;
-  font-weight: 600;
+  color: #E8E8EA !important;
+  margin-top: 0.5rem !important;
+  font-weight: 500;
   opacity: 1 !important;
 }
 
@@ -248,54 +256,52 @@
   gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 2rem;
+  margin-top: 2.5rem;
 }
 
 .button {
-  font-family: 'Nunito', sans-serif;
-  font-weight: 700;
+  font-family: 'Instrument Sans', sans-serif;
+  font-weight: 500;
+  font-size: 0.875rem;
   padding: 0.875rem 1.75rem;
-  border-radius: 9999px;
-  font-size: 1rem;
+  border-radius: 10px;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  position: relative;
-  overflow: hidden;
+  letter-spacing: 0.08em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .buttonPrimary {
-  background: linear-gradient(135deg, #FB923C 0%, #FBBF24 100%);
-  color: #1E293B;
-  border: none;
-  box-shadow: 0 4px 14px rgba(251, 146, 60, 0.35);
+  background: #E8E8EA;
+  color: #08080A;
+  border: 1px solid #E8E8EA;
 }
 
 .buttonPrimary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(251, 146, 60, 0.4);
-  color: #1E293B;
+  background: #C0C0C5;
+  border-color: #C0C0C5;
+  color: #08080A;
   text-decoration: none;
-}
-
-.buttonPrimary:active {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(200, 200, 205, 0.3);
 }
 
 .buttonSecondary {
-  background: rgba(15, 23, 42, 0.85);
-  color: #F8FAFC;
-  border: 2px solid #FBBF24;
-  backdrop-filter: blur(8px);
+  background: transparent;
+  color: #E8E8EA;
+  border: 1px solid #38383F;
 }
 
 .buttonSecondary:hover {
-  background: #FBBF24;
-  color: #1E293B;
+  border-color: #98989F;
+  background: rgba(152, 152, 159, 0.05);
+  color: #E8E8EA;
   text-decoration: none;
-  transform: translateY(-3px);
-  border-color: #FBBF24;
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(200, 200, 205, 0.1);
 }
 
 /* Install command */
@@ -304,23 +310,23 @@
 }
 
 .installCommand code {
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(18, 18, 24, 0.8);
   padding: 0.75rem 1.5rem;
   border-radius: 10px;
-  font-size: 0.95rem;
-  color: #7DD3FC;
-  border: 1px solid rgba(125, 211, 252, 0.25);
-  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: #98989F;
+  border: 1px solid #28282E;
+  transition: all 0.25s ease;
   cursor: pointer;
   display: inline-block;
-  backdrop-filter: blur(8px);
 }
 
 .installCommand code:hover {
-  background: rgba(15, 23, 42, 0.95);
-  border-color: rgba(125, 211, 252, 0.4);
+  border-color: #38383F;
+  color: #E8E8EA;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 20px rgba(200, 200, 205, 0.1);
 }
 
 /* Responsive */
@@ -334,7 +340,7 @@
     position: relative;
     top: auto;
     right: auto;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
   }
 
   .floatingRalph.visible {
@@ -342,7 +348,7 @@
   }
 
   .ralphImage {
-    width: 300px;
+    width: 260px;
   }
 
   .logo {
@@ -350,11 +356,16 @@
   }
 
   .tagline {
-    font-size: 1.3rem;
+    font-size: 1.8rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
   }
 
   .terminal {
     margin: 1rem;
+    max-width: 100%;
   }
 
   .terminalBody {
@@ -362,8 +373,32 @@
     padding: 1rem;
   }
 
+  .integrations {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
   .button {
     padding: 0.75rem 1.5rem;
-    font-size: 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .tagline {
+    font-size: 1.5rem;
+  }
+
+  .ralphImage {
+    width: 200px;
+  }
+
+  .integrationLogos {
+    gap: 1rem;
+  }
+
+  .integrationLogo {
+    width: 24px;
+    height: 24px;
   }
 }

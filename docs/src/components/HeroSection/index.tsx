@@ -1,49 +1,23 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './styles.module.css';
 
 export default function HeroSection(): React.ReactElement {
-  const [scrollY, setScrollY] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    // Trigger entrance animation
     const timer = setTimeout(() => setIsVisible(true), 100);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   return (
-    <section ref={heroRef} className={styles.hero}>
-      {/* Background images - CSS handles theme switching */}
-      <div className={styles.heroBackground}>
-        <img
-          src={useBaseUrl('/img/bg.jpg')}
-          alt=""
-          className={`${styles.bgImage} ${styles.bgLight}`}
-          style={{ transform: `translateY(${scrollY * 0.3}px)` }}
-        />
-        <img
-          src={useBaseUrl('/img/bgdark.png')}
-          alt=""
-          className={`${styles.bgImage} ${styles.bgDark}`}
-          style={{ transform: `translateY(${scrollY * 0.3}px)` }}
-        />
-      </div>
+    <section className={styles.hero}>
+      {/* Grid background */}
+      <div className={styles.gridBackground} />
 
-      {/* Floating Ralph astronaut with parallax */}
-      <div
-        className={`${styles.floatingRalph} ${isVisible ? styles.visible : ''}`}
-        style={{ transform: `translateY(${scrollY * 0.5}px)` }}
-      >
+      {/* Floating Ralph astronaut */}
+      <div className={`${styles.floatingRalph} ${isVisible ? styles.visible : ''}`}>
         <img
           src={useBaseUrl('/img/astronaut-fly.png')}
           alt="Ralph Astronaut"
@@ -61,13 +35,40 @@ export default function HeroSection(): React.ReactElement {
           />
         </div>
 
-        <p className={`${styles.tagline} ${styles.animateIn} ${styles.delay1}`}>
-          Connect your tools. Run AI coding loops. Ship faster.
+        <p className={`${styles.sectionLabel} ${styles.animateIn} ${styles.delay1}`}>
+          AI-Powered Development
         </p>
 
+        <h1 className={`${styles.tagline} ${styles.animateIn} ${styles.delay1}`}>
+          Get specs from anywhere.<br />
+          Run AI loops from zero to prod.
+        </h1>
+
         <p className={`${styles.subtitle} ${styles.animateIn} ${styles.delay2}`}>
-          Fetch specs from GitHub, Linear, Notion - then let AI agents build it for you
+          Connect your tools, fetch requirements, and let AI agents build production-ready code automatically.
         </p>
+
+        {/* Integration logos */}
+        <div className={`${styles.integrations} ${styles.animateIn} ${styles.delay2}`}>
+          <span className={styles.integrationLabel}>Integrations</span>
+          <div className={styles.integrationLogos}>
+            <img
+              src={useBaseUrl('/img/github logo.webp')}
+              alt="GitHub"
+              className={styles.integrationLogo}
+            />
+            <img
+              src={useBaseUrl('/img/linear.jpeg')}
+              alt="Linear"
+              className={styles.integrationLogo}
+            />
+            <img
+              src={useBaseUrl('/img/notion logo.png')}
+              alt="Notion"
+              className={styles.integrationLogo}
+            />
+          </div>
+        </div>
 
         {/* Terminal preview */}
         <div className={`${styles.terminal} ${styles.animateIn} ${styles.delay3}`}>
@@ -85,7 +86,7 @@ export default function HeroSection(): React.ReactElement {
               <div>✓ Loop 1: Analyzing requirements...</div>
               <div>✓ Loop 2: Creating components...</div>
               <div>✓ Loop 3: Adding tests...</div>
-              <div className={styles.terminalSuccess}>✨ Done! Cost: $0.42 | 3 commits created</div>
+              <div className={styles.terminalSuccess}>✓ Done! Cost: $0.42 | 3 commits created</div>
             </div>
           </div>
         </div>
@@ -95,7 +96,7 @@ export default function HeroSection(): React.ReactElement {
           <Link
             className={`${styles.button} ${styles.buttonPrimary}`}
             to="/docs/intro">
-            Get Started
+            Get Started →
           </Link>
           <Link
             className={`${styles.button} ${styles.buttonSecondary}`}
@@ -105,7 +106,7 @@ export default function HeroSection(): React.ReactElement {
         </div>
 
         {/* Install command */}
-        <div className={`${styles.installCommand} ${styles.animateIn} ${styles.delay4}`}>
+        <div className={`${styles.installCommand} ${styles.animateIn} ${styles.delay5}`}>
           <code>npm install -g ralph-starter</code>
         </div>
       </div>
