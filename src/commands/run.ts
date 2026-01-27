@@ -411,18 +411,25 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
       }
     }
   } else {
-    console.log(chalk.red.bold('Loop failed'));
-    console.log(chalk.dim(`Exit reason: ${result.exitReason}`));
-    if (result.error) {
-      console.log(chalk.dim(result.error));
+    // Check if it's a rate limit issue (already shown detailed message in executor)
+    const isRateLimit = result.error?.includes('Rate limit');
+
+    if (!isRateLimit) {
+      // Only show generic failure for non-rate-limit errors
+      console.log(chalk.red.bold('Loop failed'));
+      console.log(chalk.dim(`Exit reason: ${result.exitReason}`));
+      if (result.error) {
+        console.log(chalk.dim(result.error));
+      }
+      if (result.stats?.circuitBreakerStats) {
+        const cb = result.stats.circuitBreakerStats;
+        console.log(
+          chalk.dim(
+            `Circuit breaker: ${cb.consecutiveFailures} consecutive failures, ${cb.uniqueErrors} unique errors`
+          )
+        );
+      }
     }
-    if (result.stats?.circuitBreakerStats) {
-      const cb = result.stats.circuitBreakerStats;
-      console.log(
-        chalk.dim(
-          `Circuit breaker: ${cb.consecutiveFailures} consecutive failures, ${cb.uniqueErrors} unique errors`
-        )
-      );
-    }
+    // Rate limit message was already shown in executor
   }
 }

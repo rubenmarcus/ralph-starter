@@ -540,12 +540,46 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     }
 
     if (status === 'blocked') {
-      console.log(chalk.red(`✗ Loop ${i}: Task blocked`));
-      console.log(chalk.dim(result.output.slice(0, 200)));
+      // Detect specific block reasons for better user feedback
+      const output = result.output.toLowerCase();
+      const isRateLimit =
+        output.includes('rate limit') ||
+        output.includes('usage limit') ||
+        output.includes('100%') ||
+        output.includes('exceeded') ||
+        output.includes('too many requests');
+      const isPermission =
+        output.includes('permission') || output.includes('unauthorized') || output.includes('403');
+
+      console.log();
+      if (isRateLimit) {
+        console.log(chalk.red.bold('  ⚠ Claude rate limit reached'));
+        console.log();
+        console.log(chalk.yellow('  Your Claude session usage is at 100%.'));
+        console.log(chalk.yellow('  Wait for your rate limit to reset, then run again:'));
+        console.log(chalk.dim('    ralph-starter run'));
+        console.log();
+        console.log(chalk.dim('  Tip: Check your limits at https://claude.ai/settings'));
+      } else if (isPermission) {
+        console.log(chalk.red.bold('  ⚠ Permission denied'));
+        console.log();
+        console.log(chalk.yellow('  Claude Code requires permission to continue.'));
+        console.log(chalk.dim('  Run without --auto flag to approve permissions interactively.'));
+      } else {
+        console.log(chalk.red(`  ✗ Task blocked - cannot continue`));
+        console.log();
+        console.log(chalk.dim('  The AI agent was blocked from continuing.'));
+        console.log(chalk.dim('  This may be due to rate limits or permissions.'));
+      }
+      console.log();
 
       if (progressTracker && progressEntry) {
         progressEntry.status = 'blocked';
-        progressEntry.summary = 'Task blocked - cannot continue';
+        progressEntry.summary = isRateLimit
+          ? 'Rate limit reached'
+          : isPermission
+            ? 'Permission denied'
+            : 'Task blocked';
         progressEntry.duration = Date.now() - iterationStart;
         await progressTracker.appendEntry(progressEntry);
       }
@@ -556,7 +590,11 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
         success: false,
         iterations: i,
         commits,
-        error: 'Task blocked - cannot continue',
+        error: isRateLimit
+          ? 'Rate limit reached - wait and try again'
+          : isPermission
+            ? 'Permission denied'
+            : 'Task blocked - cannot continue',
         exitReason,
         stats: {
           totalDuration: Date.now() - startTime,
