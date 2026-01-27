@@ -5,10 +5,10 @@
 
 import chalk from 'chalk';
 import ora from 'ora';
+import { getConfiguredLLM, readConfig } from '../config/manager.js';
+import { PROVIDERS } from '../llm/index.js';
 import { isClaudeCodeAvailable, testClaudeCodeConnection } from '../setup/agent-detector.js';
 import { testApiConnection } from '../setup/llm-tester.js';
-import { getConfiguredLLM, readConfig } from '../config/manager.js';
-import { PROVIDERS, type LLMProvider } from '../llm/index.js';
 
 export interface CheckCommandOptions {
   verbose?: boolean;
@@ -32,7 +32,7 @@ export async function checkCommand(options: CheckCommandOptions): Promise<void> 
   console.log(chalk.bold('Checking ralph-starter configuration...'));
   console.log();
 
-  const config = readConfig();
+  const _config = readConfig();
   let hasLLM = false;
   let usesClaudeCode = false;
 
@@ -126,14 +126,16 @@ export async function checkCommand(options: CheckCommandOptions): Promise<void> 
 
   // Summary
   console.log();
-  console.log(chalk.green.bold('  All checks passed!') + ' You\'re ready to go.');
+  console.log(`${chalk.green.bold('  All checks passed!')} You're ready to go.`);
   console.log();
 
   const usingProvider = usesClaudeCode
     ? 'Claude Code CLI (no API key needed)'
-    : `${PROVIDERS[llmConfig!.provider].displayName} API`;
+    : llmConfig?.provider
+      ? `${PROVIDERS[llmConfig.provider].displayName} API`
+      : 'Unknown provider';
 
   console.log(chalk.dim(`  Using: ${usingProvider}`));
-  console.log(chalk.dim('  Run \'ralph-starter\' to launch the wizard.'));
+  console.log(chalk.dim("  Run 'ralph-starter' to launch the wizard."));
   console.log();
 }

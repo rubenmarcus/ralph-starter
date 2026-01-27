@@ -1,10 +1,5 @@
-import type {
-  InputSource,
-  SourceResult,
-  SourceOptions,
-  SourceCredentials,
-} from './types.js';
 import { getSourceCredentials } from './config.js';
+import type { InputSource, SourceCredentials, SourceOptions, SourceResult } from './types.js';
 
 /**
  * Abstract base class for input sources
@@ -97,7 +92,7 @@ export abstract class BaseSource implements InputSource {
     if (format === 'json') {
       try {
         const obj = JSON.parse(content);
-        return '```json\n' + JSON.stringify(obj, null, 2) + '\n```';
+        return `\`\`\`json\n${JSON.stringify(obj, null, 2)}\n\`\`\``;
       } catch {
         return content;
       }
@@ -151,9 +146,7 @@ export abstract class IntegrationSource extends BaseSource {
     const key = this.getRequiredCredentialKey();
 
     if (!creds || !creds[key]) {
-      this.error(
-        `No ${key} configured. Run: ralph-starter config set ${this.name}.${key} <value>`
-      );
+      this.error(`No ${key} configured. Run: ralph-starter config set ${this.name}.${key} <value>`);
     }
 
     return creds[key] as string;

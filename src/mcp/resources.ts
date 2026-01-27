@@ -1,6 +1,6 @@
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import type { Resource } from '@modelcontextprotocol/sdk/types.js';
-import { existsSync, readFileSync, readdirSync } from 'fs';
-import { join, basename } from 'path';
 
 /**
  * Get available resources for the current working directory

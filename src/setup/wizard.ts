@@ -6,26 +6,15 @@
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import ora from 'ora';
+import { getConfiguredLLM, readConfig, writeConfig } from '../config/manager.js';
 import {
-  detectAllAgents,
-  isClaudeCodeAvailable,
-  testClaudeCodeConnection,
-  type AgentDetectionResult,
-} from './agent-detector.js';
-import { testApiConnection, testClaudeCode } from './llm-tester.js';
-import {
-  readConfig,
-  writeConfig,
-  setLLMProvider,
-  setLLMApiKey,
-  getConfiguredLLM,
-} from '../config/manager.js';
-import {
-  PROVIDERS,
-  PROVIDER_NAMES,
-  type LLMProvider,
   getProviderKeyFromEnv,
+  type LLMProvider,
+  PROVIDER_NAMES,
+  PROVIDERS,
 } from '../llm/index.js';
+import { type AgentDetectionResult, detectAllAgents } from './agent-detector.js';
+import { testApiConnection, testClaudeCode } from './llm-tester.js';
 
 export interface SetupResult {
   success: boolean;
@@ -41,8 +30,14 @@ export interface SetupResult {
 function showBanner(): void {
   console.log();
   console.log(chalk.cyan('  ╭─────────────────────────────────────────╮'));
-  console.log(chalk.cyan('  │') + chalk.bold.white('  ralph-starter Setup Wizard            ') + chalk.cyan('│'));
-  console.log(chalk.cyan('  │') + chalk.dim('  Let\'s get you configured!             ') + chalk.cyan('│'));
+  console.log(
+    chalk.cyan('  │') +
+      chalk.bold.white('  ralph-starter Setup Wizard            ') +
+      chalk.cyan('│')
+  );
+  console.log(
+    chalk.cyan('  │') + chalk.dim("  Let's get you configured!             ") + chalk.cyan('│')
+  );
   console.log(chalk.cyan('  ╰─────────────────────────────────────────╯'));
   console.log();
 }
@@ -137,7 +132,11 @@ async function stepConfigureLLM(claudeAvailable: boolean): Promise<{
   // Check for existing config
   const existingConfig = getConfiguredLLM();
   if (existingConfig) {
-    console.log(chalk.green(`  ✓ Found existing ${PROVIDERS[existingConfig.provider].displayName} configuration`));
+    console.log(
+      chalk.green(
+        `  ✓ Found existing ${PROVIDERS[existingConfig.provider].displayName} configuration`
+      )
+    );
     console.log();
 
     const { useExisting } = await inquirer.prompt([
@@ -288,25 +287,28 @@ async function stepSaveConfig(options: {
 /**
  * Step 5: Show success message
  */
-function showSuccess(options: {
-  usesClaudeCode: boolean;
-  provider?: LLMProvider;
-}): void {
+function showSuccess(options: { usesClaudeCode: boolean; provider?: LLMProvider }): void {
   console.log();
   console.log(chalk.cyan('  ╭─────────────────────────────────────────╮'));
-  console.log(chalk.cyan('  │') + chalk.bold.green('  Setup Complete!                       ') + chalk.cyan('│'));
-  console.log(chalk.cyan('  │') + '                                         ' + chalk.cyan('│'));
+  console.log(
+    chalk.cyan('  │') +
+      chalk.bold.green('  Setup Complete!                       ') +
+      chalk.cyan('│')
+  );
+  console.log(`${chalk.cyan('  │')}                                         ${chalk.cyan('│')}`);
 
   if (options.usesClaudeCode) {
-    console.log(chalk.cyan('  │') + '  Using: Claude Code CLI                 ' + chalk.cyan('│'));
-    console.log(chalk.cyan('  │') + chalk.dim('  No API key needed                     ') + chalk.cyan('│'));
+    console.log(`${chalk.cyan('  │')}  Using: Claude Code CLI                 ${chalk.cyan('│')}`);
+    console.log(
+      chalk.cyan('  │') + chalk.dim('  No API key needed                     ') + chalk.cyan('│')
+    );
   } else if (options.provider) {
     const name = PROVIDERS[options.provider].displayName;
     const padding = ' '.repeat(Math.max(0, 25 - name.length));
-    console.log(chalk.cyan('  │') + `  Provider: ${name}${padding}` + chalk.cyan('│'));
+    console.log(`${chalk.cyan('  │')}  Provider: ${name}${padding}${chalk.cyan('│')}`);
   }
 
-  console.log(chalk.cyan('  │') + '                                         ' + chalk.cyan('│'));
+  console.log(`${chalk.cyan('  │')}                                         ${chalk.cyan('│')}`);
   console.log(chalk.cyan('  ╰─────────────────────────────────────────╯'));
   console.log();
 
@@ -320,9 +322,7 @@ function showSuccess(options: {
 /**
  * Run the full setup wizard
  */
-export async function runSetupWizard(options?: {
-  force?: boolean;
-}): Promise<SetupResult> {
+export async function runSetupWizard(options?: { force?: boolean }): Promise<SetupResult> {
   showBanner();
 
   // Check if already configured (unless --force)

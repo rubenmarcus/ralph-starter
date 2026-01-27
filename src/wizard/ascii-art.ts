@@ -19,7 +19,6 @@ ${chalk.yellow('     ██    ██    ██   ██ ██   ██    █�
 ${chalk.yellow('███████    ██    ██   ██ ██   ██    ██    ███████ ██   ██')}
 `;
 
-
 // Full Ralph Wiggum ASCII art - detailed version for welcome screen
 export const RALPH_FULL = chalk.yellow(`
                                     ˆ    5
@@ -170,7 +169,7 @@ export function getRalphLoadingFrame(frame: number): string {
  * Print Ralph with a message
  */
 export function printRalphWithMessage(art: string, message: string): void {
-  const lines = art.split('\n').filter(l => l);
+  const lines = art.split('\n').filter((l) => l);
   const messageLines = message.split('\n');
 
   console.log();
@@ -197,10 +196,10 @@ export const RALPH_QUOTES = [
   "Me fail English? That's unpossible!",
   "I'm learnding!",
   "My cat's breath smells like cat food.",
-  "I bent my wookiee.",
+  'I bent my wookiee.',
   "I'm a unitard!",
-  "When I grow up, I want to be a principal or a caterpillar.",
-  "I found a moon rock in my nose!",
+  'When I grow up, I want to be a principal or a caterpillar.',
+  'I found a moon rock in my nose!',
 ];
 
 export function getRandomRalphQuote(): string {
@@ -212,15 +211,15 @@ export function getRandomRalphQuote(): string {
 // ═══════════════════════════════════════════════════════════════
 
 // Custom gradient presets
-const GRADIENT_PRESETS = [
-  ['#FF6B6B', '#4ECDC4'],        // Coral to Teal
+const _GRADIENT_PRESETS = [
+  ['#FF6B6B', '#4ECDC4'], // Coral to Teal
   ['#A770EF', '#CF8BF3', '#FDB99B'], // Purple to peach
-  ['#00C9FF', '#92FE9D'],        // Blue to green
-  ['#FC466B', '#3F5EFB'],        // Pink to blue
-  ['#f953c6', '#b91d73'],        // Pink gradient
-  ['#4776E6', '#8E54E9'],        // Blue to purple
-  ['#00d2ff', '#3a7bd5'],        // Light blue
-  ['#f79d00', '#64f38c'],        // Orange to green
+  ['#00C9FF', '#92FE9D'], // Blue to green
+  ['#FC466B', '#3F5EFB'], // Pink to blue
+  ['#f953c6', '#b91d73'], // Pink gradient
+  ['#4776E6', '#8E54E9'], // Blue to purple
+  ['#00d2ff', '#3a7bd5'], // Light blue
+  ['#f79d00', '#64f38c'], // Orange to green
 ];
 
 // Spinner frames (dots style like Claude CLI)
@@ -352,7 +351,7 @@ export class RalphAnimator {
 
       if (distance < shimmerWidth) {
         // Near the shimmer - use brighter color
-        const intensity = 1 - (distance / shimmerWidth);
+        const intensity = 1 - distance / shimmerWidth;
         const colorIndex = Math.floor(intensity * (SHIMMER_COLORS.length - 1));
         result += chalk.hex(SHIMMER_COLORS[colorIndex])(chars[i]);
       } else {
@@ -383,3 +382,45 @@ export function createProgressBar(progress: number, width: number = 20): string 
 export const RALPH_WALK_FRAMES = [''];
 export const RALPH_WALK_WITH_HAND = [''];
 export function showWalkingRalph(_message: string, _elapsed?: number): void {}
+
+/**
+ * Compact banner - Simple header without large ASCII text
+ * Just shows Ralph head + text description
+ */
+export function showCompactBanner(): void {
+  console.log();
+  console.log(RALPH_WELCOME_SMALL);
+  console.log(chalk.cyan.bold('  ralph-starter'));
+  console.log(chalk.dim('  AI-powered project generator'));
+  console.log();
+}
+
+/**
+ * Mini header - Just text, no art
+ */
+export function showMiniHeader(): void {
+  console.log();
+  console.log(chalk.cyan.bold('  ralph-starter'));
+  console.log(chalk.dim('  AI-powered project generator'));
+  console.log();
+}
+
+/**
+ * Show success with Ralph
+ */
+export function showRalphSuccess(message: string): void {
+  console.log();
+  console.log(RALPH_WELCOME_SMALL);
+  console.log(chalk.green.bold(`  ${message}`));
+  console.log();
+}
+
+/**
+ * Show error with Ralph
+ */
+export function showRalphError(message: string): void {
+  console.log();
+  console.log(RALPH_ERROR);
+  console.log(chalk.red.bold(`  ${message}`));
+  console.log();
+}

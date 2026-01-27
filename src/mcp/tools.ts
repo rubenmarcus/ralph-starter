@@ -1,12 +1,12 @@
-import { z } from 'zod';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { existsSync, readFileSync, readdirSync } from 'fs';
-import { join } from 'path';
+import { z } from 'zod';
 
 // Import core functions (these will be created/extracted)
-import { initCore, InitCoreOptions, InitCoreResult } from './core/init.js';
-import { planCore, PlanCoreOptions, PlanCoreResult } from './core/plan.js';
-import { runCore, RunCoreOptions, RunCoreResult } from './core/run.js';
+import { type InitCoreResult, initCore } from './core/init.js';
+import { type PlanCoreResult, planCore } from './core/plan.js';
+import { type RunCoreResult, runCore } from './core/run.js';
 
 /**
  * Tool definitions for ralph-starter MCP server
@@ -329,9 +329,7 @@ async function handleValidate(
   const parsed = toolSchemas.ralph_validate.parse(args);
 
   // Import validation functions
-  const { detectValidationCommands, runAllValidations } = await import(
-    '../loop/validation.js'
-  );
+  const { detectValidationCommands, runAllValidations } = await import('../loop/validation.js');
 
   const commands = detectValidationCommands(parsed.path);
   const results = await runAllValidations(parsed.path, commands);

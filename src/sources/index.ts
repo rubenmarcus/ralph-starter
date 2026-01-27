@@ -8,18 +8,16 @@
  * - Fetch content from any source
  */
 
-import type { InputSource, SourceInfo, SourceResult, SourceOptions } from './types.js';
-
 // Built-in sources
 import { FileSource } from './builtin/file.js';
-import { UrlSource } from './builtin/url.js';
 import { PdfSource } from './builtin/pdf.js';
-
+import { UrlSource } from './builtin/url.js';
 // Integration sources
 import { GitHubSource } from './integrations/github.js';
-import { TodoistSource } from './integrations/todoist.js';
 import { LinearSource } from './integrations/linear.js';
 import { NotionSource } from './integrations/notion.js';
+import { TodoistSource } from './integrations/todoist.js';
+import type { InputSource, SourceInfo, SourceOptions, SourceResult } from './types.js';
 
 /**
  * All registered sources
@@ -259,4 +257,4 @@ export async function testSource(name: string): Promise<{
 }
 
 // Re-export types
-export type { InputSource, SourceInfo, SourceResult, SourceOptions } from './types.js';
+export type { InputSource, SourceInfo, SourceOptions, SourceResult } from './types.js';

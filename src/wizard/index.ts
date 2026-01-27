@@ -1,49 +1,48 @@
-import ora, { type Ora } from 'ora';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { join, resolve } from 'path';
-
-import type { WizardAnswers, RefinedIdea, WizardStep } from './types.js';
-import { DEFAULT_WIZARD_ANSWERS } from './types.js';
+import ora, { type Ora } from 'ora';
+import { detectProject, detectRalphPlaybook, initCommand } from '../commands/init.js';
+import { planCommand } from '../commands/plan.js';
+import { runCommand } from '../commands/run.js';
+import { getConfiguredLLM, promptForLLMSetup } from '../config/manager.js';
+import { detectBestAgent } from '../loop/agents.js';
+import { isClaudeCodeAvailable } from '../setup/agent-detector.js';
+import { runSetupWizard } from '../setup/wizard.js';
+import { runIdeaMode } from './ideas.js';
+import { isLlmAvailable, refineIdea } from './llm.js';
 import {
-  showWelcome,
-  showRefinedSummary,
-  showExecutionPlan,
-  showError,
-  showSuccess,
-  showWorking,
-  renderSteps,
-  formatProjectType,
-  formatComplexity,
-  showDetectedProject,
-  showDetectedRalphPlaybook,
-} from './ui.js';
-import {
-  askHasIdea,
+  askContinueAction,
+  askExecutionOptions,
+  askExistingProjectAction,
+  askForComplexity,
+  askForFeatures,
   askForIdea,
   askForProjectType,
   askForTechStack,
-  askForFeatures,
-  askForComplexity,
-  confirmPlan,
-  askWhatToModify,
-  askExecutionOptions,
-  askWorkingDirectory,
-  askExistingProjectAction,
+  askHasIdea,
+  askImproveAction,
+  askImprovementPrompt,
   askRalphPlaybookAction,
-  askContinueAction,
+  askWhatToModify,
+  askWorkingDirectory,
+  confirmPlan,
 } from './prompts.js';
-import { refineIdea, isLlmAvailable } from './llm.js';
-import { runIdeaMode } from './ideas.js';
-import { generateSpec, generateAgentsMd, sanitizeFilename } from './spec-generator.js';
-import { initCommand, detectProject, detectRalphPlaybook } from '../commands/init.js';
-import { planCommand } from '../commands/plan.js';
-import { runCommand } from '../commands/run.js';
-import { detectBestAgent } from '../loop/agents.js';
-import { isClaudeCodeAvailable } from '../setup/agent-detector.js';
-import { getConfiguredLLM, promptForLLMSetup } from '../config/manager.js';
-import { runSetupWizard } from '../setup/wizard.js';
+import { generateAgentsMd, generateSpec, sanitizeFilename } from './spec-generator.js';
+import type { RefinedIdea, WizardAnswers } from './types.js';
+import { DEFAULT_WIZARD_ANSWERS } from './types.js';
+import {
+  formatComplexity,
+  formatProjectType,
+  showDetectedProject,
+  showDetectedRalphPlaybook,
+  showError,
+  showExecutionPlan,
+  showRefinedSummary,
+  showSuccess,
+  showWelcome,
+} from './ui.js';
 
 // Global spinner reference for cleanup on exit
 let activeSpinner: Ora | null = null;
@@ -190,11 +189,25 @@ async function runWizardFlow(spinner: Ora): Promise<void> {
     return;
   }
 
+  // Detect if we're in an existing project before showing welcome
+  const cwd = process.cwd();
+  const cwdPlaybook = detectRalphPlaybook(cwd);
+  const cwdProject = detectProject(cwd);
+  const cwdIsRalphProject = cwdPlaybook.hasPlaybook;
+  const cwdIsExistingProject = cwdIsRalphProject || cwdProject.type !== 'unknown';
+
   // Show welcome
   showWelcome();
 
+  // If existing project detected, show info
+  if (cwdIsRalphProject) {
+    showDetectedRalphPlaybook(cwdPlaybook, cwd);
+  } else if (cwdIsExistingProject) {
+    showDetectedProject(cwdProject, cwd);
+  }
+
   // Initialize answers
-  let answers: WizardAnswers = {
+  const answers: WizardAnswers = {
     ...DEFAULT_WIZARD_ANSWERS,
     rawIdea: '',
     projectName: '',
@@ -208,12 +221,63 @@ async function runWizardFlow(spinner: Ora): Promise<void> {
     workingDirectory: process.cwd(),
   } as WizardAnswers;
 
-  // Step 1: Get the idea (with optional brainstorming)
+  // Step 1: Get the idea (with optional brainstorming or improve existing)
   let continueWizard = true;
 
   while (continueWizard) {
-    // Ask if user has an idea or needs help
-    const hasIdea = await askHasIdea();
+    // Ask if user has an idea, needs help, or wants to improve existing
+    const hasIdea = await askHasIdea({
+      isExistingProject: cwdIsExistingProject,
+      isRalphProject: cwdIsRalphProject,
+    });
+
+    // Handle "improve existing project" flow
+    if (hasIdea === 'improve_existing') {
+      const improveAction = await askImproveAction();
+
+      if (improveAction === 'prompt') {
+        // User gives specific instructions
+        const improvementPrompt = await askImprovementPrompt();
+
+        console.log();
+        console.log(chalk.cyan.bold('  Starting improvement loop...'));
+        console.log();
+
+        // Run with the improvement as the task
+        await runCommand(improvementPrompt, {
+          auto: true,
+          commit: false,
+          validate: true,
+        });
+
+        showSuccess('Improvement complete!');
+        return;
+      } else {
+        // Analyze and suggest improvements
+        console.log();
+        console.log(chalk.cyan.bold('  Analyzing project...'));
+        console.log();
+
+        const analysisPrompt = `Analyze this codebase and suggest improvements. Look at:
+1. Code quality and best practices
+2. Missing features or incomplete implementations
+3. Performance opportunities
+4. Security concerns
+5. Developer experience improvements
+
+Provide a prioritized list of suggestions with explanations.`;
+
+        await runCommand(analysisPrompt, {
+          auto: true,
+          commit: false,
+          validate: false,
+          maxIterations: 5,
+        });
+
+        showSuccess('Analysis complete!');
+        return;
+      }
+    }
 
     let idea: string;
     if (hasIdea === 'need_help') {
@@ -237,7 +301,7 @@ async function runWizardFlow(spinner: Ora): Promise<void> {
     try {
       refinedIdea = await refineIdea(idea);
       spinner.succeed('Got it!');
-    } catch (error) {
+    } catch (_error) {
       spinner.fail('Could not analyze idea');
       // Use fallback
       refinedIdea = {
@@ -267,7 +331,10 @@ async function runWizardFlow(spinner: Ora): Promise<void> {
         answers.projectName,
         formatProjectType(answers.projectType || 'web'),
         answers.techStack,
-        [...refinedIdea.coreFeatures, ...answers.selectedFeatures.filter(f => !refinedIdea.coreFeatures.includes(f))],
+        [
+          ...refinedIdea.coreFeatures,
+          ...answers.selectedFeatures.filter((f) => !refinedIdea.coreFeatures.includes(f)),
+        ],
         formatComplexity(answers.complexity)
       );
 
@@ -315,7 +382,7 @@ async function runWizardFlow(spinner: Ora): Promise<void> {
   // Get working directory with existing project detection
   let workDir = '';
   let isExistingProject = false;
-  let isRalphPlaybook = false;
+  const _isRalphPlaybook = false;
 
   // Loop until we have a valid directory decision
   let selectingDirectory = true;
@@ -491,5 +558,5 @@ async function runWizardFlow(spinner: Ora): Promise<void> {
 // Export for use in CLI
 export { isLlmAvailable };
 export { runIdeaMode };
-export { showWorking, showSuccess, showError } from './ui.js';
 export * from './ascii-art.js';
+export { showError, showSuccess, showWorking } from './ui.js';

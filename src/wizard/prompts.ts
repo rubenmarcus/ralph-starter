@@ -1,24 +1,94 @@
 import inquirer from 'inquirer';
-import type { ProjectType, Complexity, TechStack, RefinedIdea } from './types.js';
-import type { ProjectInfo, RalphPlaybookInfo } from '../commands/init.js';
+import type { ProjectInfo } from '../commands/init.js';
+import type { Complexity, ProjectType, TechStack } from './types.js';
 
 /**
  * Ask if user has an idea or needs help brainstorming
+ * @param isExistingProject - If true, show option to improve existing project
+ * @param isRalphProject - If true (and isExistingProject), project has Ralph files
  */
-export async function askHasIdea(): Promise<'has_idea' | 'need_help'> {
+export async function askHasIdea(options?: {
+  isExistingProject?: boolean;
+  isRalphProject?: boolean;
+}): Promise<'has_idea' | 'need_help' | 'improve_existing'> {
+  const choices: Array<{ name: string; value: string }> = [];
+
+  // If in an existing project, show improve option first
+  if (options?.isExistingProject) {
+    const projectLabel = options.isRalphProject
+      ? 'Improve this Ralph project'
+      : 'Improve this existing project';
+    choices.push({
+      name: `${projectLabel} → (add features, fix issues, or get suggestions)`,
+      value: 'improve_existing',
+    });
+  }
+
+  choices.push(
+    { name: 'Yes, I know what I want to build', value: 'has_idea' },
+    { name: 'No, help me brainstorm ideas', value: 'need_help' }
+  );
+
   const { hasIdea } = await inquirer.prompt([
     {
       type: 'list',
       name: 'hasIdea',
-      message: 'Do you have a project idea?',
-      choices: [
-        { name: 'Yes, I know what I want to build', value: 'has_idea' },
-        { name: "No, help me brainstorm ideas", value: 'need_help' },
-      ],
+      message: options?.isExistingProject
+        ? 'What would you like to do?'
+        : 'Do you have a project idea?',
+      choices,
     },
   ]);
 
   return hasIdea;
+}
+
+/**
+ * Ask how user wants to improve existing project
+ */
+export type ImproveAction = 'prompt' | 'analyze';
+
+export async function askImproveAction(): Promise<ImproveAction> {
+  console.log();
+
+  const { action } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'action',
+      message: 'How would you like to improve this project?',
+      choices: [
+        {
+          name: 'Give specific instructions → (describe what you want to change)',
+          short: 'Instructions',
+          value: 'prompt',
+        },
+        {
+          name: 'Analyze and suggest improvements → (AI reviews code and suggests)',
+          short: 'Analyze',
+          value: 'analyze',
+        },
+      ],
+    },
+  ]);
+
+  return action;
+}
+
+/**
+ * Ask for improvement instructions
+ */
+export async function askImprovementPrompt(): Promise<string> {
+  const { prompt } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'prompt',
+      message: 'What would you like to change or add?',
+      suffix: '\n  (e.g., "add dark mode", "fix the footer links", "improve performance")\n  >',
+      validate: (input: string) =>
+        input.trim().length > 0 ? true : 'Please describe what you want to improve',
+    },
+  ]);
+  return prompt.trim();
 }
 
 /**
@@ -31,8 +101,7 @@ export async function askForIdea(): Promise<string> {
       name: 'idea',
       message: "What's your idea for today?",
       suffix: '\n  (e.g., "a habit tracker app" or "an API for managing recipes")\n  >',
-      validate: (input: string) =>
-        input.trim().length > 0 ? true : 'Please describe your idea',
+      validate: (input: string) => (input.trim().length > 0 ? true : 'Please describe your idea'),
     },
   ]);
   return idea.trim();
@@ -41,9 +110,7 @@ export async function askForIdea(): Promise<string> {
 /**
  * Ask for project type if not detected
  */
-export async function askForProjectType(
-  suggestedType?: ProjectType
-): Promise<ProjectType> {
+export async function askForProjectType(suggestedType?: ProjectType): Promise<ProjectType> {
   const choices = [
     { name: 'Web Application (React, Next.js, Vue, etc.)', value: 'web' },
     { name: 'API / Backend Service', value: 'api' },
@@ -116,8 +183,7 @@ export async function askForTechStack(
       {
         type: 'list',
         name: 'frontend',
-        message:
-          projectType === 'web' ? 'What frontend framework?' : 'What mobile framework?',
+        message: projectType === 'web' ? 'What frontend framework?' : 'What mobile framework?',
         choices: frontendChoices,
       },
     ]);
@@ -227,9 +293,7 @@ export async function askForFeatures(
 /**
  * Ask for project complexity
  */
-export async function askForComplexity(
-  suggestedComplexity?: Complexity
-): Promise<Complexity> {
+export async function askForComplexity(suggestedComplexity?: Complexity): Promise<Complexity> {
   const choices = [
     {
       name: 'Quick Prototype - Basic functionality, minimal polish',
@@ -289,9 +353,7 @@ export async function confirmPlan(): Promise<'proceed' | 'modify' | 'restart'> {
 /**
  * Ask what to modify
  */
-export async function askWhatToModify(): Promise<
-  'type' | 'stack' | 'features' | 'complexity'
-> {
+export async function askWhatToModify(): Promise<'type' | 'stack' | 'features' | 'complexity'> {
   const { modify } = await inquirer.prompt([
     {
       type: 'list',
@@ -327,12 +389,12 @@ export async function askExecutionOptions(): Promise<{
         {
           name: 'Start building automatically → (AI runs immediately after setup)',
           short: 'Build now',
-          value: true
+          value: true,
         },
         {
           name: 'Just create the plan → (run "ralph-starter run" later)',
           short: 'Plan only',
-          value: false
+          value: false,
         },
       ],
     },
@@ -357,9 +419,7 @@ export async function askExecutionOptions(): Promise<{
 /**
  * Ask for working directory
  */
-export async function askWorkingDirectory(
-  suggestedName: string
-): Promise<string> {
+export async function askWorkingDirectory(suggestedName: string): Promise<string> {
   const defaultDir = `./${suggestedName.toLowerCase().replace(/\s+/g, '-')}`;
 
   const { directory } = await inquirer.prompt([
@@ -399,17 +459,17 @@ export async function askExistingProjectAction(
         {
           name: 'Add features to this existing project',
           short: 'Enhance existing',
-          value: 'enhance'
+          value: 'enhance',
         },
         {
           name: 'Create new project in a subfolder',
           short: 'New subfolder',
-          value: 'subfolder'
+          value: 'subfolder',
         },
         {
           name: 'Choose a different directory',
           short: 'Different directory',
-          value: 'different'
+          value: 'different',
         },
       ],
     },
@@ -435,17 +495,17 @@ export async function askRalphPlaybookAction(): Promise<RalphPlaybookAction> {
         {
           name: 'Continue working on this project → (run build, regenerate plan, or add specs)',
           short: 'Continue',
-          value: 'continue'
+          value: 'continue',
         },
         {
           name: 'Start fresh → (will overwrite AGENTS.md, specs/, and plans)',
           short: 'Start fresh',
-          value: 'fresh'
+          value: 'fresh',
         },
         {
           name: 'Choose a different directory',
           short: 'Different directory',
-          value: 'different'
+          value: 'different',
         },
       ],
     },
@@ -470,17 +530,17 @@ export async function askContinueAction(): Promise<ContinueAction> {
         {
           name: 'Run the build loop → (AI will implement the plan)',
           short: 'Build',
-          value: 'run'
+          value: 'run',
         },
         {
           name: 'Regenerate the implementation plan → (re-analyze specs)',
           short: 'Plan',
-          value: 'plan'
+          value: 'plan',
         },
         {
           name: 'Add a new spec to the project → (create new feature spec)',
           short: 'Add spec',
-          value: 'add_spec'
+          value: 'add_spec',
         },
       ],
     },

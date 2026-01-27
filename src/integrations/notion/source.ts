@@ -6,7 +6,12 @@
  * - Private pages: Notion API (requires token)
  */
 
-import { BaseIntegration, type IntegrationResult, type IntegrationOptions, type AuthMethod } from '../base.js';
+import {
+  type AuthMethod,
+  BaseIntegration,
+  type IntegrationOptions,
+  type IntegrationResult,
+} from '../base.js';
 
 interface NotionPage {
   id: string;
@@ -54,7 +59,7 @@ export class NotionIntegration extends BaseIntegration {
 
       this.error(
         'Could not fetch Notion page. If this is a private page, configure API token:\n' +
-        'ralph-starter config set notion.token <token>'
+          'ralph-starter config set notion.token <token>'
       );
     }
 
@@ -65,7 +70,7 @@ export class NotionIntegration extends BaseIntegration {
 
     this.error(
       'Please provide a Notion URL or configure API token:\n' +
-      'ralph-starter config set notion.token <token>'
+        'ralph-starter config set notion.token <token>'
     );
   }
 
@@ -124,7 +129,9 @@ export class NotionIntegration extends BaseIntegration {
     let content = html;
 
     // Try to find the main content div
-    const contentMatch = html.match(/<div[^>]*class="[^"]*notion-page-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+    const contentMatch = html.match(
+      /<div[^>]*class="[^"]*notion-page-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i
+    );
     if (contentMatch) {
       content = contentMatch[1];
     }
@@ -247,14 +254,22 @@ export class NotionIntegration extends BaseIntegration {
     const formattedId = this.formatNotionId(id);
 
     try {
-      const page = await this.apiRequest(token, 'GET', `/pages/${formattedId}`) as NotionPage;
-      const blocks = await this.apiRequest(token, 'GET', `/blocks/${formattedId}/children?page_size=100`);
+      const page = (await this.apiRequest(token, 'GET', `/pages/${formattedId}`)) as NotionPage;
+      const blocks = await this.apiRequest(
+        token,
+        'GET',
+        `/blocks/${formattedId}/children?page_size=100`
+      );
 
       return this.formatPage(page, (blocks as { results: NotionBlock[] }).results);
     } catch {
       // Try as database
       try {
-        const database = await this.apiRequest(token, 'GET', `/databases/${formattedId}`) as NotionDatabase;
+        const database = (await this.apiRequest(
+          token,
+          'GET',
+          `/databases/${formattedId}`
+        )) as NotionDatabase;
         const items = await this.apiRequest(token, 'POST', `/databases/${formattedId}/query`, {
           page_size: 50,
         });
@@ -271,11 +286,11 @@ export class NotionIntegration extends BaseIntegration {
     query: string,
     options?: IntegrationOptions
   ): Promise<IntegrationResult> {
-    const response = await this.apiRequest(token, 'POST', '/search', {
+    const response = (await this.apiRequest(token, 'POST', '/search', {
       query,
       filter: { property: 'object', value: 'page' },
       page_size: options?.limit || 10,
-    }) as { results: NotionPage[] };
+    })) as { results: NotionPage[] };
 
     const results = response.results;
 
@@ -295,7 +310,11 @@ export class NotionIntegration extends BaseIntegration {
       sections.push(`## ${title}\n`);
 
       try {
-        const blocks = await this.apiRequest(token, 'GET', `/blocks/${page.id}/children?page_size=100`);
+        const blocks = await this.apiRequest(
+          token,
+          'GET',
+          `/blocks/${page.id}/children?page_size=100`
+        );
         sections.push(this.blocksToMarkdown((blocks as { results: NotionBlock[] }).results));
       } catch {
         sections.push('*Could not fetch page content*');
@@ -334,17 +353,13 @@ export class NotionIntegration extends BaseIntegration {
 
     if (!response.ok) {
       if (response.status === 401) {
-        this.error(
-          'Invalid Notion token. Run: ralph-starter config set notion.token <token>'
-        );
+        this.error('Invalid Notion token. Run: ralph-starter config set notion.token <token>');
       }
       if (response.status === 404) {
         throw new Error('Not found');
       }
-      const error = await response.json().catch(() => ({})) as { message?: string };
-      this.error(
-        `Notion API error: ${response.status} - ${error.message || response.statusText}`
-      );
+      const error = (await response.json().catch(() => ({}))) as { message?: string };
+      this.error(`Notion API error: ${response.status} - ${error.message || response.statusText}`);
     }
 
     return response.json();
@@ -440,7 +455,7 @@ export class NotionIntegration extends BaseIntegration {
     const p = prop as Record<string, unknown>;
     switch (p.type) {
       case 'rich_text':
-        return ((p.rich_text as Array<{ plain_text: string }>)?.[0]?.plain_text) || null;
+        return (p.rich_text as Array<{ plain_text: string }>)?.[0]?.plain_text || null;
       case 'number':
         return (p.number as number)?.toString() || null;
       case 'select':
@@ -474,14 +489,23 @@ export class NotionIntegration extends BaseIntegration {
   }
 
   private blockToMarkdown(block: NotionBlock): string {
-    const content = block[block.type] as { rich_text?: unknown[]; checked?: boolean; icon?: { emoji?: string }; language?: string; file?: { url: string }; external?: { url: string } } | undefined;
+    const content = block[block.type] as
+      | {
+          rich_text?: unknown[];
+          checked?: boolean;
+          icon?: { emoji?: string };
+          language?: string;
+          file?: { url: string };
+          external?: { url: string };
+        }
+      | undefined;
     if (!content) return '';
 
     const text = this.richTextToPlain(content.rich_text);
 
     switch (block.type) {
       case 'paragraph':
-        return text + '\n';
+        return `${text}\n`;
       case 'heading_1':
         return `## ${text}\n`;
       case 'heading_2':
@@ -492,26 +516,30 @@ export class NotionIntegration extends BaseIntegration {
         return `- ${text}`;
       case 'numbered_list_item':
         return `1. ${text}`;
-      case 'to_do':
+      case 'to_do': {
         const checked = content.checked ? 'x' : ' ';
         return `- [${checked}] ${text}`;
+      }
       case 'toggle':
         return `<details>\n<summary>${text}</summary>\n</details>\n`;
       case 'quote':
         return `> ${text}\n`;
-      case 'callout':
+      case 'callout': {
         const emoji = content.icon?.emoji || '💡';
         return `> ${emoji} ${text}\n`;
-      case 'code':
+      }
+      case 'code': {
         const lang = content.language || '';
         return `\`\`\`${lang}\n${text}\n\`\`\`\n`;
+      }
       case 'divider':
         return '---\n';
-      case 'image':
+      case 'image': {
         const url = content.file?.url || content.external?.url || '';
         return url ? `![Image](${url})\n` : '';
+      }
       default:
-        return text ? text + '\n' : '';
+        return text ? `${text}\n` : '';
     }
   }
 

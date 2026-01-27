@@ -5,7 +5,12 @@
  * Supports CLI auth (`linear auth login`) or API key.
  */
 
-import { BaseIntegration, type IntegrationResult, type IntegrationOptions, type AuthMethod } from '../base.js';
+import {
+  type AuthMethod,
+  BaseIntegration,
+  type IntegrationOptions,
+  type IntegrationResult,
+} from '../base.js';
 
 interface LinearIssue {
   id: string;
@@ -78,8 +83,8 @@ export class LinearIntegration extends BaseIntegration {
     if (!authMethod) {
       this.error(
         'No authentication configured. Options:\n' +
-        '  1. Install Linear CLI: npm install -g @linear/cli && linear auth login\n' +
-        '  2. Use API key: ralph-starter config set linear.apiKey <key>'
+          '  1. Install Linear CLI: npm install -g @linear/cli && linear auth login\n' +
+          '  2. Use API key: ralph-starter config set linear.apiKey <key>'
       );
     }
 
@@ -185,9 +190,7 @@ export class LinearIntegration extends BaseIntegration {
 
     if (!response.ok) {
       if (response.status === 401) {
-        this.error(
-          'Invalid Linear API key. Run: ralph-starter config set linear.apiKey <key>'
-        );
+        this.error('Invalid Linear API key. Run: ralph-starter config set linear.apiKey <key>');
       }
       this.error(`Linear API error: ${response.status} ${response.statusText}`);
     }

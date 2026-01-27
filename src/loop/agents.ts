@@ -1,7 +1,5 @@
-import { execa } from 'execa';
-import { existsSync } from 'fs';
-import { join } from 'path';
 import chalk from 'chalk';
+import { execa } from 'execa';
 
 export type AgentType = 'claude-code' | 'cursor' | 'codex' | 'opencode' | 'unknown';
 
@@ -29,22 +27,22 @@ const AGENTS: Record<AgentType, { name: string; command: string; checkCmd: strin
     command: 'claude',
     checkCmd: ['claude', '--version'],
   },
-  'cursor': {
+  cursor: {
     name: 'Cursor',
     command: 'cursor',
     checkCmd: ['cursor', '--version'],
   },
-  'codex': {
+  codex: {
     name: 'Codex CLI',
     command: 'codex',
     checkCmd: ['codex', '--version'],
   },
-  'opencode': {
+  opencode: {
     name: 'OpenCode',
     command: 'opencode',
     checkCmd: ['opencode', '--version'],
   },
-  'unknown': {
+  unknown: {
     name: 'Unknown',
     command: '',
     checkCmd: [],
@@ -83,21 +81,24 @@ export async function detectAvailableAgents(): Promise<Agent[]> {
 
 export async function detectBestAgent(): Promise<Agent | null> {
   const agents = await detectAvailableAgents();
-  const available = agents.filter(a => a.available);
+  const available = agents.filter((a) => a.available);
 
   if (available.length === 0) return null;
 
   // Prefer Claude Code, then others
   const preferred = ['claude-code', 'cursor', 'codex', 'opencode'];
   for (const type of preferred) {
-    const agent = available.find(a => a.type === type);
+    const agent = available.find((a) => a.type === type);
     if (agent) return agent;
   }
 
   return available[0];
 }
 
-export async function runAgent(agent: Agent, options: AgentRunOptions): Promise<{ output: string; exitCode: number }> {
+export async function runAgent(
+  agent: Agent,
+  options: AgentRunOptions
+): Promise<{ output: string; exitCode: number }> {
   const args: string[] = [];
   let stdinInput: string | undefined;
   const env: Record<string, string | undefined> = { ...process.env };
@@ -170,7 +171,7 @@ export async function runAgent(agent: Agent, options: AgentRunOptions): Promise<
         }
         if (options.onOutput) {
           // Call callback for each line
-          const lines = text.split('\n').filter(l => l.trim());
+          const lines = text.split('\n').filter((l) => l.trim());
           for (const line of lines) {
             options.onOutput(line);
           }
@@ -184,7 +185,7 @@ export async function runAgent(agent: Agent, options: AgentRunOptions): Promise<
           process.stderr.write(chalk.dim(text));
         }
         if (options.onOutput) {
-          const lines = text.split('\n').filter(l => l.trim());
+          const lines = text.split('\n').filter((l) => l.trim());
           for (const line of lines) {
             options.onOutput(line);
           }
@@ -219,9 +220,7 @@ export function printAgentStatus(agents: Agent[]): void {
   console.log();
 
   for (const agent of agents) {
-    const status = agent.available
-      ? chalk.green('✓ installed')
-      : chalk.gray('✗ not found');
+    const status = agent.available ? chalk.green('✓ installed') : chalk.gray('✗ not found');
     console.log(`  ${agent.name.padEnd(15)} ${status}`);
   }
   console.log();

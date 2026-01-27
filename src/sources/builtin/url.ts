@@ -1,13 +1,13 @@
 import { BuiltinSource } from '../base.js';
-import type { SourceResult, SourceOptions } from '../types.js';
+import type { SourceOptions, SourceResult } from '../types.js';
 import {
   detectGitHubUrl,
+  fileToMarkdown,
+  issueListToMarkdown,
+  issueToMarkdown,
+  parseGitHubBlob,
   parseGitHubIssue,
   parseGitHubIssueList,
-  parseGitHubBlob,
-  issueToMarkdown,
-  issueListToMarkdown,
-  fileToMarkdown,
 } from './github-scraper.js';
 
 /**
@@ -268,9 +268,7 @@ export class UrlSource extends BuiltinSource {
     // Notion SSR includes some content in data attributes
 
     // Look for preloaded content in __NEXT_DATA__ or similar
-    const nextDataMatch = html.match(
-      /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/
-    );
+    const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
     if (nextDataMatch) {
       try {
         const data = JSON.parse(nextDataMatch[1]);
@@ -300,9 +298,13 @@ export class UrlSource extends BuiltinSource {
 
     // Add note about limitations
     if (lines.length <= 2) {
-      lines.push('*Note: Notion pages are rendered client-side. For full content, use the Notion API integration.*');
+      lines.push(
+        '*Note: Notion pages are rendered client-side. For full content, use the Notion API integration.*'
+      );
       lines.push('');
-      lines.push('Run `ralph-starter config set notion.token <your-token>` to enable full Notion support.');
+      lines.push(
+        'Run `ralph-starter config set notion.token <your-token>` to enable full Notion support.'
+      );
     }
 
     return lines.join('\n');
@@ -339,10 +341,7 @@ export class UrlSource extends BuiltinSource {
     }
 
     // Check content type
-    if (
-      contentType.includes('text/markdown') ||
-      contentType.includes('text/x-markdown')
-    ) {
+    if (contentType.includes('text/markdown') || contentType.includes('text/x-markdown')) {
       return true;
     }
 

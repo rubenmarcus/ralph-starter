@@ -14,10 +14,12 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\"",
+    "lint": "biome lint src",
+    "lint:fix": "biome lint --write src",
+    "format": "biome format --write src",
+    "format:check": "biome format src",
+    "check": "biome check src",
+    "check:fix": "biome check --write src",
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
     "prepublishOnly": "npm run build && npm run test:run",
@@ -72,24 +74,19 @@
     "zod": "^3.22.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.13",
     "@commitlint/cli": "^20.3.1",
     "@commitlint/config-conventional": "^20.3.1",
     "@types/inquirer": "^9.0.7",
     "@types/node": "^22.10.7",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0",
     "husky": "^9.1.0",
     "lint-staged": "^15.2.0",
-    "prettier": "^3.3.0",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8"
   },
   "lint-staged": {
     "src/**/*.ts": [
-      "eslint --fix",
-      "prettier --write"
+      "biome check --write --no-errors-on-unmatched"
     ]
   }
 }

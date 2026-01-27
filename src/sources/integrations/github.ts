@@ -1,5 +1,5 @@
 import { IntegrationSource } from '../base.js';
-import type { SourceResult, SourceOptions } from '../types.js';
+import type { SourceOptions, SourceResult } from '../types.js';
 
 /**
  * GitHub source - fetches issues from GitHub repositories
@@ -71,9 +71,7 @@ export class GitHubSource extends IntegrationSource {
       return { owner, repo };
     }
 
-    this.error(
-      `Invalid repository format: ${identifier}. Use owner/repo or GitHub URL.`
-    );
+    this.error(`Invalid repository format: ${identifier}. Use owner/repo or GitHub URL.`);
   }
 
   private async fetchViaGhCli(
@@ -84,7 +82,14 @@ export class GitHubSource extends IntegrationSource {
     const { execa } = await import('execa');
 
     // Build gh command
-    const args = ['issue', 'list', '-R', `${owner}/${repo}`, '--json', 'number,title,body,labels,state'];
+    const args = [
+      'issue',
+      'list',
+      '-R',
+      `${owner}/${repo}`,
+      '--json',
+      'number,title,body,labels,state',
+    ];
 
     // Add filters
     if (options?.label) {
@@ -152,11 +157,7 @@ export class GitHubSource extends IntegrationSource {
     return this.formatIssues(issues, owner, repo);
   }
 
-  private formatIssues(
-    issues: GitHubIssue[],
-    owner: string,
-    repo: string
-  ): SourceResult {
+  private formatIssues(issues: GitHubIssue[], owner: string, repo: string): SourceResult {
     if (issues.length === 0) {
       return {
         content: `# ${owner}/${repo}\n\nNo issues found matching the criteria.`,

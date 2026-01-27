@@ -48,11 +48,7 @@ function createCodeChallenge(verifier: string): string {
  * Standard base64 with + → -, / → _, and no padding
  */
 function base64urlEncode(buffer: Buffer): string {
-  return buffer
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**

@@ -1,7 +1,7 @@
-import fs from 'fs/promises';
-import path from 'path';
-import type { ValidationResult } from './validation.js';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import type { CostEstimate, TokenEstimate } from './cost-tracker.js';
+import type { ValidationResult } from './validation.js';
 
 export interface ProgressEntry {
   timestamp: string;
@@ -21,7 +21,7 @@ export interface ProgressTracker {
   clear(): Promise<void>;
 }
 
-const ACTIVITY_FILE = 'activity.md';
+const ACTIVITY_FILE = '.ralph/activity.md';
 
 /**
  * Format a progress entry as markdown
@@ -55,12 +55,11 @@ function formatEntry(entry: ProgressEntry): string {
 
   // Cost info
   if (entry.cost) {
-    const costStr = entry.cost.totalCost < 0.01
-      ? `${(entry.cost.totalCost * 100).toFixed(2)}¢`
-      : `$${entry.cost.totalCost.toFixed(3)}`;
-    const tokensStr = entry.tokens
-      ? ` (${entry.tokens.totalTokens.toLocaleString()} tokens)`
-      : '';
+    const costStr =
+      entry.cost.totalCost < 0.01
+        ? `${(entry.cost.totalCost * 100).toFixed(2)}¢`
+        : `$${entry.cost.totalCost.toFixed(3)}`;
+    const tokensStr = entry.tokens ? ` (${entry.tokens.totalTokens.toLocaleString()} tokens)` : '';
     lines.push(`**Cost:** ${costStr}${tokensStr}`);
   }
 
@@ -129,12 +128,16 @@ function getFileHeader(task: string): string {
  */
 export function createProgressTracker(cwd: string, task: string): ProgressTracker {
   const filePath = path.join(cwd, ACTIVITY_FILE);
+  const dirPath = path.dirname(filePath);
   let initialized = false;
 
   return {
     async appendEntry(entry: ProgressEntry): Promise<void> {
       // Initialize file if needed
       if (!initialized) {
+        // Ensure .ralph directory exists
+        await fs.mkdir(dirPath, { recursive: true });
+
         try {
           await fs.access(filePath);
         } catch {

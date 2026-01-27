@@ -4,7 +4,7 @@ import { getConfiguredLLM, getLLMModel } from '../config/manager.js';
 import { callLLM, type LLMProvider, PROVIDERS } from '../llm/index.js';
 import { detectBestAgent, runAgent } from '../loop/agents.js';
 import { RalphAnimator } from './ascii-art.js';
-import type { RefinedIdea, ProjectType, Complexity, TechStack } from './types.js';
+import type { ProjectType, RefinedIdea, TechStack } from './types.js';
 
 // Timeout for agent calls (60 seconds - agents take longer)
 const AGENT_TIMEOUT_MS = 60000;
@@ -15,9 +15,7 @@ const AGENT_TIMEOUT_MS = 60000;
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
   return Promise.race([
     promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(message)), timeoutMs)
-    ),
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(message)), timeoutMs)),
   ]);
 }
 
@@ -85,9 +83,11 @@ Return ONLY valid JSON (no markdown, no explanation) in this exact format:
   "projectDescription": "A one-sentence description of what this project does",
   "projectType": "web|api|cli|mobile|library|automation",
   "suggestedStack": {
-    "frontend": "react|nextjs|vue|svelte|vanilla|react-native|expo|null",
-    "backend": "nodejs|python|go|null",
-    "database": "sqlite|postgres|mongodb|null"
+    "frontend": "react|nextjs|vue|svelte|astro|remix|vanilla|react-native|expo|null",
+    "backend": "nodejs|express|fastify|hono|python|django|flask|fastapi|go|gin|rust|null",
+    "database": "sqlite|postgres|mysql|mongodb|redis|supabase|firebase|prisma|drizzle|null",
+    "styling": "tailwind|css|scss|styled-components|null",
+    "language": "typescript|javascript|python|go|rust"
   },
   "coreFeatures": ["feature1", "feature2", "feature3"],
   "suggestedFeatures": ["additional-feature1", "additional-feature2"],
@@ -97,7 +97,14 @@ Return ONLY valid JSON (no markdown, no explanation) in this exact format:
 Guidelines:
 - projectName should be short, memorable, and lowercase with hyphens
 - Choose the most appropriate projectType based on the idea
-- For suggestedStack, pick practical defaults (e.g., React + Node.js + SQLite for web apps)
+- CRITICAL: If the user mentions ANY specific technology, framework, library, or tool, you MUST use it exactly as specified. This applies to:
+  - Frontend: Astro, Next.js, Vue, Svelte, React, Remix, etc.
+  - Backend: Express, Fastify, Hono, Django, Flask, FastAPI, Gin, etc.
+  - Database: PostgreSQL, MySQL, MongoDB, Supabase, Firebase, Prisma, Drizzle, etc.
+  - Styling: Tailwind, SCSS, styled-components, etc.
+  - Language: TypeScript, Python, Go, Rust, etc.
+- NEVER substitute a user-specified technology with a different one
+- Only suggest defaults when the user doesn't specify (e.g., TypeScript + React for unspecified web apps)
 - coreFeatures are essential features implied by the idea
 - suggestedFeatures are nice-to-haves that would enhance the project
 - estimatedComplexity is based on scope (prototype=hours, mvp=day, full=days/weeks)`;
@@ -126,11 +133,11 @@ export async function refineIdea(idea: string, spinner?: Ora): Promise<RefinedId
         const result = await refineViaAgentWithAnimator(idea, agent, animator);
         animator.stop(chalk.green('✓ Idea analyzed!'));
         return result;
-      } catch (error) {
+      } catch (_error) {
         animator.stop(chalk.red('✗ Could not analyze idea'));
         // Fall through to API
       }
-    } catch (error) {
+    } catch (_error) {
       // Fall through to API - silent fallback
     }
   }
@@ -140,7 +147,7 @@ export async function refineIdea(idea: string, spinner?: Ora): Promise<RefinedId
   if (llmConfig) {
     try {
       return await refineViaApi(idea, llmConfig.provider, llmConfig.apiKey);
-    } catch (error) {
+    } catch (_error) {
       // Fall through to template - silent fallback
     }
   }
@@ -178,7 +185,7 @@ async function refineViaApi(
 /**
  * Refine via Claude Code agent
  */
-async function refineViaAgent(idea: string, agent: any): Promise<RefinedIdea> {
+async function _refineViaAgent(idea: string, agent: any): Promise<RefinedIdea> {
   const prompt = REFINEMENT_PROMPT.replace('{IDEA}', idea);
 
   // NOTE: Don't use maxTurns:1 - it's too restrictive and causes "Reached max turns" error
@@ -211,6 +218,53 @@ async function refineViaAgent(idea: string, agent: any): Promise<RefinedIdea> {
 }
 
 /**
+ * Detect status message from JSONL event
+ */
+function getStatusFromEvent(parsed: any): string | null {
+  // System events
+  if (parsed.type === 'system') {
+    if (parsed.subtype === 'init') return 'Starting up...';
+    return null;
+  }
+
+  // Assistant is thinking/responding
+  if (parsed.type === 'assistant') {
+    const content = parsed.message?.content;
+    if (content && Array.isArray(content)) {
+      for (const block of content) {
+        // Tool use - show what tool is being used
+        if (block.type === 'tool_use') {
+          const toolName = block.name?.toLowerCase() || '';
+          if (toolName.includes('read')) return 'Reading files...';
+          if (toolName.includes('write') || toolName.includes('edit')) return 'Writing...';
+          if (toolName.includes('glob') || toolName.includes('grep')) return 'Searching...';
+          if (toolName.includes('bash')) return 'Running command...';
+          if (toolName.includes('task')) return 'Processing...';
+          return `Using ${block.name}...`;
+        }
+        // Text content - Claude is thinking
+        if (block.type === 'text') {
+          return 'Thinking...';
+        }
+      }
+    }
+    return 'Thinking...';
+  }
+
+  // User/tool result
+  if (parsed.type === 'user') {
+    return 'Processing result...';
+  }
+
+  // Result event
+  if (parsed.type === 'result') {
+    return 'Finishing up...';
+  }
+
+  return null;
+}
+
+/**
  * Refine via Claude Code agent with streaming output to animator
  */
 async function refineViaAgentWithAnimator(
@@ -226,26 +280,17 @@ async function refineViaAgentWithAnimator(
       cwd: process.cwd(),
       auto: true,
       onOutput: (line: string) => {
-        // Parse JSONL lines to extract meaningful text for display
+        // Parse JSONL lines to update status message
         try {
           const parsed = JSON.parse(line);
-          // Show assistant text content (not tool calls or system messages)
-          if (parsed.type === 'assistant' && parsed.message?.content) {
-            for (const block of parsed.message.content) {
-              if (block.type === 'text' && typeof block.text === 'string') {
-                const text = block.text.trim();
-                // Filter out JSON fragments, only show meaningful text
-                if (text && !text.startsWith('{') && !text.startsWith('"') && text.length > 10) {
-                  animator.addOutput(text);
-                }
-              }
-            }
+
+          // Update animator message based on event type
+          const status = getStatusFromEvent(parsed);
+          if (status) {
+            animator.updateMessage(status);
           }
         } catch {
-          // Not JSON - show if meaningful
-          if (line && !line.startsWith('{') && !line.startsWith('"') && line.trim().length > 10) {
-            animator.addOutput(line.trim());
-          }
+          // Not JSON - ignore
         }
       },
     }),
@@ -279,13 +324,29 @@ function getTemplateSuggestions(idea: string): RefinedIdea {
   let projectType: ProjectType = 'web';
   if (lowerIdea.includes('api') || lowerIdea.includes('backend') || lowerIdea.includes('server')) {
     projectType = 'api';
-  } else if (lowerIdea.includes('cli') || lowerIdea.includes('command line') || lowerIdea.includes('terminal')) {
+  } else if (
+    lowerIdea.includes('cli') ||
+    lowerIdea.includes('command line') ||
+    lowerIdea.includes('terminal')
+  ) {
     projectType = 'cli';
-  } else if (lowerIdea.includes('mobile') || lowerIdea.includes('ios') || lowerIdea.includes('android')) {
+  } else if (
+    lowerIdea.includes('mobile') ||
+    lowerIdea.includes('ios') ||
+    lowerIdea.includes('android')
+  ) {
     projectType = 'mobile';
-  } else if (lowerIdea.includes('library') || lowerIdea.includes('package') || lowerIdea.includes('sdk')) {
+  } else if (
+    lowerIdea.includes('library') ||
+    lowerIdea.includes('package') ||
+    lowerIdea.includes('sdk')
+  ) {
     projectType = 'library';
-  } else if (lowerIdea.includes('script') || lowerIdea.includes('automate') || lowerIdea.includes('bot')) {
+  } else if (
+    lowerIdea.includes('script') ||
+    lowerIdea.includes('automate') ||
+    lowerIdea.includes('bot')
+  ) {
     projectType = 'automation';
   }
 
@@ -299,19 +360,85 @@ function getTemplateSuggestions(idea: string): RefinedIdea {
     .slice(0, 3)
     .join('-');
 
-  // Suggest stack based on type
+  // Detect specific technologies from idea
+  const detectTech = (patterns: [string, string][]): string | undefined => {
+    for (const [pattern, value] of patterns) {
+      if (lowerIdea.includes(pattern)) return value;
+    }
+    return undefined;
+  };
+
+  const detectedFrontend = detectTech([
+    ['astro', 'astro'],
+    ['nextjs', 'nextjs'],
+    ['next.js', 'nextjs'],
+    ['remix', 'remix'],
+    ['vue', 'vue'],
+    ['svelte', 'svelte'],
+    ['react native', 'react-native'],
+    ['expo', 'expo'],
+  ]);
+
+  const detectedBackend = detectTech([
+    ['express', 'express'],
+    ['fastify', 'fastify'],
+    ['hono', 'hono'],
+    ['django', 'django'],
+    ['flask', 'flask'],
+    ['fastapi', 'fastapi'],
+    ['gin', 'gin'],
+  ]);
+
+  const detectedDatabase = detectTech([
+    ['supabase', 'supabase'],
+    ['firebase', 'firebase'],
+    ['prisma', 'prisma'],
+    ['drizzle', 'drizzle'],
+    ['postgres', 'postgres'],
+    ['postgresql', 'postgres'],
+    ['mysql', 'mysql'],
+    ['mongodb', 'mongodb'],
+    ['mongo', 'mongodb'],
+    ['redis', 'redis'],
+  ]);
+
+  const detectedStyling = detectTech([
+    ['tailwind', 'tailwind'],
+    ['styled-components', 'styled-components'],
+    ['scss', 'scss'],
+    ['sass', 'scss'],
+  ]);
+
+  const detectedLanguage = detectTech([
+    ['typescript', 'typescript'],
+    ['python', 'python'],
+    ['golang', 'go'],
+    [' go ', 'go'],
+    ['rust', 'rust'],
+  ]);
+
+  // Suggest stack based on type and detected tech
   const suggestedStack: TechStack = {};
+
   if (projectType === 'web') {
-    suggestedStack.frontend = 'react';
-    suggestedStack.backend = 'nodejs';
-    suggestedStack.database = 'sqlite';
+    suggestedStack.frontend = detectedFrontend || 'react';
+    suggestedStack.backend =
+      detectedBackend || (detectedFrontend === 'astro' ? undefined : 'nodejs');
+    suggestedStack.database =
+      detectedDatabase || (detectedFrontend === 'astro' ? undefined : 'sqlite');
   } else if (projectType === 'api') {
-    suggestedStack.backend = 'nodejs';
-    suggestedStack.database = 'postgres';
+    suggestedStack.backend = detectedBackend || 'nodejs';
+    suggestedStack.database = detectedDatabase || 'postgres';
   } else if (projectType === 'mobile') {
-    suggestedStack.frontend = 'expo';
-    suggestedStack.backend = 'nodejs';
+    suggestedStack.frontend = detectedFrontend || 'expo';
+    suggestedStack.backend = detectedBackend || 'nodejs';
+  } else if (projectType === 'cli') {
+    suggestedStack.language = detectedLanguage || 'typescript';
   }
+
+  // Add detected styling and language if found
+  if (detectedStyling) suggestedStack.styling = detectedStyling;
+  if (detectedLanguage) suggestedStack.language = detectedLanguage;
 
   // Common features based on type
   const typeFeatures: Record<ProjectType, string[]> = {

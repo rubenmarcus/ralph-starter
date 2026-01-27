@@ -4,17 +4,16 @@
  */
 
 export {
-  type LLMProvider,
-  type ProviderConfig,
-  PROVIDERS,
-  PROVIDER_NAMES,
-  detectProviderFromEnv,
-  getProviderKeyFromEnv,
-} from './providers.js';
-
-export {
+  callLLM,
   type LLMRequest,
   type LLMResponse,
-  callLLM,
   tryCallLLM,
 } from './api.js';
+export {
+  detectProviderFromEnv,
+  getProviderKeyFromEnv,
+  type LLMProvider,
+  PROVIDER_NAMES,
+  PROVIDERS,
+  type ProviderConfig,
+} from './providers.js';

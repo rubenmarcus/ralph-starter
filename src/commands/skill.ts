@@ -1,7 +1,7 @@
 import chalk from 'chalk';
-import ora from 'ora';
 import { execa } from 'execa';
 import inquirer from 'inquirer';
+import ora from 'ora';
 
 interface SkillOptions {
   global?: boolean;
@@ -12,12 +12,21 @@ const POPULAR_SKILLS = [
   {
     name: 'vercel-labs/agent-skills',
     description: 'React, Next.js, and Vercel best practices',
-    skills: ['react-best-practices', 'nextjs-best-practices', 'vercel-best-practices', 'web-design-review']
+    skills: [
+      'react-best-practices',
+      'nextjs-best-practices',
+      'vercel-best-practices',
+      'web-design-review',
+    ],
   },
   // Add more as the ecosystem grows
 ];
 
-export async function skillCommand(action: string, skillName?: string, options: SkillOptions = {}): Promise<void> {
+export async function skillCommand(
+  action: string,
+  skillName?: string,
+  options: SkillOptions = {}
+): Promise<void> {
   switch (action) {
     case 'add':
     case 'install':
@@ -80,7 +89,7 @@ async function addSkill(skillName: string, options: SkillOptions): Promise<void>
     });
 
     spinner.succeed('Skill installed successfully!');
-  } catch (error) {
+  } catch (_error) {
     spinner.fail('Failed to install skill');
     console.log();
     console.log(chalk.yellow('Try running manually:'));
@@ -116,10 +125,11 @@ async function searchSkills(query?: string): Promise<void> {
   console.log();
 
   // Filter popular skills by query
-  const results = POPULAR_SKILLS.filter(repo =>
-    repo.name.toLowerCase().includes(query.toLowerCase()) ||
-    repo.description.toLowerCase().includes(query.toLowerCase()) ||
-    repo.skills.some(s => s.toLowerCase().includes(query.toLowerCase()))
+  const results = POPULAR_SKILLS.filter(
+    (repo) =>
+      repo.name.toLowerCase().includes(query.toLowerCase()) ||
+      repo.description.toLowerCase().includes(query.toLowerCase()) ||
+      repo.skills.some((s) => s.toLowerCase().includes(query.toLowerCase()))
   );
 
   if (results.length === 0) {
@@ -142,14 +152,14 @@ async function browseSkills(): Promise<void> {
       name: 'skill',
       message: 'Select a skill to install:',
       choices: [
-        ...POPULAR_SKILLS.map(repo => ({
+        ...POPULAR_SKILLS.map((repo) => ({
           name: `${repo.name} - ${chalk.dim(repo.description)}`,
           value: repo.name,
         })),
         new inquirer.Separator(),
         { name: chalk.dim('Cancel'), value: null },
       ],
-    }
+    },
   ]);
 
   if (skill) {

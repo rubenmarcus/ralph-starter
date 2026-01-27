@@ -1,6 +1,6 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { execa } from 'execa';
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
 
 export interface ValidationCommand {
   name: string;
@@ -26,8 +26,9 @@ export function detectValidationCommands(cwd: string): ValidationCommand[] {
   if (existsSync(agentsPath)) {
     const content = readFileSync(agentsPath, 'utf-8');
 
-    // Look for test command
-    const testMatch = content.match(/test[:\s]+[`"]?([^`"\n]+)[`"]?/i);
+    // Look for test command (must be in backticks after bullet or colon)
+    // Matches: "- **Test**: `npm test`" or "- Test: `bun test`" or "* test: `vitest`"
+    const testMatch = content.match(/[-*]\s*\*?\*?test\*?\*?[:\s]+`([^`]+)`/i);
     if (testMatch) {
       const parts = testMatch[1].trim().split(/\s+/);
       commands.push({
@@ -37,8 +38,8 @@ export function detectValidationCommands(cwd: string): ValidationCommand[] {
       });
     }
 
-    // Look for lint command
-    const lintMatch = content.match(/lint[:\s]+[`"]?([^`"\n]+)[`"]?/i);
+    // Look for lint command (must be in backticks after bullet or colon)
+    const lintMatch = content.match(/[-*]\s*\*?\*?lint\*?\*?[:\s]+`([^`]+)`/i);
     if (lintMatch) {
       const parts = lintMatch[1].trim().split(/\s+/);
       commands.push({
@@ -48,8 +49,8 @@ export function detectValidationCommands(cwd: string): ValidationCommand[] {
       });
     }
 
-    // Look for build command
-    const buildMatch = content.match(/build[:\s]+[`"]?([^`"\n]+)[`"]?/i);
+    // Look for build command (must be in backticks after bullet or colon)
+    const buildMatch = content.match(/[-*]\s*\*?\*?build\*?\*?[:\s]+`([^`]+)`/i);
     if (buildMatch) {
       const parts = buildMatch[1].trim().split(/\s+/);
       commands.push({
@@ -153,7 +154,7 @@ export async function runAllValidations(
  * Format validation errors for feedback to the agent
  */
 export function formatValidationFeedback(results: ValidationResult[]): string {
-  const failedResults = results.filter(r => !r.success);
+  const failedResults = results.filter((r) => !r.success);
 
   if (failedResults.length === 0) {
     return '';

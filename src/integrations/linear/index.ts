@@ -5,5 +5,5 @@
  * Uses the Linear CLI for authentication or API key.
  */
 
-export { LinearIntegration } from './source.js';
 export { LinearOAuthProvider, linearProvider } from './auth.js';
+export { LinearIntegration } from './source.js';

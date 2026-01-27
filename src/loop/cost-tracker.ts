@@ -5,7 +5,7 @@
 
 export interface ModelPricing {
   name: string;
-  inputPricePerMillion: number;  // USD per 1M input tokens
+  inputPricePerMillion: number; // USD per 1M input tokens
   outputPricePerMillion: number; // USD per 1M output tokens
 }
 
@@ -37,7 +37,7 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
     outputPricePerMillion: 30,
   },
   // Default for unknown models (conservative estimate)
-  'default': {
+  default: {
     name: 'Default',
     inputPricePerMillion: 3,
     outputPricePerMillion: 15,
@@ -86,7 +86,9 @@ export function estimateTokens(text: string): number {
   if (!text) return 0;
   // More accurate estimation considering code vs prose
   // Code typically has more tokens per character due to special characters
-  const hasCode = /```|function|const |let |var |import |export |class |def |async |await /.test(text);
+  const hasCode = /```|function|const |let |var |import |export |class |def |async |await /.test(
+    text
+  );
   const charsPerToken = hasCode ? 3.5 : 4;
   return Math.ceil(text.length / charsPerToken);
 }
@@ -140,7 +142,7 @@ export class CostTracker {
 
   constructor(config: CostTrackerConfig) {
     this.config = config;
-    this.pricing = MODEL_PRICING[config.model] || MODEL_PRICING['default'];
+    this.pricing = MODEL_PRICING[config.model] || MODEL_PRICING.default;
   }
 
   /**
@@ -216,9 +218,9 @@ export class CostTracker {
       const remainingIterations = this.config.maxIterations - totalIterations;
       if (remainingIterations > 0) {
         projectedCost = {
-          inputCost: totalCost.inputCost + (avgCostPerIteration.inputCost * remainingIterations),
-          outputCost: totalCost.outputCost + (avgCostPerIteration.outputCost * remainingIterations),
-          totalCost: totalCost.totalCost + (avgCostPerIteration.totalCost * remainingIterations),
+          inputCost: totalCost.inputCost + avgCostPerIteration.inputCost * remainingIterations,
+          outputCost: totalCost.outputCost + avgCostPerIteration.outputCost * remainingIterations,
+          totalCost: totalCost.totalCost + avgCostPerIteration.totalCost * remainingIterations,
         };
       }
     }

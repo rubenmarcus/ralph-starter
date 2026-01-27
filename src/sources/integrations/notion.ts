@@ -1,5 +1,5 @@
 import { IntegrationSource } from '../base.js';
-import type { SourceResult, SourceOptions } from '../types.js';
+import type { SourceOptions, SourceResult } from '../types.js';
 
 /**
  * Notion source - fetches pages and databases from Notion
@@ -84,7 +84,7 @@ export class NotionSource extends IntegrationSource {
       const page = await this.fetchPage(token, formattedId);
       const blocks = await this.fetchBlocks(token, formattedId);
       return this.formatPage(page, blocks);
-    } catch (error) {
+    } catch (_error) {
       // Try as database
       try {
         const database = await this.fetchDatabase(token, formattedId);
@@ -152,11 +152,7 @@ export class NotionSource extends IntegrationSource {
   }
 
   private async fetchBlocks(token: string, id: string): Promise<NotionBlock[]> {
-    const response = await this.apiRequest(
-      token,
-      'GET',
-      `/blocks/${id}/children?page_size=100`
-    );
+    const response = await this.apiRequest(token, 'GET', `/blocks/${id}/children?page_size=100`);
     return response.results;
   }
 
@@ -189,9 +185,7 @@ export class NotionSource extends IntegrationSource {
 
     if (!response.ok) {
       if (response.status === 401) {
-        this.error(
-          'Invalid Notion token. Run: ralph-starter config set notion.token <token>'
-        );
+        this.error('Invalid Notion token. Run: ralph-starter config set notion.token <token>');
       }
       if (response.status === 404) {
         throw new Error('Not found');
@@ -221,10 +215,7 @@ export class NotionSource extends IntegrationSource {
     };
   }
 
-  private formatDatabase(
-    database: NotionDatabase,
-    items: NotionPage[]
-  ): SourceResult {
+  private formatDatabase(database: NotionDatabase, items: NotionPage[]): SourceResult {
     const title = this.getDatabaseTitle(database);
     const sections: string[] = [`# ${title}\n`];
 
@@ -340,7 +331,7 @@ export class NotionSource extends IntegrationSource {
 
     switch (block.type) {
       case 'paragraph':
-        return text + '\n';
+        return `${text}\n`;
       case 'heading_1':
         return `## ${text}\n`;
       case 'heading_2':
@@ -351,26 +342,30 @@ export class NotionSource extends IntegrationSource {
         return `- ${text}`;
       case 'numbered_list_item':
         return `1. ${text}`;
-      case 'to_do':
+      case 'to_do': {
         const checked = content.checked ? 'x' : ' ';
         return `- [${checked}] ${text}`;
+      }
       case 'toggle':
         return `<details>\n<summary>${text}</summary>\n</details>\n`;
       case 'quote':
         return `> ${text}\n`;
-      case 'callout':
+      case 'callout': {
         const emoji = content.icon?.emoji || '💡';
         return `> ${emoji} ${text}\n`;
-      case 'code':
+      }
+      case 'code': {
         const lang = content.language || '';
         return `\`\`\`${lang}\n${text}\n\`\`\`\n`;
+      }
       case 'divider':
         return '---\n';
-      case 'image':
+      case 'image': {
         const url = content.file?.url || content.external?.url || '';
         return url ? `![Image](${url})\n` : '';
+      }
       default:
-        return text ? text + '\n' : '';
+        return text ? `${text}\n` : '';
     }
   }
 

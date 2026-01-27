@@ -210,7 +210,7 @@ export abstract class BaseIntegration implements Integration {
    */
   protected async hasOAuthToken(): Promise<boolean> {
     const creds = await this.getCredentials();
-    return !!(creds?.accessToken);
+    return !!creds?.accessToken;
   }
 
   /**

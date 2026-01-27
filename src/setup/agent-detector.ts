@@ -3,7 +3,7 @@
  * Detects installed AI coding agents (Claude Code, OpenCode, Codex, Aider)
  */
 
-import { platform } from 'os';
+import { platform } from 'node:os';
 
 export interface AgentInfo {
   id: string;
@@ -31,7 +31,7 @@ export const SUPPORTED_AGENTS: AgentInfo[] = [
     name: 'Claude Code',
     command: 'claude',
     versionFlag: '--version',
-    description: 'Anthropic\'s Claude Code CLI',
+    description: "Anthropic's Claude Code CLI",
   },
   {
     id: 'opencode',
@@ -120,9 +120,7 @@ export async function detectAgent(agent: AgentInfo): Promise<AgentDetectionResul
  * Detect all supported agents
  */
 export async function detectAllAgents(): Promise<AgentDetectionResult[]> {
-  const results = await Promise.all(
-    SUPPORTED_AGENTS.map((agent) => detectAgent(agent))
-  );
+  const results = await Promise.all(SUPPORTED_AGENTS.map((agent) => detectAgent(agent)));
   return results;
 }
 
@@ -192,11 +190,7 @@ export async function testClaudeCodeWithPrompt(): Promise<{
     const { execa } = await import('execa');
 
     // Run a simple test prompt
-    const result = await execa(
-      'claude',
-      ['-p', 'say OK', '--no-markdown'],
-      { timeout: 60000 }
-    );
+    const result = await execa('claude', ['-p', 'say OK', '--no-markdown'], { timeout: 60000 });
 
     const responseTime = Date.now() - startTime;
 

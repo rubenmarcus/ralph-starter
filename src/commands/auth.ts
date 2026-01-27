@@ -1,24 +1,18 @@
-import chalk from 'chalk';
 import crypto from 'node:crypto';
+import chalk from 'chalk';
 import ora from 'ora';
+import { getRandomPort, openBrowser } from '../auth/browser.js';
+import { getCallbackUrl, startOAuthServer } from '../auth/oauth-server.js';
+import { generatePKCE } from '../auth/pkce.js';
+import { getProvider, getProviderNames, type OAuthProvider } from '../auth/providers/index.js';
 import {
-  setSourceCredential,
   deleteSourceCredential,
   getSourceCredentials,
   getSourcesConfigPath,
+  setSourceCredential,
 } from '../sources/config.js';
-import { openBrowser, getRandomPort } from '../auth/browser.js';
-import { startOAuthServer, getCallbackUrl } from '../auth/oauth-server.js';
-import { generatePKCE } from '../auth/pkce.js';
-import {
-  getProvider,
-  getProviderNames,
-  type OAuthProvider,
-} from '../auth/providers/index.js';
 
-export interface AuthCommandOptions {
-  // No options yet
-}
+export type AuthCommandOptions = {};
 
 /**
  * Auth command - Browser-based OAuth authentication for integrations
@@ -80,7 +74,9 @@ async function showAuthStatus(): Promise<void> {
       console.log(chalk.dim(`      Run: ralph-starter auth ${name}`));
     } else if (provider.supportsPKCE && !isConfigured) {
       // PKCE provider but no client_id - needs env var
-      console.log(`  ${chalk.dim('○')} ${chalk.bold(provider.displayName)} - ${authMethod} (not configured)`);
+      console.log(
+        `  ${chalk.dim('○')} ${chalk.bold(provider.displayName)} - ${authMethod} (not configured)`
+      );
       console.log(chalk.dim(`      Set RALPH_${name.toUpperCase()}_CLIENT_ID env var`));
     } else {
       // Non-PKCE provider - manual API key only
@@ -176,7 +172,7 @@ async function startOAuthFlow(service: string): Promise<void> {
   // Open browser to authorization URL
   try {
     await openBrowser(authUrl);
-  } catch (error) {
+  } catch (_error) {
     console.log(chalk.yellow('Could not open browser automatically.'));
     console.log(chalk.dim('Please open this URL manually:'));
     console.log();
@@ -239,7 +235,7 @@ function getApiKeyUrl(service: string): string {
     todoist: 'https://todoist.com/prefs/integrations',
     github: 'https://github.com/settings/tokens',
   };
-  return urls[service] || 'the service\'s developer settings';
+  return urls[service] || "the service's developer settings";
 }
 
 /**

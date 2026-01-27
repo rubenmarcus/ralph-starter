@@ -3,7 +3,7 @@
  * Supports Anthropic, OpenAI, and OpenRouter
  */
 
-import { LLMProvider, PROVIDERS, getProviderKeyFromEnv } from './providers.js';
+import { getProviderKeyFromEnv, type LLMProvider, PROVIDERS } from './providers.js';
 
 // Timeout for API calls (30 seconds)
 const API_TIMEOUT_MS = 30000;
@@ -50,10 +50,7 @@ async function fetchWithTimeout(
 /**
  * Call Anthropic API
  */
-async function callAnthropic(
-  apiKey: string,
-  request: LLMRequest
-): Promise<LLMResponse> {
+async function callAnthropic(apiKey: string, request: LLMRequest): Promise<LLMResponse> {
   const config = PROVIDERS.anthropic;
   const model = request.model || config.defaultModel;
 
@@ -108,7 +105,7 @@ async function callOpenAICompatible(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${apiKey}`,
+    Authorization: `Bearer ${apiKey}`,
   };
 
   // OpenRouter requires additional headers
@@ -197,10 +194,7 @@ export async function tryCallLLM(
     if (key) {
       try {
         return await callLLM(p, key, request);
-      } catch {
-        // Try next provider
-        continue;
-      }
+      } catch {}
     }
   }
 

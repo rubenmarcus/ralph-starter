@@ -1,7 +1,7 @@
-import { existsSync, readFileSync } from 'fs';
-import { resolve, basename } from 'path';
+import { existsSync, readFileSync } from 'node:fs';
+import { basename, resolve } from 'node:path';
 import { BuiltinSource } from '../base.js';
-import type { SourceResult, SourceOptions } from '../types.js';
+import type { SourceOptions, SourceResult } from '../types.js';
 
 /**
  * PDF source - extracts text from PDF documents
@@ -33,9 +33,7 @@ export class PdfSource extends BuiltinSource {
     if (!this.pdfParse) {
       const available = await this.isAvailable();
       if (!available) {
-        this.error(
-          'pdf-parse package not installed. Run: npm install pdf-parse'
-        );
+        this.error('pdf-parse package not installed. Run: npm install pdf-parse');
       }
     }
 
@@ -57,7 +55,11 @@ export class PdfSource extends BuiltinSource {
     }
 
     // Parse PDF
-    const data = await this.pdfParse!(buffer);
+    const data = await this.pdfParse?.(buffer);
+
+    if (!data) {
+      throw new Error('PDF parsing failed - pdf-parse not available');
+    }
 
     // Clean and format the text
     const content = this.formatPdfContent(data.text, title);
@@ -162,9 +164,7 @@ export class PdfSource extends BuiltinSource {
         lines[i + 1]?.trim()
       ) {
         // Convert to title case
-        const titleCase = line
-          .toLowerCase()
-          .replace(/\b\w/g, (c) => c.toUpperCase());
+        const titleCase = line.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
         result.push(`\n## ${titleCase}\n`);
         continue;
       }

@@ -1,14 +1,68 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import chalk from 'chalk';
-import ora from 'ora';
+import { execa } from 'execa';
 import inquirer from 'inquirer';
-import { existsSync, readFileSync, mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { detectBestAgent, detectAvailableAgents, printAgentStatus, Agent } from '../loop/agents.js';
-import { runLoop, LoopOptions } from '../loop/executor.js';
-import { isGitRepo, initGitRepo } from '../automation/git.js';
-import { fetchFromSource, detectSource } from '../sources/index.js';
-import { getPreset, getPresetNames, formatPresetsHelp, PresetConfig } from '../presets/index.js';
+import ora from 'ora';
+import { initGitRepo, isGitRepo } from '../automation/git.js';
+import {
+  type Agent,
+  detectAvailableAgents,
+  detectBestAgent,
+  printAgentStatus,
+} from '../loop/agents.js';
 import { formatCost, formatTokens } from '../loop/cost-tracker.js';
+import { type LoopOptions, runLoop } from '../loop/executor.js';
+import { calculateOptimalIterations } from '../loop/task-counter.js';
+import { formatPresetsHelp, getPreset, type PresetConfig } from '../presets/index.js';
+import { fetchFromSource } from '../sources/index.js';
+
+/**
+ * Detect how to run the project based on package.json scripts or common patterns
+ */
+function detectRunCommand(
+  cwd: string
+): { command: string; args: string[]; description: string } | null {
+  // Check package.json for scripts
+  const packageJsonPath = join(cwd, 'package.json');
+  if (existsSync(packageJsonPath)) {
+    try {
+      const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+      const scripts = pkg.scripts || {};
+
+      // Priority order for dev commands
+      if (scripts.dev) {
+        return { command: 'npm', args: ['run', 'dev'], description: 'npm run dev' };
+      }
+      if (scripts.start) {
+        return { command: 'npm', args: ['run', 'start'], description: 'npm run start' };
+      }
+      if (scripts.serve) {
+        return { command: 'npm', args: ['run', 'serve'], description: 'npm run serve' };
+      }
+      if (scripts.preview) {
+        return { command: 'npm', args: ['run', 'preview'], description: 'npm run preview' };
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }
+
+  // Check for Python projects
+  if (existsSync(join(cwd, 'main.py'))) {
+    return { command: 'python', args: ['main.py'], description: 'python main.py' };
+  }
+  if (existsSync(join(cwd, 'app.py'))) {
+    return { command: 'python', args: ['app.py'], description: 'python app.py' };
+  }
+
+  // Check for Go projects
+  if (existsSync(join(cwd, 'main.go'))) {
+    return { command: 'go', args: ['run', 'main.go'], description: 'go run main.go' };
+  }
+
+  return null;
+}
 
 export interface RunCommandOptions {
   auto?: boolean;
@@ -37,7 +91,10 @@ export interface RunCommandOptions {
   circuitBreakerErrors?: number;
 }
 
-export async function runCommand(task: string | undefined, options: RunCommandOptions): Promise<void> {
+export async function runCommand(
+  task: string | undefined,
+  options: RunCommandOptions
+): Promise<void> {
   const cwd = process.cwd();
   const spinner = ora();
 
@@ -56,7 +113,7 @@ export async function runCommand(task: string | undefined, options: RunCommandOp
           name: 'initGit',
           message: 'Git repo not found. Initialize one?',
           default: true,
-        }
+        },
       ]);
 
       if (initGit) {
@@ -105,49 +162,40 @@ export async function runCommand(task: string | undefined, options: RunCommandOp
     }
   }
 
-  // Detect available agents
-  spinner.start('Detecting available agents...');
-  const agents = await detectAvailableAgents();
-  const availableAgents = agents.filter(a => a.available);
-  spinner.stop();
+  // Detect agent - use explicit selection or auto-detect best
+  let agent: Agent | null = null;
 
-  if (availableAgents.length === 0) {
-    console.log(chalk.red('No coding agents found!'));
-    console.log();
-    console.log(chalk.yellow('Please install one of these:'));
-    console.log(chalk.gray('  Claude Code: npm install -g @anthropic-ai/claude-code'));
-    console.log(chalk.gray('  Cursor:      https://cursor.sh'));
-    console.log(chalk.gray('  Codex:       npm install -g codex'));
-    console.log(chalk.gray('  OpenCode:    npm install -g opencode'));
-    process.exit(1);
-  }
-
-  // Select agent
-  let agent: Agent;
   if (options.agent) {
-    const found = agents.find(a => a.type === options.agent || a.name.toLowerCase() === options.agent?.toLowerCase());
+    // Explicit agent selection via --agent flag
+    spinner.start('Checking agent...');
+    const agents = await detectAvailableAgents();
+    const found = agents.find(
+      (a) => a.type === options.agent || a.name.toLowerCase() === options.agent?.toLowerCase()
+    );
+    spinner.stop();
+
     if (!found || !found.available) {
       console.log(chalk.red(`Agent "${options.agent}" not found or not available.`));
       printAgentStatus(agents);
       process.exit(1);
     }
     agent = found;
-  } else if (availableAgents.length === 1) {
-    agent = availableAgents[0];
   } else {
-    // Let user choose
-    const { selectedAgent } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'selectedAgent',
-        message: 'Select coding agent:',
-        choices: availableAgents.map(a => ({
-          name: a.name,
-          value: a,
-        })),
-      }
-    ]);
-    agent = selectedAgent;
+    // Auto-detect best agent (same as plan.ts)
+    spinner.start('Detecting coding agent...');
+    agent = await detectBestAgent();
+    spinner.stop();
+
+    if (!agent) {
+      console.log(chalk.red('No coding agents found!'));
+      console.log();
+      console.log(chalk.yellow('Please install one of these:'));
+      console.log(chalk.gray('  Claude Code: npm install -g @anthropic-ai/claude-code'));
+      console.log(chalk.gray('  Cursor:      https://cursor.sh'));
+      console.log(chalk.gray('  Codex:       npm install -g codex'));
+      console.log(chalk.gray('  OpenCode:    npm install -g opencode'));
+      process.exit(1);
+    }
   }
 
   console.log(chalk.dim(`Using agent: ${agent.name}`));
@@ -198,8 +246,8 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
           type: 'input',
           name: 'inputTask',
           message: 'What would you like to build?',
-          validate: (input: string) => input.trim() ? true : 'Please enter a task',
-        }
+          validate: (input: string) => (input.trim() ? true : 'Please enter a task'),
+        },
       ]);
       finalTask = inputTask;
     }
@@ -215,7 +263,9 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
 
   if (!finalTask) {
     console.log(chalk.red('No task provided.'));
-    console.log(chalk.dim('Either provide a task or run `ralph-starter init` to set up Ralph Playbook.'));
+    console.log(
+      chalk.dim('Either provide a task or run `ralph-starter init` to set up Ralph Playbook.')
+    );
     process.exit(1);
   }
 
@@ -244,12 +294,25 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     ? 'Ralph: Implementation from plan'
     : `Ralph: ${finalTask.slice(0, 50)}`;
 
+  // Calculate smart iterations based on tasks (if in build mode and no explicit override)
+  let smartIterations = 10; // default
+  if (isBuildMode && !options.maxIterations && !preset?.maxIterations) {
+    const { iterations, taskCount, reason } = calculateOptimalIterations(cwd);
+    smartIterations = iterations;
+    if (taskCount.total > 0) {
+      console.log(
+        chalk.dim(`Tasks: ${taskCount.pending} pending, ${taskCount.completed} completed`)
+      );
+      console.log(chalk.dim(`Max iterations: ${iterations} (${reason})`));
+    }
+  }
+
   // Apply preset values with CLI overrides
   const loopOptions: LoopOptions = {
     task: preset?.promptPrefix ? `${preset.promptPrefix}\n\n${finalTask}` : finalTask,
     cwd,
     agent,
-    maxIterations: options.maxIterations ?? preset?.maxIterations ?? 50,
+    maxIterations: options.maxIterations ?? preset?.maxIterations ?? smartIterations,
     auto: options.auto,
     commit: options.commit ?? preset?.commit,
     push: options.push,
@@ -266,8 +329,10 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     checkFileCompletion: true, // Always check for file-based completion
     circuitBreaker: preset?.circuitBreaker
       ? {
-          maxConsecutiveFailures: options.circuitBreakerFailures ?? preset.circuitBreaker.maxConsecutiveFailures,
-          maxSameErrorCount: options.circuitBreakerErrors ?? preset.circuitBreaker.maxSameErrorCount,
+          maxConsecutiveFailures:
+            options.circuitBreakerFailures ?? preset.circuitBreaker.maxConsecutiveFailures,
+          maxSameErrorCount:
+            options.circuitBreakerErrors ?? preset.circuitBreaker.maxSameErrorCount,
         }
       : options.circuitBreakerFailures || options.circuitBreakerErrors
         ? {
@@ -296,7 +361,53 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
       }
       if (result.stats.costStats) {
         const cost = result.stats.costStats;
-        console.log(chalk.dim(`Total cost: ${formatCost(cost.totalCost.totalCost)} (${formatTokens(cost.totalTokens.totalTokens)} tokens)`));
+        console.log(
+          chalk.dim(
+            `Total cost: ${formatCost(cost.totalCost.totalCost)} (${formatTokens(cost.totalTokens.totalTokens)} tokens)`
+          )
+        );
+      }
+    }
+
+    // Offer to run the project
+    const runCmd = detectRunCommand(cwd);
+    if (runCmd) {
+      console.log();
+      const { shouldRun } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'shouldRun',
+          message: `Run the project with ${chalk.cyan(runCmd.description)}?`,
+          default: true,
+        },
+      ]);
+
+      if (shouldRun) {
+        console.log();
+        console.log(chalk.cyan(`Starting: ${runCmd.description}`));
+        console.log(chalk.dim('Press Ctrl+C to stop'));
+        console.log();
+
+        try {
+          // Run with stdio inherited so user can see output and interact
+          await execa(runCmd.command, runCmd.args, {
+            cwd,
+            stdio: 'inherit',
+          });
+        } catch (error: unknown) {
+          // User likely pressed Ctrl+C, which is expected
+          if (
+            error &&
+            typeof error === 'object' &&
+            'signal' in error &&
+            error.signal === 'SIGINT'
+          ) {
+            console.log();
+            console.log(chalk.dim('Stopped.'));
+          } else {
+            console.log(chalk.yellow('Process exited'));
+          }
+        }
       }
     }
   } else {
@@ -307,7 +418,11 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     }
     if (result.stats?.circuitBreakerStats) {
       const cb = result.stats.circuitBreakerStats;
-      console.log(chalk.dim(`Circuit breaker: ${cb.consecutiveFailures} consecutive failures, ${cb.uniqueErrors} unique errors`));
+      console.log(
+        chalk.dim(
+          `Circuit breaker: ${cb.consecutiveFailures} consecutive failures, ${cb.uniqueErrors} unique errors`
+        )
+      );
     }
   }
 }

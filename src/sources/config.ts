@@ -1,7 +1,7 @@
-import { homedir } from 'os';
-import { join } from 'path';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
-import type { SourcesConfig, SourceConfig, SourceCredentials, SourceOptions } from './types.js';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import type { SourceConfig, SourceCredentials, SourceOptions, SourcesConfig } from './types.js';
 
 const CONFIG_DIR = join(homedir(), '.ralph-starter');
 const SOURCES_CONFIG_FILE = join(CONFIG_DIR, 'sources.json');
@@ -135,11 +135,7 @@ export function isCredentialFromEnv(sourceName: string, key: string): boolean {
 /**
  * Set a credential for a specific source
  */
-export function setSourceCredential(
-  sourceName: string,
-  key: string,
-  value: string
-): void {
+export function setSourceCredential(sourceName: string, key: string, value: string): void {
   const config = readSourcesConfig();
 
   if (!config.sources[sourceName]) {
@@ -164,7 +160,7 @@ export function deleteSourceCredential(sourceName: string, key: string): boolean
     return false;
   }
 
-  delete config.sources[sourceName].credentials![key];
+  delete config.sources[sourceName].credentials?.[key];
 
   // Clean up empty credentials object
   if (Object.keys(config.sources[sourceName].credentials!).length === 0) {

@@ -1,10 +1,9 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import {
-  getAllIntegrations,
+  fetchFromIntegration,
   getIntegration,
   getIntegrationsInfo,
-  fetchFromIntegration,
 } from '../integrations/index.js';
 
 export interface IntegrationsCommandOptions {
@@ -79,9 +78,7 @@ async function listIntegrations(): Promise<void> {
 
     for (const integration of integrations) {
       // Status indicator
-      const statusIcon = integration.available
-        ? chalk.green('✓')
-        : chalk.yellow('○');
+      const statusIcon = integration.available ? chalk.green('✓') : chalk.yellow('○');
 
       // Auth methods
       const authBadges = integration.authMethods.map((m) => {
@@ -155,13 +152,9 @@ async function testIntegration(name: string): Promise<void> {
     const authMethod = await integration.getConfiguredAuthMethod();
 
     if (available && authMethod) {
-      spinner.succeed(
-        chalk.green(`${integration.displayName}: Connected via ${authMethod}`)
-      );
+      spinner.succeed(chalk.green(`${integration.displayName}: Connected via ${authMethod}`));
     } else {
-      spinner.fail(
-        chalk.yellow(`${integration.displayName}: Not configured`)
-      );
+      spinner.fail(chalk.yellow(`${integration.displayName}: Not configured`));
       console.log();
       console.log(chalk.dim('Run the following for setup instructions:'));
       console.log(chalk.cyan(`  ralph-starter integrations help ${name}`));
@@ -196,10 +189,7 @@ async function fetchAndPreview(
       console.log(chalk.bold.cyan('Title:'), result.title);
     }
     if (result.metadata) {
-      console.log(
-        chalk.bold.cyan('Metadata:'),
-        JSON.stringify(result.metadata, null, 2)
-      );
+      console.log(chalk.bold.cyan('Metadata:'), JSON.stringify(result.metadata, null, 2));
     }
 
     console.log();

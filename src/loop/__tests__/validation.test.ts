@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   detectValidationCommands,
-  runValidation,
-  runAllValidations,
   formatValidationFeedback,
+  runAllValidations,
+  runValidation,
   type ValidationCommand,
   type ValidationResult,
 } from '../validation.js';
@@ -45,9 +45,9 @@ describe('validation', () => {
       mockReadFileSync.mockReturnValue(`
 # Project Commands
 
-test: npm test
-lint: npm run lint
-build: npm run build
+- **Test**: \`npm test\`
+- **Lint**: \`npm run lint\`
+- **Build**: \`npm run build\`
       `);
 
       const commands = detectValidationCommands('/test/dir');
@@ -60,7 +60,7 @@ build: npm run build
 
     it('should parse command with arguments from AGENTS.md', () => {
       mockExistsSync.mockImplementation((path: any) => path.toString().includes('AGENTS.md'));
-      mockReadFileSync.mockReturnValue('test: pytest -x --verbose');
+      mockReadFileSync.mockReturnValue('- test: `pytest -x --verbose`');
 
       const commands = detectValidationCommands('/test/dir');
 

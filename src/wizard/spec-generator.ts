@@ -1,5 +1,5 @@
-import type { WizardAnswers, TechStack } from './types.js';
-import { formatProjectType, formatComplexity } from './ui.js';
+import type { TechStack, WizardAnswers } from './types.js';
+import { formatComplexity, formatProjectType } from './ui.js';
 
 /**
  * Generate a spec markdown file from wizard answers
@@ -60,7 +60,8 @@ export function generateSpec(answers: WizardAnswers): string {
   sections.push('');
 
   const scopeDescriptions: Record<string, string> = {
-    prototype: 'Focus on core functionality. Skip polish, extensive error handling, and edge cases.',
+    prototype:
+      'Focus on core functionality. Skip polish, extensive error handling, and edge cases.',
     mvp: 'Implement all core features with basic error handling. Ready for initial use.',
     full: 'Complete implementation with comprehensive error handling, tests, and documentation.',
   };

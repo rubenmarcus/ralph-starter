@@ -5,7 +5,12 @@
  * Uses the `gh` CLI for authentication (if available) or falls back to API token.
  */
 
-import { BaseIntegration, type IntegrationResult, type IntegrationOptions, type AuthMethod } from '../base.js';
+import {
+  type AuthMethod,
+  BaseIntegration,
+  type IntegrationOptions,
+  type IntegrationResult,
+} from '../base.js';
 
 interface GitHubIssue {
   number: number;
@@ -71,9 +76,7 @@ export class GitHubIntegration extends BaseIntegration {
       return { owner, repo };
     }
 
-    this.error(
-      `Invalid repository format: ${identifier}. Use owner/repo or GitHub URL.`
-    );
+    this.error(`Invalid repository format: ${identifier}. Use owner/repo or GitHub URL.`);
   }
 
   private async fetchViaCli(
@@ -157,11 +160,7 @@ export class GitHubIntegration extends BaseIntegration {
     return this.formatIssues(issues, owner, repo);
   }
 
-  private formatIssues(
-    issues: GitHubIssue[],
-    owner: string,
-    repo: string
-  ): IntegrationResult {
+  private formatIssues(issues: GitHubIssue[], owner: string, repo: string): IntegrationResult {
     if (issues.length === 0) {
       return {
         content: `# ${owner}/${repo}\n\nNo issues found matching the criteria.`,

@@ -1,28 +1,24 @@
 import chalk from 'chalk';
 import {
-  readSourcesConfig,
-  setSourceCredential,
+  getLLMApiKey,
+  getLLMProvider,
+  readConfig,
+  setLLMApiKey,
+  setLLMProvider,
+  writeConfig,
+} from '../config/manager.js';
+import { type LLMProvider, PROVIDER_NAMES, PROVIDERS } from '../llm/index.js';
+import {
+  deleteSourceConfig,
   deleteSourceCredential,
+  getSourceConfig,
   getSourcesConfigPath,
   listConfiguredSources,
-  getSourceConfig,
-  deleteSourceConfig,
+  setSourceCredential,
 } from '../sources/config.js';
-import { getSource, getAllSources } from '../sources/index.js';
-import {
-  readConfig,
-  writeConfig,
-  getLLMProvider,
-  getLLMApiKey,
-  setLLMProvider,
-  setLLMApiKey,
-  type RalphConfig,
-} from '../config/manager.js';
-import { PROVIDERS, PROVIDER_NAMES, type LLMProvider } from '../llm/index.js';
+import { getAllSources, getSource } from '../sources/index.js';
 
-export interface ConfigCommandOptions {
-  // No options for now
-}
+export type ConfigCommandOptions = {};
 
 /**
  * Config command - manage source credentials and settings
@@ -118,7 +114,9 @@ async function listConfig(): Promise<void> {
   const currentKey = getLLMApiKey(currentProvider);
 
   if (currentKey) {
-    console.log(`  ${chalk.green('✓')} ${chalk.bold('Provider:')} ${PROVIDERS[currentProvider].displayName}`);
+    console.log(
+      `  ${chalk.green('✓')} ${chalk.bold('Provider:')} ${PROVIDERS[currentProvider].displayName}`
+    );
     console.log(chalk.dim(`      API Key: ${maskValue(currentKey)}`));
     if (config.llm?.model) {
       console.log(chalk.dim(`      Model: ${config.llm.model}`));
@@ -299,13 +297,15 @@ async function getLLMConfig(): Promise<void> {
   if (config.llm?.model) {
     console.log(`Model:    ${config.llm.model}`);
   } else {
-    console.log(`Model:    ${chalk.dim(PROVIDERS[currentProvider].defaultModel + ' (default)')}`);
+    console.log(`Model:    ${chalk.dim(`${PROVIDERS[currentProvider].defaultModel} (default)`)}`);
   }
 
   // Show key source
   const envKey = process.env[PROVIDERS[currentProvider].envVar];
   if (envKey) {
-    console.log(chalk.dim(`\nKey source: Environment variable (${PROVIDERS[currentProvider].envVar})`));
+    console.log(
+      chalk.dim(`\nKey source: Environment variable (${PROVIDERS[currentProvider].envVar})`)
+    );
   } else if (currentKey) {
     console.log(chalk.dim('\nKey source: Config file'));
   }
@@ -324,7 +324,9 @@ async function setLLMConfig(keyPath: string, value: string): Promise<void> {
         process.exit(1);
       }
       setLLMProvider(value as LLMProvider);
-      console.log(chalk.green(`✓ Set LLM provider to ${PROVIDERS[value as LLMProvider].displayName}`));
+      console.log(
+        chalk.green(`✓ Set LLM provider to ${PROVIDERS[value as LLMProvider].displayName}`)
+      );
       break;
     }
     case 'apiKey': {

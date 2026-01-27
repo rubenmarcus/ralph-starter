@@ -1,15 +1,12 @@
 import chalk from 'chalk';
-import type { WizardStep } from './types.js';
 import type { ProjectInfo, RalphPlaybookInfo } from '../commands/init.js';
 import {
-  RALPH_WELCOME_SMALL,
-  RALPH_SUCCESS,
-  RALPH_ERROR,
-  RALPH_WORKING_SMALL,
-  RALPH_STARTER_BANNER,
-  RALPH_FULL,
   getRandomRalphQuote,
+  RALPH_ERROR,
+  RALPH_WELCOME_SMALL,
+  RALPH_WORKING_SMALL,
 } from './ascii-art.js';
+import type { WizardStep } from './types.js';
 
 /**
  * Render step progress indicator
@@ -18,8 +15,7 @@ import {
 export function renderSteps(steps: WizardStep[]): string {
   return steps
     .map((step) => {
-      const icon =
-        step.status === 'complete' ? '✓' : step.status === 'current' ? '>' : '○';
+      const icon = step.status === 'complete' ? '✓' : step.status === 'current' ? '>' : '○';
       const color =
         step.status === 'complete'
           ? chalk.green
@@ -33,14 +29,15 @@ export function renderSteps(steps: WizardStep[]): string {
 
 /**
  * Display welcome banner with Ralph ASCII art
+ * Uses compact version to save terminal space
  */
 export function showWelcome(): void {
   console.log();
-  console.log(RALPH_STARTER_BANNER);
-  console.log(RALPH_FULL);
-  console.log(chalk.dim(`  "${getRandomRalphQuote()}"`));
+  console.log(RALPH_WELCOME_SMALL);
+  console.log(chalk.cyan.bold('  ralph-starter'));
+  console.log(chalk.dim('  AI-powered project generator'));
   console.log();
-  console.log(chalk.dim("  Let's build something awesome together."));
+  console.log(chalk.dim(`  "${getRandomRalphQuote()}"`));
   console.log();
 }
 
@@ -66,7 +63,7 @@ export function showRefinedSummary(
   complexity: string
 ): void {
   console.log();
-  console.log(chalk.cyan.bold('  Here\'s what I understand:'));
+  console.log(chalk.cyan.bold("  Here's what I understand:"));
   console.log(chalk.gray('  ────────────────────────────────────────'));
   console.log();
   console.log(`  ${chalk.white('Project:')} ${chalk.yellow(projectName)}`);
@@ -127,11 +124,10 @@ export function showError(title: string, message: string, suggestion?: string): 
 }
 
 /**
- * Display success message with happy Ralph
+ * Display success message (clean, no ASCII art)
  */
 export function showSuccess(message: string): void {
   console.log();
-  console.log(RALPH_SUCCESS);
   console.log(chalk.green.bold(`  ✓ ${message}`));
   console.log();
 }
@@ -223,13 +219,16 @@ export function showDetectedRalphPlaybook(playbook: RalphPlaybookInfo, directory
   console.log(`  ${chalk.white('Directory:')} ${chalk.yellow(directory)}`);
 
   if (playbook.readme?.description) {
-    console.log(`  ${chalk.white('Description:')} ${chalk.dim(playbook.readme.description.slice(0, 60))}${playbook.readme.description.length > 60 ? '...' : ''}`);
+    console.log(
+      `  ${chalk.white('Description:')} ${chalk.dim(playbook.readme.description.slice(0, 60))}${playbook.readme.description.length > 60 ? '...' : ''}`
+    );
   }
 
   console.log();
   console.log(`  ${chalk.white('Found files:')}`);
   if (playbook.files.agentsMd) console.log(`    ${chalk.green('✓')} AGENTS.md`);
-  if (playbook.files.implementationPlan) console.log(`    ${chalk.green('✓')} IMPLEMENTATION_PLAN.md`);
+  if (playbook.files.implementationPlan)
+    console.log(`    ${chalk.green('✓')} IMPLEMENTATION_PLAN.md`);
   if (playbook.files.promptBuild) console.log(`    ${chalk.green('✓')} PROMPT_build.md`);
   if (playbook.files.promptPlan) console.log(`    ${chalk.green('✓')} PROMPT_plan.md`);
   if (playbook.files.specsDir) console.log(`    ${chalk.green('✓')} specs/`);

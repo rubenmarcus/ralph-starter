@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
-import { join, basename } from 'path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import YAML from 'yaml';
 import { detectBestAgent } from '../../loop/agents.js';
 
@@ -79,11 +79,7 @@ function detectProject(cwd: string): ProjectInfo {
 }
 
 function generateAgentsMd(project: ProjectInfo): string {
-  const validationCmds = [
-    project.testCmd,
-    project.buildCmd,
-    project.lintCmd,
-  ].filter(Boolean);
+  const validationCmds = [project.testCmd, project.buildCmd, project.lintCmd].filter(Boolean);
 
   return `# AGENTS.md
 
@@ -141,6 +137,8 @@ You are in BUILDING mode. Execute tasks from the implementation plan.
 - Validate after each change
 - Commit working code only
 - Update the plan as you learn
+- Only link to pages that exist - use "#" for placeholder links
+- Use realistic placeholder data (names, dates, content)
 
 ## Completion Signal
 
@@ -278,10 +276,7 @@ export async function initCore(options: InitCoreOptions): Promise<InitCoreResult
     const specsDir = join(cwd, 'specs');
     if (!existsSync(specsDir)) {
       mkdirSync(specsDir, { recursive: true });
-      writeFileSync(
-        join(specsDir, 'example.md'),
-        generateExampleSpec(project.name)
-      );
+      writeFileSync(join(specsDir, 'example.md'), generateExampleSpec(project.name));
       filesCreated.push('specs/example.md');
     }
 
