@@ -1,12 +1,6 @@
 import chalk from 'chalk';
 import ora from 'ora';
-import {
-  getSourcesInfo,
-  getSource,
-  getSourceHelp,
-  testSource,
-  fetchFromSource,
-} from '../sources/index.js';
+import { fetchFromSource, getSourceHelp, getSourcesInfo, testSource } from '../sources/index.js';
 
 export interface SourceCommandOptions {
   project?: string;
@@ -82,9 +76,7 @@ async function listSources(): Promise<void> {
     // Built-in sources
     console.log(chalk.cyan.bold('Built-in'));
     for (const source of builtins) {
-      const status = source.available
-        ? chalk.green('✓')
-        : chalk.red('✗');
+      const status = source.available ? chalk.green('✓') : chalk.red('✗');
       console.log(`  ${status} ${chalk.bold(source.name)} - ${source.description}`);
     }
 
@@ -93,16 +85,14 @@ async function listSources(): Promise<void> {
     // Integration sources
     console.log(chalk.cyan.bold('Integrations'));
     for (const source of integrations) {
-      const status = source.available
+      const _status = source.available
         ? chalk.green('✓ configured')
         : chalk.yellow('○ not configured');
       console.log(
         `  ${source.available ? chalk.green('✓') : chalk.yellow('○')} ${chalk.bold(source.name)} - ${source.description}`
       );
       if (!source.available && source.requiresAuth) {
-        console.log(
-          chalk.dim(`      Run: ralph-starter config set ${source.name}.apiKey <value>`)
-        );
+        console.log(chalk.dim(`      Run: ralph-starter config set ${source.name}.apiKey <value>`));
       }
     }
 
@@ -141,10 +131,7 @@ async function testSourceConnection(sourceName: string): Promise<void> {
   }
 }
 
-async function previewSource(
-  identifier: string,
-  options?: SourceCommandOptions
-): Promise<void> {
+async function previewSource(identifier: string, options?: SourceCommandOptions): Promise<void> {
   const spinner = ora('Fetching content...').start();
 
   try {

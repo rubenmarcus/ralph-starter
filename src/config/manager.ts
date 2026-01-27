@@ -1,14 +1,14 @@
-import { homedir } from 'os';
-import { join } from 'path';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import inquirer from 'inquirer';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import chalk from 'chalk';
+import inquirer from 'inquirer';
 import {
-  type LLMProvider,
-  PROVIDERS,
-  PROVIDER_NAMES,
   detectProviderFromEnv,
   getProviderKeyFromEnv,
+  type LLMProvider,
+  PROVIDER_NAMES,
+  PROVIDERS,
 } from '../llm/index.js';
 
 export interface RalphConfig {
@@ -97,7 +97,7 @@ export async function promptForApiKey(): Promise<string | null> {
       name: 'apiKey',
       message: 'Enter your Anthropic API key:',
       mask: '*',
-    }
+    },
   ]);
 
   if (!apiKey) {
@@ -110,7 +110,7 @@ export async function promptForApiKey(): Promise<string | null> {
       name: 'save',
       message: 'Save this API key for future use?',
       default: true,
-    }
+    },
   ]);
 
   if (save) {
@@ -242,7 +242,10 @@ export function getLLMModel(): string | null {
 /**
  * Interactive prompt for LLM provider selection and API key
  */
-export async function promptForLLMSetup(): Promise<{ provider: LLMProvider; apiKey: string } | null> {
+export async function promptForLLMSetup(): Promise<{
+  provider: LLMProvider;
+  apiKey: string;
+} | null> {
   console.log();
   console.log(chalk.yellow('No LLM API key configured.'));
   console.log();

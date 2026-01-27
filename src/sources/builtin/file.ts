@@ -1,7 +1,7 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
-import { resolve, extname, basename, join } from 'path';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { basename, extname, join, resolve } from 'node:path';
 import { BuiltinSource } from '../base.js';
-import type { SourceResult, SourceOptions } from '../types.js';
+import type { SourceOptions, SourceResult } from '../types.js';
 
 /**
  * File source - reads specs from local files and directories

@@ -83,12 +83,16 @@ export abstract class BaseOAuthProvider implements OAuthProvider {
     return `${this.authorizationUrl}?${params.toString()}`;
   }
 
-  async exchangeCode(code: string, redirectUri: string, codeVerifier?: string): Promise<OAuthTokens> {
+  async exchangeCode(
+    code: string,
+    redirectUri: string,
+    codeVerifier?: string
+  ): Promise<OAuthTokens> {
     // For PKCE flow, we don't need client_secret
     if (!this.supportsPKCE && !this.clientSecret) {
       throw new Error(
         `No client secret configured for ${this.displayName}. ` +
-        `Set RALPH_${this.name.toUpperCase()}_CLIENT_SECRET environment variable.`
+          `Set RALPH_${this.name.toUpperCase()}_CLIENT_SECRET environment variable.`
       );
     }
 
@@ -123,7 +127,7 @@ export abstract class BaseOAuthProvider implements OAuthProvider {
       throw new Error(`Failed to exchange code: ${error}`);
     }
 
-    const data = await response.json() as Record<string, unknown>;
+    const data = (await response.json()) as Record<string, unknown>;
 
     return {
       accessToken: data.access_token as string,

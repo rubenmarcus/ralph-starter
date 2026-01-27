@@ -103,7 +103,7 @@ function matchPatterns(
 function determineConfidence(
   completionScore: number,
   stuckScore: number,
-  progressMatches: number
+  _progressMatches: number
 ): 'high' | 'medium' | 'low' {
   // High confidence: strong signal in one direction with no conflicting signals
   if (completionScore >= 0.8 && stuckScore < 0.2) {
@@ -134,11 +134,7 @@ export function analyzeResponse(output: string): AnalysisResult {
   const stuck = matchPatterns(output, STUCK_PATTERNS);
   const progress = matchPatterns(output, PROGRESS_PATTERNS);
 
-  const confidence = determineConfidence(
-    completion.score,
-    stuck.score,
-    progress.matches.length
-  );
+  const confidence = determineConfidence(completion.score, stuck.score, progress.matches.length);
 
   return {
     completionScore: completion.score,
@@ -206,8 +202,5 @@ export function countCompletionIndicators(output: string): number {
  * Check if output contains explicit exit signal
  */
 export function hasExitSignal(output: string): boolean {
-  return (
-    /EXIT_SIGNAL:\s*true/i.test(output) ||
-    /<promise>COMPLETE<\/promise>/i.test(output)
-  );
+  return /EXIT_SIGNAL:\s*true/i.test(output) || /<promise>COMPLETE<\/promise>/i.test(output);
 }

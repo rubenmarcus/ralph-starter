@@ -5,7 +5,12 @@
  * Rename this class and update all the properties.
  */
 
-import { BaseIntegration, type IntegrationResult, type IntegrationOptions, type AuthMethod } from '../base.js';
+import {
+  type AuthMethod,
+  BaseIntegration,
+  type IntegrationOptions,
+  type IntegrationResult,
+} from '../base.js';
 
 export class TemplateIntegration extends BaseIntegration {
   // ============================================
@@ -49,7 +54,9 @@ export class TemplateIntegration extends BaseIntegration {
     const authMethod = await this.getConfiguredAuthMethod();
 
     if (!authMethod) {
-      this.error('No authentication configured. Run: ralph-starter config set template.apiKey <key>');
+      this.error(
+        'No authentication configured. Run: ralph-starter config set template.apiKey <key>'
+      );
     }
 
     // Fetch data based on auth method
@@ -64,8 +71,8 @@ export class TemplateIntegration extends BaseIntegration {
    * Fetch via CLI tool
    */
   private async fetchViaCli(
-    identifier: string,
-    options?: IntegrationOptions
+    _identifier: string,
+    _options?: IntegrationOptions
   ): Promise<IntegrationResult> {
     // Example implementation:
     // const { execa } = await import('execa');
@@ -81,7 +88,7 @@ export class TemplateIntegration extends BaseIntegration {
    */
   private async fetchViaApi(
     identifier: string,
-    options?: IntegrationOptions
+    _options?: IntegrationOptions
   ): Promise<IntegrationResult> {
     const apiKey = await this.getApiKey();
 

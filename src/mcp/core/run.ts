@@ -1,7 +1,7 @@
-import { existsSync, readFileSync, mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { detectBestAgent } from '../../loop/agents.js';
-import { runLoop, LoopOptions } from '../../loop/executor.js';
+import { type LoopOptions, runLoop } from '../../loop/executor.js';
 import { fetchFromSource } from '../../sources/index.js';
 
 export interface RunCoreOptions {

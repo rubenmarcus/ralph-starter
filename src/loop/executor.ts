@@ -1,13 +1,106 @@
+import { readdir, stat } from 'node:fs/promises';
+import { join } from 'node:path';
 import chalk from 'chalk';
 import ora from 'ora';
-import { Agent, runAgent, AgentRunOptions } from './agents.js';
-import { gitCommit, gitPush, hasUncommittedChanges, createPullRequest } from '../automation/git.js';
-import { detectValidationCommands, runAllValidations, formatValidationFeedback, ValidationResult } from './validation.js';
-import { CircuitBreaker, CircuitBreakerConfig } from './circuit-breaker.js';
-import { analyzeResponse, hasExitSignal, countCompletionIndicators } from './semantic-analyzer.js';
-import { createProgressTracker, checkFileBasedCompletion, ProgressEntry } from './progress.js';
-import { RateLimiter, RateLimiterConfig } from './rate-limiter.js';
-import { CostTracker, CostTrackerStats, formatCost, formatTokens } from './cost-tracker.js';
+import { createPullRequest, gitCommit, gitPush, hasUncommittedChanges } from '../automation/git.js';
+import { ProgressRenderer } from '../ui/progress-renderer.js';
+import { type Agent, type AgentRunOptions, runAgent } from './agents.js';
+import { CircuitBreaker, type CircuitBreakerConfig } from './circuit-breaker.js';
+import { CostTracker, type CostTrackerStats, formatCost } from './cost-tracker.js';
+import { estimateLoop, formatEstimateDetailed } from './estimator.js';
+import { checkFileBasedCompletion, createProgressTracker, type ProgressEntry } from './progress.js';
+import { RateLimiter } from './rate-limiter.js';
+import { analyzeResponse, hasExitSignal } from './semantic-analyzer.js';
+import { detectClaudeSkills, formatSkillsForPrompt } from './skills.js';
+import { detectStepFromOutput } from './step-detector.js';
+import { getCurrentTask, parsePlanTasks } from './task-counter.js';
+import {
+  detectValidationCommands,
+  formatValidationFeedback,
+  runAllValidations,
+  type ValidationResult,
+} from './validation.js';
+
+/**
+ * Sleep for a given number of milliseconds
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Strip markdown formatting from task names
+ */
+function cleanTaskName(name: string): string {
+  return name
+    .replace(/\*\*/g, '') // Remove bold **
+    .replace(/\*/g, '') // Remove italic *
+    .replace(/`/g, '') // Remove code backticks
+    .trim();
+}
+
+/**
+ * Get the latest modification time in a directory (recursive)
+ */
+async function getLatestMtime(dir: string): Promise<number> {
+  let latestMtime = 0;
+
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      // Skip hidden files, node_modules, and .git
+      if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+
+      const fullPath = join(dir, entry.name);
+
+      try {
+        const stats = await stat(fullPath);
+
+        if (stats.mtimeMs > latestMtime) {
+          latestMtime = stats.mtimeMs;
+        }
+
+        if (entry.isDirectory()) {
+          const subMtime = await getLatestMtime(fullPath);
+          if (subMtime > latestMtime) {
+            latestMtime = subMtime;
+          }
+        }
+      } catch {
+        // Ignore stat errors (file might have been deleted)
+      }
+    }
+  } catch {
+    // Ignore readdir errors
+  }
+
+  return latestMtime;
+}
+
+/**
+ * Wait for filesystem to settle (no new writes)
+ */
+async function waitForFilesystemQuiescence(dir: string, timeoutMs = 3000): Promise<void> {
+  const startTime = Date.now();
+  let lastMtime = 0;
+
+  while (Date.now() - startTime < timeoutMs) {
+    const currentMtime = await getLatestMtime(dir);
+
+    if (currentMtime === lastMtime && lastMtime > 0) {
+      // No changes for 500ms, check again
+      await sleep(500);
+      const afterWait = await getLatestMtime(dir);
+      if (afterWait === currentMtime) {
+        return; // Filesystem is stable
+      }
+    }
+
+    lastMtime = currentMtime;
+    await sleep(100);
+  }
+}
 
 export interface LoopOptions {
   task: string;
@@ -37,7 +130,13 @@ export interface LoopResult {
   iterations: number;
   commits: string[];
   error?: string;
-  exitReason?: 'completed' | 'blocked' | 'max_iterations' | 'circuit_breaker' | 'rate_limit' | 'file_signal';
+  exitReason?:
+    | 'completed'
+    | 'blocked'
+    | 'max_iterations'
+    | 'circuit_breaker'
+    | 'rate_limit'
+    | 'file_signal';
   stats?: {
     totalDuration: number;
     avgIterationDuration: number;
@@ -61,12 +160,7 @@ const COMPLETION_MARKERS = [
 ];
 
 // Blocked markers that indicate the task cannot continue
-const BLOCKED_MARKERS = [
-  '<TASK_BLOCKED>',
-  'TASK BLOCKED',
-  'Cannot proceed',
-  'Blocked:',
-];
+const BLOCKED_MARKERS = ['<TASK_BLOCKED>', 'TASK BLOCKED', 'Cannot proceed', 'Blocked:'];
 
 interface CompletionOptions {
   completionPromise?: string;
@@ -121,7 +215,10 @@ function detectCompletion(
   }
 
   // Check completion indicators
-  if (analysis.completionScore >= 0.7 && analysis.indicators.completion.length >= minCompletionIndicators) {
+  if (
+    analysis.completionScore >= 0.7 &&
+    analysis.indicators.completion.length >= minCompletionIndicators
+  ) {
     return 'done';
   }
 
@@ -181,7 +278,7 @@ function getCompletionReason(output: string, options: CompletionOptions): string
 
 function summarizeChanges(output: string): string {
   // Try to extract a meaningful summary from the output
-  const lines = output.split('\n').filter(l => l.trim());
+  const lines = output.split('\n').filter((l) => l.trim());
 
   // Look for common patterns
   for (const line of lines) {
@@ -227,6 +324,14 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
   // Detect validation commands if validation is enabled
   const validationCommands = options.validate ? detectValidationCommands(options.cwd) : [];
 
+  // Detect Claude Code skills
+  const detectedSkills = detectClaudeSkills(options.cwd);
+  let taskWithSkills = options.task;
+  if (detectedSkills.length > 0) {
+    const skillsPrompt = formatSkillsForPrompt(detectedSkills);
+    taskWithSkills = `${options.task}\n\n${skillsPrompt}`;
+  }
+
   // Completion detection options
   const completionOptions: CompletionOptions = {
     completionPromise: options.completionPromise,
@@ -234,12 +339,40 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     minCompletionIndicators: options.minCompletionIndicators,
   };
 
+  // Get initial task count for estimates
+  const initialTaskCount = parsePlanTasks(options.cwd);
+
   console.log();
   console.log(chalk.cyan.bold('Starting Ralph Wiggum Loop'));
   console.log(chalk.dim(`Agent: ${options.agent.name}`));
-  console.log(chalk.dim(`Task: ${options.task.slice(0, 60)}${options.task.length > 60 ? '...' : ''}`));
+
+  // Show task count and estimates if we have tasks
+  if (initialTaskCount.total > 0) {
+    console.log(
+      chalk.dim(
+        `Tasks: ${initialTaskCount.pending} pending, ${initialTaskCount.completed} completed`
+      )
+    );
+
+    // Show estimate
+    const estimate = estimateLoop(initialTaskCount);
+    console.log();
+    console.log(chalk.yellow.bold('📋 Estimate:'));
+    for (const line of formatEstimateDetailed(estimate)) {
+      console.log(chalk.yellow(`   ${line}`));
+    }
+  } else {
+    console.log(
+      chalk.dim(`Task: ${options.task.slice(0, 60)}${options.task.length > 60 ? '...' : ''}`)
+    );
+  }
+
+  console.log();
   if (validationCommands.length > 0) {
-    console.log(chalk.dim(`Validation: ${validationCommands.map(c => c.name).join(', ')}`));
+    console.log(chalk.dim(`Validation: ${validationCommands.map((c) => c.name).join(', ')}`));
+  }
+  if (detectedSkills.length > 0) {
+    console.log(chalk.dim(`Skills: ${detectedSkills.map((s) => s.name).join(', ')}`));
   }
   if (options.completionPromise) {
     console.log(chalk.dim(`Completion promise: ${options.completionPromise}`));
@@ -247,10 +380,10 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
   if (rateLimiter) {
     console.log(chalk.dim(`Rate limit: ${options.rateLimit}/hour`));
   }
-  if (costTracker) {
-    console.log(chalk.dim(`Cost tracking: enabled (${options.model || 'claude-3-sonnet'})`));
-  }
   console.log();
+
+  // Track completed tasks to show progress diff between iterations
+  let previousCompletedTasks = initialTaskCount.completed;
 
   for (let i = 1; i <= maxIterations; i++) {
     const iterationStart = Date.now();
@@ -282,7 +415,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
 
       const acquired = await rateLimiter.waitAndAcquire(60000); // Wait up to 1 minute
       clearInterval(countdownInterval);
-      process.stdout.write('\r' + ' '.repeat(40) + '\r'); // Clear countdown line
+      process.stdout.write(`\r${' '.repeat(40)}\r`); // Clear countdown line
 
       if (!acquired) {
         console.log(chalk.red('✗ Rate limit timeout - stopping loop'));
@@ -325,33 +458,86 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
       };
     }
 
-    // Show loop header
+    // Get current task from implementation plan (re-parse to catch updates)
+    const currentTask = getCurrentTask(options.cwd);
+    const taskInfo = parsePlanTasks(options.cwd);
+    const totalTasks = taskInfo.total;
+    const completedTasks = taskInfo.completed;
+
+    // Check if tasks were completed since last iteration
+    const newlyCompleted = completedTasks - previousCompletedTasks;
+    if (newlyCompleted > 0 && i > 1) {
+      // Get names of newly completed tasks (strip markdown)
+      const completedNames = taskInfo.tasks
+        .filter((t) => t.completed && t.index >= previousCompletedTasks && t.index < completedTasks)
+        .map((t) => {
+          const clean = cleanTaskName(t.name);
+          return clean.length > 25 ? `${clean.slice(0, 22)}...` : clean;
+        });
+
+      if (completedNames.length > 0) {
+        console.log(
+          chalk.green(`  ✓ Completed ${newlyCompleted} task(s): ${completedNames.join(', ')}`)
+        );
+      }
+    }
+    previousCompletedTasks = completedTasks;
+
+    // Show loop header with task info
     console.log(chalk.cyan(`\n═══════════════════════════════════════════════════════════════`));
-    console.log(chalk.cyan.bold(`  Loop ${i}/${maxIterations} │ Running ${options.agent.name}`));
+    if (currentTask && totalTasks > 0) {
+      const taskNum = completedTasks + 1;
+      const cleanName = cleanTaskName(currentTask.name);
+      const taskName = cleanName.length > 40 ? `${cleanName.slice(0, 37)}...` : cleanName;
+      console.log(chalk.cyan.bold(`  Task ${taskNum}/${totalTasks} │ ${taskName}`));
+    } else {
+      console.log(chalk.cyan.bold(`  Loop ${i}/${maxIterations} │ Running ${options.agent.name}`));
+    }
     console.log(chalk.cyan(`═══════════════════════════════════════════════════════════════\n`));
 
-    // Run the agent with streaming output
+    // Create progress renderer for this iteration
+    const iterProgress = new ProgressRenderer();
+    iterProgress.start('Working...');
+
+    // Run the agent with step detection (include skills in task)
     const agentOptions: AgentRunOptions = {
-      task: options.task,
+      task: taskWithSkills,
       cwd: options.cwd,
       auto: options.auto,
       maxTurns: 10, // Limit turns per loop iteration
-      streamOutput: true, // Stream output so user can see progress
+      streamOutput: false, // Don't dump raw JSON - use progress renderer instead
+      onOutput: (line: string) => {
+        const step = detectStepFromOutput(line);
+        if (step) {
+          iterProgress.updateStep(step);
+        }
+      },
     };
 
     const result = await runAgent(options.agent, agentOptions);
 
-    console.log(); // Newline after streaming output
+    iterProgress.stop('Iteration complete');
 
-    // Track cost for this iteration
+    // Track cost for this iteration (silent - summary shown at end)
     if (costTracker) {
-      const iterationCost = costTracker.recordIteration(options.task, result.output);
-      const stats = costTracker.getStats();
-      console.log(chalk.dim(`  💰 Iteration cost: ${formatCost(iterationCost.cost.totalCost)} | Total: ${formatCost(stats.totalCost.totalCost)} (${formatTokens(stats.totalTokens.totalTokens)} tokens)`));
+      costTracker.recordIteration(options.task, result.output);
     }
 
     // Check for completion using enhanced detection
-    const status = detectCompletion(result.output, completionOptions);
+    let status = detectCompletion(result.output, completionOptions);
+
+    // Verify completion - check if files were actually changed
+    if (status === 'done' && i === 1) {
+      // On first iteration, verify that files were actually created/modified
+      const hasChanges = await hasUncommittedChanges(options.cwd);
+      if (!hasChanges) {
+        console.log(chalk.yellow('  Agent reported done but no files changed - continuing...'));
+        status = 'continue';
+      } else {
+        // Wait for filesystem to settle before declaring done
+        await waitForFilesystemQuiescence(options.cwd, 2000);
+      }
+    }
 
     if (status === 'blocked') {
       console.log(chalk.red(`✗ Loop ${i}: Task blocked`));
@@ -383,17 +569,17 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     }
 
     // Run validation (backpressure) if enabled and there are changes
-    let validationPassed = true;
+    let _validationPassed = true;
     let validationResults: ValidationResult[] = [];
 
-    if (validationCommands.length > 0 && await hasUncommittedChanges(options.cwd)) {
+    if (validationCommands.length > 0 && (await hasUncommittedChanges(options.cwd))) {
       spinner.start(chalk.yellow(`Loop ${i}: Running validation...`));
 
       validationResults = await runAllValidations(options.cwd, validationCommands);
-      const allPassed = validationResults.every(r => r.success);
+      const allPassed = validationResults.every((r) => r.success);
 
       if (!allPassed) {
-        validationPassed = false;
+        _validationPassed = false;
         validationFailures++;
         const feedback = formatValidationFeedback(validationResults);
         spinner.fail(chalk.red(`Loop ${i}: Validation failed`));
@@ -418,8 +604,8 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
 
         // Record failure in circuit breaker
         const errorMsg = validationResults
-          .filter(r => !r.success)
-          .map(r => r.error?.slice(0, 200) || r.output?.slice(0, 200) || r.command)
+          .filter((r) => !r.success)
+          .map((r) => r.error?.slice(0, 200) || r.output?.slice(0, 200) || r.command)
           .join('\n');
         const tripped = circuitBreaker.recordFailure(errorMsg);
 
@@ -449,7 +635,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
         }
 
         // Continue loop with validation feedback
-        options.task = `${options.task}\n\n${feedback}`;
+        taskWithSkills = `${taskWithSkills}\n\n${feedback}`;
         continue; // Go to next iteration to fix issues
       } else {
         // Validation passed - record success
@@ -461,7 +647,15 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     // Auto-commit if enabled and there are changes
     let committed = false;
     let commitMsg = '';
-    if (options.commit && await hasUncommittedChanges(options.cwd)) {
+
+    // Get current task info for display
+    const displayTaskInfo = parsePlanTasks(options.cwd);
+    const iterationLabel =
+      displayTaskInfo.total > 0
+        ? `Task ${displayTaskInfo.completed}/${displayTaskInfo.total}`
+        : `Iteration ${i}`;
+
+    if (options.commit && (await hasUncommittedChanges(options.cwd))) {
       const summary = summarizeChanges(result.output);
       commitMsg = `feat: ${summary}`;
 
@@ -469,19 +663,20 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
         await gitCommit(options.cwd, commitMsg);
         commits.push(commitMsg);
         committed = true;
-        console.log(chalk.green(`✓ Loop ${i}: Committed - ${commitMsg}`));
-      } catch (error) {
-        console.log(chalk.yellow(`⚠ Loop ${i}: Completed (commit failed)`));
+        console.log(chalk.green(`✓ ${iterationLabel}: Committed - ${commitMsg}`));
+      } catch (_error) {
+        console.log(chalk.yellow(`⚠ ${iterationLabel}: Completed (commit failed)`));
       }
     } else {
-      console.log(chalk.green(`✓ Loop ${i}: Completed`));
+      console.log(chalk.green(`✓ ${iterationLabel}: Completed`));
     }
 
     // Update progress entry
     if (progressTracker && progressEntry) {
       progressEntry.status = status === 'done' ? 'completed' : 'completed';
       progressEntry.summary = summarizeChanges(result.output);
-      progressEntry.validationResults = validationResults.length > 0 ? validationResults : undefined;
+      progressEntry.validationResults =
+        validationResults.length > 0 ? validationResults : undefined;
       progressEntry.commitHash = committed ? commitMsg : undefined;
       progressEntry.duration = Date.now() - iterationStart;
       // Add cost info from tracker
@@ -497,9 +692,13 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
 
     if (status === 'done') {
       console.log();
-      console.log(chalk.green.bold('═══════════════════════════════════════════════════════════════'));
+      console.log(
+        chalk.green.bold('═══════════════════════════════════════════════════════════════')
+      );
       console.log(chalk.green.bold('  ✓ Task completed successfully!'));
-      console.log(chalk.green.bold('═══════════════════════════════════════════════════════════════'));
+      console.log(
+        chalk.green.bold('═══════════════════════════════════════════════════════════════')
+      );
 
       // Show completion reason (UX 3: clear completion signals)
       const completionReason = getCompletionReason(result.output, completionOptions);
@@ -521,7 +720,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     }
 
     // Small delay between iterations
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
   // Post-loop actions
@@ -530,7 +729,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     try {
       await gitPush(options.cwd);
       spinner.succeed('Pushed to remote');
-    } catch (error) {
+    } catch (_error) {
       spinner.fail('Failed to push');
     }
   }
@@ -540,10 +739,10 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     try {
       const prUrl = await createPullRequest(options.cwd, {
         title: options.prTitle || `Ralph: ${options.task.slice(0, 50)}`,
-        body: `Automated PR created by ralph-starter\n\n## Task\n${options.task}\n\n## Commits\n${commits.map(c => `- ${c}`).join('\n')}`,
+        body: `Automated PR created by ralph-starter\n\n## Task\n${options.task}\n\n## Commits\n${commits.map((c) => `- ${c}`).join('\n')}`,
       });
       spinner.succeed(`Created PR: ${prUrl}`);
-    } catch (error) {
+    } catch (_error) {
       spinner.fail('Failed to create PR');
     }
   }

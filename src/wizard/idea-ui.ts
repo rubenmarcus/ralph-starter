@@ -2,12 +2,15 @@
 
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import type { IdeaSuggestion, IdeaDiscoveryMethod, IdeaContext } from './types.js';
+import type { IdeaContext, IdeaDiscoveryMethod, IdeaSuggestion } from './types.js';
 
 /**
  * Create a box with properly aligned borders
  */
-function createBox(lines: Array<{ text: string; style?: (s: string) => string }>, width: number = 55): string[] {
+function createBox(
+  lines: Array<{ text: string; style?: (s: string) => string }>,
+  width: number = 55
+): string[] {
   const output: string[] = [];
   const border = chalk.yellow;
 
@@ -23,7 +26,7 @@ function createBox(lines: Array<{ text: string; style?: (s: string) => string }>
     // Calculate visible length (without ANSI codes)
     const visibleLen = line.text.length;
     const padding = width - 3 - visibleLen; // 3 for "   " prefix
-    output.push(border('  │') + '   ' + styled + ' '.repeat(Math.max(0, padding)) + border('│'));
+    output.push(`${border('  │')}   ${styled}${' '.repeat(Math.max(0, padding))}${border('│')}`);
   }
 
   // Empty line
@@ -109,8 +112,7 @@ export async function askUserSkills(): Promise<string[]> {
         { name: 'DevOps/CLI', value: 'devops' },
         { name: 'Mobile Development', value: 'mobile' },
       ],
-      validate: (input: string[]) =>
-        input.length > 0 ? true : 'Please select at least one skill',
+      validate: (input: string[]) => (input.length > 0 ? true : 'Please select at least one skill'),
     },
   ]);
 
@@ -139,7 +141,7 @@ export async function askUserProblem(): Promise<string> {
     {
       type: 'input',
       name: 'problem',
-      message: "What problem or frustration do you want to solve?",
+      message: 'What problem or frustration do you want to solve?',
       suffix:
         '\n  (e.g., "I spend too much time organizing my notes" or "Managing dotfiles is painful")\n  >',
       validate: (input: string) =>
@@ -167,9 +169,7 @@ export function showBrainstormResults(ideas: IdeaSuggestion[]): void {
           ? chalk.yellow
           : chalk.red;
 
-    console.log(
-      `  ${chalk.bold.white(`${index + 1}.`)} ${chalk.bold.cyan(idea.title)}`
-    );
+    console.log(`  ${chalk.bold.white(`${index + 1}.`)} ${chalk.bold.cyan(idea.title)}`);
     console.log(`     ${chalk.dim(idea.description)}`);
     console.log(
       `     ${chalk.gray('Type:')} ${formatProjectType(idea.projectType)}  ${chalk.gray('|')}  ${chalk.gray('Difficulty:')} ${difficultyColor(idea.difficulty)}`

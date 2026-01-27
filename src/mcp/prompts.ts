@@ -1,4 +1,4 @@
-import type { Prompt, GetPromptResult } from '@modelcontextprotocol/sdk/types.js';
+import type { GetPromptResult, Prompt } from '@modelcontextprotocol/sdk/types.js';
 
 /**
  * Pre-built workflow prompts for ralph-starter
@@ -70,10 +70,7 @@ export function getPrompts(): Prompt[] {
 /**
  * Get a specific prompt with arguments filled in
  */
-export function handleGetPrompt(
-  name: string,
-  args?: Record<string, string>
-): GetPromptResult {
+export function handleGetPrompt(name: string, args?: Record<string, string>): GetPromptResult {
   const cwd = args?.path || process.cwd();
 
   switch (name) {

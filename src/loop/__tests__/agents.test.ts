@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  type Agent,
   checkAgentAvailable,
   detectAvailableAgents,
   detectBestAgent,
   runAgent,
-  type Agent,
 } from '../agents.js';
 
 // Mock execa
@@ -120,7 +120,15 @@ describe('agents', () => {
         cwd: '/test/dir',
       });
 
-      expect(mockExeca).toHaveBeenCalledWith('claude', ['-p', 'Fix the bug'], expect.any(Object));
+      // Claude Code uses --print, --verbose, --output-format stream-json
+      // and passes prompt via stdin (input option)
+      expect(mockExeca).toHaveBeenCalledWith(
+        'claude',
+        expect.arrayContaining(['--print', '--verbose', '--output-format', 'stream-json']),
+        expect.objectContaining({
+          input: 'Fix the bug',
+        })
+      );
       expect(result.output).toContain('Task completed');
       expect(result.exitCode).toBe(0);
     });

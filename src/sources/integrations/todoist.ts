@@ -1,5 +1,5 @@
 import { IntegrationSource } from '../base.js';
-import type { SourceResult, SourceOptions } from '../types.js';
+import type { SourceOptions, SourceResult } from '../types.js';
 
 /**
  * Todoist source - fetches tasks from Todoist projects
@@ -26,16 +26,12 @@ export class TodoistSource extends IntegrationSource {
 
     if (projectName && projectName !== 'all') {
       const project = projects.find(
-        (p) =>
-          p.name.toLowerCase() === projectName.toLowerCase() ||
-          p.id === projectName
+        (p) => p.name.toLowerCase() === projectName.toLowerCase() || p.id === projectName
       );
 
       if (!project) {
         const available = projects.map((p) => p.name).join(', ');
-        this.error(
-          `Project not found: ${projectName}. Available: ${available}`
-        );
+        this.error(`Project not found: ${projectName}. Available: ${available}`);
       }
 
       projectId = project.id;
@@ -95,9 +91,7 @@ export class TodoistSource extends IntegrationSource {
     // Filter by label if specified
     if (options?.label) {
       const labelLower = options.label.toLowerCase();
-      tasks = tasks.filter((t) =>
-        t.labels.some((l) => l.toLowerCase() === labelLower)
-      );
+      tasks = tasks.filter((t) => t.labels.some((l) => l.toLowerCase() === labelLower));
     }
 
     // Apply limit

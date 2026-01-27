@@ -1,19 +1,19 @@
 // Idea Mode - Brainstorming for users who don't know what to build
 
-import ora from 'ora';
 import chalk from 'chalk';
-import type { IdeaSuggestion, IdeaContext, IdeaDiscoveryMethod, ProjectType } from './types.js';
-import { getBrainstormPrompt, TREND_PROMPT, SKILL_PROMPT, PROBLEM_PROMPT } from './idea-prompts.js';
-import {
-  showIdeaWelcome,
-  showBrainstormResults,
-  selectIdea,
-  buildIdeaContext,
-  showIdeaLoading,
-} from './idea-ui.js';
+import ora from 'ora';
 import { getConfiguredLLM, getLLMModel } from '../config/manager.js';
 import { callLLM, type LLMProvider, PROVIDERS } from '../llm/index.js';
 import { detectBestAgent, runAgent } from '../loop/agents.js';
+import { getBrainstormPrompt, PROBLEM_PROMPT, SKILL_PROMPT, TREND_PROMPT } from './idea-prompts.js';
+import {
+  buildIdeaContext,
+  selectIdea,
+  showBrainstormResults,
+  showIdeaLoading,
+  showIdeaWelcome,
+} from './idea-ui.js';
+import type { IdeaContext, IdeaDiscoveryMethod, IdeaSuggestion, ProjectType } from './types.js';
 
 // Timeout for agent calls (60 seconds - simplified prompt should be faster)
 const AGENT_TIMEOUT_MS = 60000;
@@ -93,7 +93,7 @@ async function runIdeaModeFlow(spinner: ReturnType<typeof ora>): Promise<string 
       } else {
         console.log(chalk.green('  ✓ Got some ideas!'));
       }
-    } catch (error) {
+    } catch (_error) {
       if (spinner.isSpinning) {
         spinner.fail('Could not generate ideas');
       } else {
@@ -137,7 +137,10 @@ export interface IdeaGenerationResult {
  * Returns both the ideas and which method was used (for user feedback)
  * @param spinner - Optional spinner to stop before streaming output
  */
-export async function generateIdeas(context: IdeaContext, spinner?: ReturnType<typeof ora>): Promise<IdeaSuggestion[]> {
+export async function generateIdeas(
+  context: IdeaContext,
+  spinner?: ReturnType<typeof ora>
+): Promise<IdeaSuggestion[]> {
   const result = await generateIdeasWithMethod(context, spinner);
   return result.ideas;
 }
@@ -148,9 +151,7 @@ export async function generateIdeas(context: IdeaContext, spinner?: ReturnType<t
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
   return Promise.race([
     promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(message)), timeoutMs)
-    ),
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(message)), timeoutMs)),
   ]);
 }
 
@@ -159,7 +160,10 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string)
  * Priority: Claude Code CLI (no API key needed) > Direct API > Template fallback
  * @param spinner - Optional spinner to stop before streaming output
  */
-export async function generateIdeasWithMethod(context: IdeaContext, spinner?: ReturnType<typeof ora>): Promise<IdeaGenerationResult> {
+export async function generateIdeasWithMethod(
+  context: IdeaContext,
+  spinner?: ReturnType<typeof ora>
+): Promise<IdeaGenerationResult> {
   // 1. Try Claude Code agent FIRST (most frictionless - no API key needed!)
   try {
     const agent = await withTimeout(detectBestAgent(), 5000, 'Agent detection timeout');
@@ -174,7 +178,7 @@ export async function generateIdeasWithMethod(context: IdeaContext, spinner?: Re
       const ideas = await generateViaAgent(context, agent);
       return { ideas, method: 'agent' };
     }
-  } catch (error) {
+  } catch (_error) {
     // Silent fallback to API
   }
 
@@ -329,46 +333,226 @@ function getTemplateIdeas(method: IdeaDiscoveryMethod): IdeaSuggestion[] {
   // Large pool of ideas to pick from
   const allIdeas: IdeaSuggestion[] = [
     // Productivity & Tools
-    { title: 'Personal Finance Tracker', description: 'Track expenses, set budgets, and visualize spending patterns', projectType: 'web' as ProjectType, difficulty: 'moderate', reasons: ['Practical everyday use', 'Great for learning data visualization'] },
-    { title: 'Habit Tracker', description: 'Build streaks, track daily habits, and see your progress over time', projectType: 'web' as ProjectType, difficulty: 'easy', reasons: ['Personal growth tool', 'Great for beginners'] },
-    { title: 'Pomodoro Timer', description: 'Focus timer with stats, break reminders, and daily productivity reports', projectType: 'web' as ProjectType, difficulty: 'easy', reasons: ['Simple but useful', 'Good first project'] },
-    { title: 'Reading List Manager', description: 'Track books to read, currently reading, and finished with notes', projectType: 'web' as ProjectType, difficulty: 'easy', reasons: ['Personal utility', 'Classic CRUD app'] },
-    { title: 'Meal Planner', description: 'Plan weekly meals, generate shopping lists, and track nutrition', projectType: 'web' as ProjectType, difficulty: 'moderate', reasons: ['Practical tool', 'Good data modeling exercise'] },
+    {
+      title: 'Personal Finance Tracker',
+      description: 'Track expenses, set budgets, and visualize spending patterns',
+      projectType: 'web' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['Practical everyday use', 'Great for learning data visualization'],
+    },
+    {
+      title: 'Habit Tracker',
+      description: 'Build streaks, track daily habits, and see your progress over time',
+      projectType: 'web' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Personal growth tool', 'Great for beginners'],
+    },
+    {
+      title: 'Pomodoro Timer',
+      description: 'Focus timer with stats, break reminders, and daily productivity reports',
+      projectType: 'web' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Simple but useful', 'Good first project'],
+    },
+    {
+      title: 'Reading List Manager',
+      description: 'Track books to read, currently reading, and finished with notes',
+      projectType: 'web' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Personal utility', 'Classic CRUD app'],
+    },
+    {
+      title: 'Meal Planner',
+      description: 'Plan weekly meals, generate shopping lists, and track nutrition',
+      projectType: 'web' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['Practical tool', 'Good data modeling exercise'],
+    },
 
     // Developer Tools
-    { title: 'Markdown Note Organizer', description: 'CLI tool to organize, search, and link markdown notes', projectType: 'cli' as ProjectType, difficulty: 'easy', reasons: ['Simple to start', 'Can grow in complexity'] },
-    { title: 'API Status Dashboard', description: 'Monitor multiple API endpoints and get alerts when they go down', projectType: 'web' as ProjectType, difficulty: 'moderate', reasons: ['Useful for developers', 'Good full-stack project'] },
-    { title: 'Git Commit Analyzer', description: 'Analyze git history to show contribution patterns and stats', projectType: 'cli' as ProjectType, difficulty: 'easy', reasons: ['Work with familiar tools', 'Interesting data to explore'] },
-    { title: 'Code Snippet Manager', description: 'Save, organize, and search your code snippets with syntax highlighting', projectType: 'web' as ProjectType, difficulty: 'moderate', reasons: ['Developer utility', 'Good for learning'] },
-    { title: 'Regex Tester', description: 'Interactive regex builder with real-time matching and explanations', projectType: 'web' as ProjectType, difficulty: 'easy', reasons: ['Everyone needs this', 'Great learning tool'] },
-    { title: 'JSON/YAML Converter', description: 'Convert between JSON, YAML, and TOML with formatting options', projectType: 'web' as ProjectType, difficulty: 'easy', reasons: ['Practical utility', 'Quick to build'] },
-    { title: 'Environment Variable Manager', description: 'Manage and sync .env files across projects securely', projectType: 'cli' as ProjectType, difficulty: 'moderate', reasons: ['Solves real problem', 'Security focused'] },
+    {
+      title: 'Markdown Note Organizer',
+      description: 'CLI tool to organize, search, and link markdown notes',
+      projectType: 'cli' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Simple to start', 'Can grow in complexity'],
+    },
+    {
+      title: 'API Status Dashboard',
+      description: 'Monitor multiple API endpoints and get alerts when they go down',
+      projectType: 'web' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['Useful for developers', 'Good full-stack project'],
+    },
+    {
+      title: 'Git Commit Analyzer',
+      description: 'Analyze git history to show contribution patterns and stats',
+      projectType: 'cli' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Work with familiar tools', 'Interesting data to explore'],
+    },
+    {
+      title: 'Code Snippet Manager',
+      description: 'Save, organize, and search your code snippets with syntax highlighting',
+      projectType: 'web' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['Developer utility', 'Good for learning'],
+    },
+    {
+      title: 'Regex Tester',
+      description: 'Interactive regex builder with real-time matching and explanations',
+      projectType: 'web' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Everyone needs this', 'Great learning tool'],
+    },
+    {
+      title: 'JSON/YAML Converter',
+      description: 'Convert between JSON, YAML, and TOML with formatting options',
+      projectType: 'web' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Practical utility', 'Quick to build'],
+    },
+    {
+      title: 'Environment Variable Manager',
+      description: 'Manage and sync .env files across projects securely',
+      projectType: 'cli' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['Solves real problem', 'Security focused'],
+    },
 
     // APIs
-    { title: 'Recipe API', description: 'RESTful API for storing and retrieving recipes with ingredients', projectType: 'api' as ProjectType, difficulty: 'easy', reasons: ['Classic CRUD project', 'Easy to extend'] },
-    { title: 'Quote of the Day API', description: 'API serving random quotes with categories and authors', projectType: 'api' as ProjectType, difficulty: 'easy', reasons: ['Simple and fun', 'Good API basics'] },
-    { title: 'URL Shortener', description: 'Create short links with click tracking and analytics', projectType: 'api' as ProjectType, difficulty: 'easy', reasons: ['Classic project', 'Real-world useful'] },
-    { title: 'Currency Converter API', description: 'Convert between currencies with historical rates', projectType: 'api' as ProjectType, difficulty: 'easy', reasons: ['Practical utility', 'Good for caching'] },
-    { title: 'Weather Aggregator API', description: 'Aggregate weather data from multiple sources', projectType: 'api' as ProjectType, difficulty: 'moderate', reasons: ['Learn API integration', 'Data normalization'] },
+    {
+      title: 'Recipe API',
+      description: 'RESTful API for storing and retrieving recipes with ingredients',
+      projectType: 'api' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Classic CRUD project', 'Easy to extend'],
+    },
+    {
+      title: 'Quote of the Day API',
+      description: 'API serving random quotes with categories and authors',
+      projectType: 'api' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Simple and fun', 'Good API basics'],
+    },
+    {
+      title: 'URL Shortener',
+      description: 'Create short links with click tracking and analytics',
+      projectType: 'api' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Classic project', 'Real-world useful'],
+    },
+    {
+      title: 'Currency Converter API',
+      description: 'Convert between currencies with historical rates',
+      projectType: 'api' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Practical utility', 'Good for caching'],
+    },
+    {
+      title: 'Weather Aggregator API',
+      description: 'Aggregate weather data from multiple sources',
+      projectType: 'api' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['Learn API integration', 'Data normalization'],
+    },
 
     // Creative & Fun
-    { title: 'Random Color Palette Generator', description: 'Generate harmonious color palettes for design projects', projectType: 'web' as ProjectType, difficulty: 'easy', reasons: ['Fun to build', 'Visual feedback'] },
-    { title: 'ASCII Art Generator', description: 'Convert images to ASCII art with customizable characters', projectType: 'cli' as ProjectType, difficulty: 'moderate', reasons: ['Fun project', 'Image processing basics'] },
-    { title: 'Playlist Shuffler', description: 'Create smart shuffled playlists based on mood or genre', projectType: 'web' as ProjectType, difficulty: 'moderate', reasons: ['Music is fun', 'Algorithm practice'] },
-    { title: 'Daily Journal', description: 'Private daily journaling app with mood tracking and search', projectType: 'web' as ProjectType, difficulty: 'easy', reasons: ['Personal tool', 'Privacy focused'] },
-    { title: 'Meme Generator', description: 'Create memes with templates and custom text', projectType: 'web' as ProjectType, difficulty: 'easy', reasons: ['Fun project', 'Image manipulation'] },
+    {
+      title: 'Random Color Palette Generator',
+      description: 'Generate harmonious color palettes for design projects',
+      projectType: 'web' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Fun to build', 'Visual feedback'],
+    },
+    {
+      title: 'ASCII Art Generator',
+      description: 'Convert images to ASCII art with customizable characters',
+      projectType: 'cli' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['Fun project', 'Image processing basics'],
+    },
+    {
+      title: 'Playlist Shuffler',
+      description: 'Create smart shuffled playlists based on mood or genre',
+      projectType: 'web' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['Music is fun', 'Algorithm practice'],
+    },
+    {
+      title: 'Daily Journal',
+      description: 'Private daily journaling app with mood tracking and search',
+      projectType: 'web' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Personal tool', 'Privacy focused'],
+    },
+    {
+      title: 'Meme Generator',
+      description: 'Create memes with templates and custom text',
+      projectType: 'web' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Fun project', 'Image manipulation'],
+    },
 
     // Automation
-    { title: 'File Organizer', description: 'Automatically organize files by type, date, or custom rules', projectType: 'automation' as ProjectType, difficulty: 'moderate', reasons: ['Practical utility', 'File system practice'] },
-    { title: 'Screenshot Organizer', description: 'Watch folder and organize screenshots by date and content', projectType: 'automation' as ProjectType, difficulty: 'easy', reasons: ['Solves real problem', 'File watching'] },
-    { title: 'Email Digest Generator', description: 'Summarize and categorize emails into daily digests', projectType: 'automation' as ProjectType, difficulty: 'challenging', reasons: ['Time saver', 'API integration'] },
-    { title: 'Social Media Scheduler', description: 'Schedule and auto-post content across platforms', projectType: 'automation' as ProjectType, difficulty: 'challenging', reasons: ['Marketing utility', 'OAuth practice'] },
+    {
+      title: 'File Organizer',
+      description: 'Automatically organize files by type, date, or custom rules',
+      projectType: 'automation' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['Practical utility', 'File system practice'],
+    },
+    {
+      title: 'Screenshot Organizer',
+      description: 'Watch folder and organize screenshots by date and content',
+      projectType: 'automation' as ProjectType,
+      difficulty: 'easy',
+      reasons: ['Solves real problem', 'File watching'],
+    },
+    {
+      title: 'Email Digest Generator',
+      description: 'Summarize and categorize emails into daily digests',
+      projectType: 'automation' as ProjectType,
+      difficulty: 'challenging',
+      reasons: ['Time saver', 'API integration'],
+    },
+    {
+      title: 'Social Media Scheduler',
+      description: 'Schedule and auto-post content across platforms',
+      projectType: 'automation' as ProjectType,
+      difficulty: 'challenging',
+      reasons: ['Marketing utility', 'OAuth practice'],
+    },
 
     // AI/Trending
-    { title: 'AI Prompt Library', description: 'Store, organize, and version prompts for LLM applications', projectType: 'web' as ProjectType, difficulty: 'moderate', reasons: ['AI tooling', 'Version control'] },
-    { title: 'Local-First Notes', description: 'Offline-first note app with optional cloud sync', projectType: 'web' as ProjectType, difficulty: 'moderate', reasons: ['Privacy focused', 'Modern patterns'] },
-    { title: 'Voice Memo Transcriber', description: 'Record voice memos and auto-transcribe with AI', projectType: 'web' as ProjectType, difficulty: 'moderate', reasons: ['AI integration', 'Audio processing'] },
-    { title: 'Smart Bookmark Tagger', description: 'Auto-tag and categorize bookmarks using AI', projectType: 'automation' as ProjectType, difficulty: 'moderate', reasons: ['AI utility', 'Browser extension'] },
+    {
+      title: 'AI Prompt Library',
+      description: 'Store, organize, and version prompts for LLM applications',
+      projectType: 'web' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['AI tooling', 'Version control'],
+    },
+    {
+      title: 'Local-First Notes',
+      description: 'Offline-first note app with optional cloud sync',
+      projectType: 'web' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['Privacy focused', 'Modern patterns'],
+    },
+    {
+      title: 'Voice Memo Transcriber',
+      description: 'Record voice memos and auto-transcribe with AI',
+      projectType: 'web' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['AI integration', 'Audio processing'],
+    },
+    {
+      title: 'Smart Bookmark Tagger',
+      description: 'Auto-tag and categorize bookmarks using AI',
+      projectType: 'automation' as ProjectType,
+      difficulty: 'moderate',
+      reasons: ['AI utility', 'Browser extension'],
+    },
   ];
 
   // Get method-specific ideas or use all
@@ -383,8 +567,8 @@ function getTemplateIdeas(method: IdeaDiscoveryMethod): IdeaSuggestion[] {
   const keywords = methodSpecific[method];
   if (keywords && keywords.length > 0) {
     // Filter to method-relevant ideas
-    const filtered = allIdeas.filter(idea =>
-      keywords.some(kw => idea.title.includes(kw) || idea.description.includes(kw))
+    const filtered = allIdeas.filter((idea) =>
+      keywords.some((kw) => idea.title.includes(kw) || idea.description.includes(kw))
     );
     // If we have enough filtered, use them; otherwise use all
     if (filtered.length >= 5) {

@@ -62,8 +62,7 @@ export class RateLimiter {
     const callsThisHour = this.getCallsInWindow(60 * 60 * 1000);
 
     return (
-      callsThisMinute < this.config.maxCallsPerMinute &&
-      callsThisHour < this.config.maxCallsPerHour
+      callsThisMinute < this.config.maxCallsPerMinute && callsThisHour < this.config.maxCallsPerHour
     );
   }
 
@@ -149,8 +148,7 @@ export class RateLimiter {
     const hourRatio = callsThisHour / this.config.maxCallsPerHour;
 
     const isWarning =
-      minuteRatio >= this.config.warningThreshold ||
-      hourRatio >= this.config.warningThreshold;
+      minuteRatio >= this.config.warningThreshold || hourRatio >= this.config.warningThreshold;
 
     const isBlocked = !this.canMakeCall();
 

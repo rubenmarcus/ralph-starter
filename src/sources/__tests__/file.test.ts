@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FileSource } from '../builtin/file.js';
 
 // Mock fs

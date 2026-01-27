@@ -3,6 +3,10 @@ node_modules/
 .DS_Store
 .env
 .env.local
+
+# ralph-starter config (may contain API keys)
+.ralph-starter/
+config.json
 coverage/
 .nyc_output/
 dist/
@@ -11,3 +15,8 @@ dist/
 docs/node_modules/
 docs/build/
 docs/.docusaurus/
+
+# Reference projects (not part of ralph-starter)
+projects/
+ralph-tui-main/
+ralphy-main/

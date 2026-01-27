@@ -253,25 +253,21 @@ export function getPresetNames(): string[] {
 export function getPresetsByCategory(): Record<string, PresetConfig[]> {
   return {
     Development: [
-      PRESETS['feature'],
+      PRESETS.feature,
       PRESETS['feature-minimal'],
       PRESETS['tdd-red-green'],
       PRESETS['spec-driven'],
-      PRESETS['refactor'],
+      PRESETS.refactor,
     ],
-    Debugging: [
-      PRESETS['debug'],
-      PRESETS['incident-response'],
-      PRESETS['code-archaeology'],
-    ],
-    Review: [PRESETS['review'], PRESETS['pr-review'], PRESETS['adversarial-review']],
-    Documentation: [PRESETS['docs'], PRESETS['documentation-first']],
+    Debugging: [PRESETS.debug, PRESETS['incident-response'], PRESETS['code-archaeology']],
+    Review: [PRESETS.review, PRESETS['pr-review'], PRESETS['adversarial-review']],
+    Documentation: [PRESETS.docs, PRESETS['documentation-first']],
     Specialized: [
       PRESETS['api-design'],
       PRESETS['migration-safety'],
       PRESETS['performance-optimization'],
       PRESETS['scientific-method'],
-      PRESETS['research'],
+      PRESETS.research,
       PRESETS['gap-analysis'],
     ],
   };

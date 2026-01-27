@@ -1,5 +1,5 @@
 import { IntegrationSource } from '../base.js';
-import type { SourceResult, SourceOptions } from '../types.js';
+import type { SourceOptions, SourceResult } from '../types.js';
 
 /**
  * Linear source - fetches issues from Linear
@@ -103,9 +103,7 @@ export class LinearSource extends IntegrationSource {
 
     if (!response.ok) {
       if (response.status === 401) {
-        this.error(
-          'Invalid Linear API key. Run: ralph-starter config set linear.apiKey <key>'
-        );
+        this.error('Invalid Linear API key. Run: ralph-starter config set linear.apiKey <key>');
       }
       this.error(`Linear API error: ${response.status} ${response.statusText}`);
     }
@@ -160,7 +158,7 @@ export class LinearSource extends IntegrationSource {
       sections.push(`\n## ${priorityEmoji[priority] || '⚪'} ${priority}\n`);
 
       for (const issue of priorityIssues) {
-        const teamKey = issue.team?.key || '';
+        const _teamKey = issue.team?.key || '';
         sections.push(`### ${issue.identifier}: ${issue.title}`);
 
         const meta: string[] = [];

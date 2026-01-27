@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { detectBestAgent, runAgent } from '../../loop/agents.js';
 
 export interface PlanCoreOptions {
@@ -85,7 +85,7 @@ Do not implement anything - only plan.`;
         success: false,
         planPath,
         taskCount: 0,
-        error: 'Planning failed: ' + result.output.slice(0, 200),
+        error: `Planning failed: ${result.output.slice(0, 200)}`,
       };
     }
 

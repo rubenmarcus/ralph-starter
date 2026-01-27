@@ -35,9 +35,10 @@ export interface GitHubFile {
 /**
  * Detect if a URL is a GitHub URL and what type
  */
-export function detectGitHubUrl(
-  url: URL
-): { type: 'issue' | 'issues' | 'blob' | 'repo' | 'raw' | null; match: RegExpMatchArray | null } {
+export function detectGitHubUrl(url: URL): {
+  type: 'issue' | 'issues' | 'blob' | 'repo' | 'raw' | null;
+  match: RegExpMatchArray | null;
+} {
   if (url.hostname !== 'github.com' && url.hostname !== 'raw.githubusercontent.com') {
     return { type: null, match: null };
   }
@@ -81,9 +82,7 @@ export function detectGitHubUrl(
  */
 export function parseGitHubIssue(html: string, issueNumber: number): GitHubIssue {
   // Extract title
-  const titleMatch = html.match(
-    /<bdi class="js-issue-title[^"]*"[^>]*>([^<]+)<\/bdi>/
-  );
+  const titleMatch = html.match(/<bdi class="js-issue-title[^"]*"[^>]*>([^<]+)<\/bdi>/);
   const title = titleMatch ? decodeHtmlEntities(titleMatch[1].trim()) : `Issue #${issueNumber}`;
 
   // Extract state (open/closed)
@@ -91,9 +90,7 @@ export function parseGitHubIssue(html: string, issueNumber: number): GitHubIssue
   const state = stateOpen ? 'open' : 'closed';
 
   // Extract author
-  const authorMatch = html.match(
-    /class="author[^"]*"[^>]*>([^<]+)<\/a>/
-  );
+  const authorMatch = html.match(/class="author[^"]*"[^>]*>([^<]+)<\/a>/);
   const author = authorMatch ? authorMatch[1].trim() : 'unknown';
 
   // Extract labels
@@ -114,9 +111,7 @@ export function parseGitHubIssue(html: string, issueNumber: number): GitHubIssue
   }
 
   // Extract created date
-  const dateMatch = html.match(
-    /<relative-time[^>]*datetime="([^"]+)"[^>]*>/
-  );
+  const dateMatch = html.match(/<relative-time[^>]*datetime="([^"]+)"[^>]*>/);
   const createdAt = dateMatch ? dateMatch[1] : '';
 
   // Extract comments
@@ -168,14 +163,13 @@ function parseGitHubComments(html: string): GitHubComment[] {
  */
 export function parseGitHubIssueList(
   html: string,
-  owner: string,
-  repo: string
+  _owner: string,
+  _repo: string
 ): { issues: Partial<GitHubIssue>[]; hasMore: boolean } {
   const issues: Partial<GitHubIssue>[] = [];
 
   // Find issue rows
-  const issueRegex =
-    /<a[^>]*id="issue_(\d+)_link"[^>]*href="[^"]*"[^>]*>([^<]+)<\/a>/g;
+  const issueRegex = /<a[^>]*id="issue_(\d+)_link"[^>]*href="[^"]*"[^>]*>([^<]+)<\/a>/g;
 
   let match;
   while ((match = issueRegex.exec(html)) !== null) {
@@ -360,41 +354,43 @@ function decodeHtmlEntities(text: string): string {
 }
 
 function htmlToMarkdown(html: string): string {
-  return html
-    // Code blocks
-    .replace(/<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi, '\n```\n$1\n```\n')
-    // Inline code
-    .replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`')
-    // Headers
-    .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n')
-    .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n')
-    .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n')
-    .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n')
-    // Paragraphs
-    .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
-    // Lists
-    .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n')
-    .replace(/<ul[^>]*>|<\/ul>|<ol[^>]*>|<\/ol>/gi, '\n')
-    // Links
-    .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
-    // Bold
-    .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
-    .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
-    // Italic
-    .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
-    .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
-    // Line breaks
-    .replace(/<br\s*\/?>/gi, '\n')
-    // Remove remaining tags
-    .replace(/<[^>]+>/g, '')
-    // Decode entities
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    // Clean up whitespace
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  return (
+    html
+      // Code blocks
+      .replace(/<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi, '\n```\n$1\n```\n')
+      // Inline code
+      .replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`')
+      // Headers
+      .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n')
+      .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n')
+      .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n')
+      .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n')
+      // Paragraphs
+      .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
+      // Lists
+      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n')
+      .replace(/<ul[^>]*>|<\/ul>|<ol[^>]*>|<\/ol>/gi, '\n')
+      // Links
+      .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
+      // Bold
+      .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
+      .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
+      // Italic
+      .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
+      .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
+      // Line breaks
+      .replace(/<br\s*\/?>/gi, '\n')
+      // Remove remaining tags
+      .replace(/<[^>]+>/g, '')
+      // Decode entities
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      // Clean up whitespace
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  );
 }
 
 function extractCodeFromBlob(html: string): string {

@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander';
 import chalk from 'chalk';
-import { runCommand } from './commands/run.js';
-import { initCommand } from './commands/init.js';
-import { skillCommand } from './commands/skill.js';
-import { planCommand } from './commands/plan.js';
-import { configCommand } from './commands/config.js';
-import { sourceCommand } from './commands/source.js';
+import { Command } from 'commander';
 import { authCommand } from './commands/auth.js';
-import { integrationsCommand } from './commands/integrations.js';
-import { setupCommand } from './commands/setup.js';
 import { checkCommand } from './commands/check.js';
-import { runWizard, runIdeaMode } from './wizard/index.js';
+import { configCommand } from './commands/config.js';
+import { initCommand } from './commands/init.js';
+import { integrationsCommand } from './commands/integrations.js';
+import { planCommand } from './commands/plan.js';
+import { runCommand } from './commands/run.js';
+import { setupCommand } from './commands/setup.js';
+import { skillCommand } from './commands/skill.js';
+import { sourceCommand } from './commands/source.js';
 import { startMcpServer } from './mcp/server.js';
 import { formatPresetsHelp, getPresetNames } from './presets/index.js';
+import { runIdeaMode, runWizard } from './wizard/index.js';
 
 const VERSION = '0.1.0';
 
@@ -56,7 +56,10 @@ program
   .option('--status <status>', 'Status filter for --from integrations')
   .option('--limit <n>', 'Max items to fetch for --from integrations', '20')
   // New options
-  .option('--preset <name>', `Use a workflow preset (${getPresetNames().slice(0, 5).join(', ')}...)`)
+  .option(
+    '--preset <name>',
+    `Use a workflow preset (${getPresetNames().slice(0, 5).join(', ')}...)`
+  )
   .option('--completion-promise <string>', 'Custom completion promise string to detect task done')
   .option('--require-exit-signal', 'Require explicit EXIT_SIGNAL: true for completion')
   .option('--rate-limit <n>', 'Max API calls per hour (default: unlimited)')
@@ -114,7 +117,7 @@ program
 // ralph-starter ideas - Brainstorm project ideas
 program
   .command('ideas')
-  .description('Brainstorm project ideas when you don\'t know what to build')
+  .description("Brainstorm project ideas when you don't know what to build")
   .action(async () => {
     const idea = await runIdeaMode();
     if (idea) {

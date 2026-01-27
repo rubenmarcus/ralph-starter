@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
   CostTracker,
-  estimateTokens,
   calculateCost,
+  estimateTokens,
   formatCost,
   formatTokens,
   MODEL_PRICING,
@@ -187,7 +187,7 @@ describe('cost-tracker', () => {
         const stats = trackerWithMax.getStats();
 
         expect(stats.projectedCost).toBeDefined();
-        expect(stats.projectedCost!.totalCost).toBeGreaterThan(stats.totalCost.totalCost);
+        expect(stats.projectedCost?.totalCost).toBeGreaterThan(stats.totalCost.totalCost);
       });
     });
 

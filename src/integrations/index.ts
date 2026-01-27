@@ -13,7 +13,13 @@ import { LinearIntegration } from './linear/index.js';
 import { NotionIntegration } from './notion/index.js';
 
 // Re-export types
-export type { Integration, IntegrationInfo, IntegrationResult, IntegrationOptions, AuthMethod } from './base.js';
+export type {
+  AuthMethod,
+  Integration,
+  IntegrationInfo,
+  IntegrationOptions,
+  IntegrationResult,
+} from './base.js';
 export { BaseIntegration } from './base.js';
 
 /**

@@ -3,25 +3,25 @@
  */
 
 export {
-  type AgentInfo,
   type AgentDetectionResult,
-  SUPPORTED_AGENTS,
+  type AgentInfo,
   detectAgent,
   detectAllAgents,
   getFirstAvailableAgent,
   isClaudeCodeAvailable,
+  SUPPORTED_AGENTS,
   testClaudeCodeConnection,
 } from './agent-detector.js';
 
 export {
+  formatTestResult,
   type LLMTestResult,
   testApiConnection,
-  testClaudeCode,
   testBestAvailable,
-  formatTestResult,
+  testClaudeCode,
 } from './llm-tester.js';
 
 export {
-  type SetupResult,
   runSetupWizard,
+  type SetupResult,
 } from './wizard.js';

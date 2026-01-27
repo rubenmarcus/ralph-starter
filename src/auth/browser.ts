@@ -29,7 +29,7 @@ export async function openBrowser(url: string): Promise<void> {
 
   try {
     await execAsync(command);
-  } catch (error) {
+  } catch (_error) {
     // Some systems don't have xdg-open, try alternatives
     if (platform === 'linux') {
       try {
@@ -45,9 +45,7 @@ export async function openBrowser(url: string): Promise<void> {
         }
       }
     }
-    throw new Error(
-      `Failed to open browser. Please open this URL manually:\n${url}`
-    );
+    throw new Error(`Failed to open browser. Please open this URL manually:\n${url}`);
   }
 }
 

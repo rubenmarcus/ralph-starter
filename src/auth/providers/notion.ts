@@ -73,7 +73,7 @@ export class NotionOAuthProvider extends BaseOAuthProvider {
       throw new Error(`Failed to exchange Notion code: ${error}`);
     }
 
-    const data = await response.json() as Record<string, unknown>;
+    const data = (await response.json()) as Record<string, unknown>;
 
     return {
       accessToken: data.access_token as string,

@@ -1,5 +1,5 @@
-import { simpleGit, SimpleGit } from 'simple-git';
 import { execa } from 'execa';
+import { type SimpleGit, simpleGit } from 'simple-git';
 
 export async function hasUncommittedChanges(cwd: string): Promise<boolean> {
   const git: SimpleGit = simpleGit({ baseDir: cwd });
@@ -51,11 +51,7 @@ export interface PROptions {
 
 export async function createPullRequest(cwd: string, options: PROptions): Promise<string> {
   // Use GitHub CLI (gh) to create PR
-  const args = [
-    'pr', 'create',
-    '--title', options.title,
-    '--body', options.body,
-  ];
+  const args = ['pr', 'create', '--title', options.title, '--body', options.body];
 
   if (options.base) {
     args.push('--base', options.base);
@@ -89,7 +85,7 @@ export async function getRecentCommits(cwd: string, count: number = 5): Promise<
 
   try {
     const log = await git.log({ maxCount: count });
-    return log.all.map(commit => commit.message);
+    return log.all.map((commit) => commit.message);
   } catch {
     return [];
   }

@@ -1,8 +1,9 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import chalk from 'chalk';
-import ora from 'ora';
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
 import { detectBestAgent, runAgent } from '../loop/agents.js';
+import { detectStepFromOutput } from '../loop/step-detector.js';
+import { ProgressRenderer } from '../ui/progress-renderer.js';
 
 export interface PlanCommandOptions {
   auto?: boolean;
@@ -10,7 +11,6 @@ export interface PlanCommandOptions {
 
 export async function planCommand(options: PlanCommandOptions): Promise<void> {
   const cwd = process.cwd();
-  const spinner = ora();
 
   console.log();
   console.log(chalk.cyan.bold('Ralph Planning Mode'));
@@ -36,18 +36,18 @@ export async function planCommand(options: PlanCommandOptions): Promise<void> {
   // Read planning prompt
   const planPrompt = readFileSync(promptPlanPath, 'utf-8');
 
-  // Detect agent
-  spinner.start('Detecting coding agent...');
+  // Detect agent with progress
+  const detectProgress = new ProgressRenderer();
+  detectProgress.start('Detecting coding agent...');
   const agent = await detectBestAgent();
-  spinner.stop();
 
   if (!agent) {
-    console.log(chalk.red('No coding agent found!'));
+    detectProgress.fail('No coding agent found');
     console.log(chalk.dim('Install Claude Code, Cursor, Codex, or OpenCode.'));
     return;
   }
 
-  console.log(chalk.dim(`Using: ${agent.name}`));
+  detectProgress.stop(`Using ${agent.name}`);
   console.log();
 
   // Build the full prompt
@@ -63,25 +63,33 @@ Focus on:
 
 Do not implement anything - only plan.`;
 
-  // Run the agent in planning mode
-  spinner.start('Running planning analysis...');
+  // Run the agent in planning mode with progress feedback
+  const planProgress = new ProgressRenderer();
+  planProgress.start('Planning...');
 
   const result = await runAgent(agent, {
     task: fullPrompt,
     cwd,
     auto: options.auto,
-    maxTurns: 5, // Limited turns for planning
+    maxTurns: 10, // Increased from 5 for more complex projects
+    streamOutput: false, // Don't dump raw JSON
+    onOutput: (line: string) => {
+      const step = detectStepFromOutput(line);
+      if (step) {
+        planProgress.updateStep(step);
+      }
+    },
   });
 
   if (result.exitCode === 0) {
-    spinner.succeed('Planning complete');
+    planProgress.stop('Planning complete');
     console.log();
-    console.log(chalk.green('Updated IMPLEMENTATION_PLAN.md'));
+    console.log(chalk.green('  Updated IMPLEMENTATION_PLAN.md'));
     console.log();
-    console.log(chalk.yellow('Next step:'));
-    console.log(chalk.gray('  ralph-starter run    # Execute the plan'));
+    console.log(chalk.yellow('  Next step:'));
+    console.log(chalk.gray('    ralph-starter run    # Execute the plan'));
   } else {
-    spinner.fail('Planning failed');
+    planProgress.fail('Planning failed');
     console.log(chalk.dim(result.output.slice(0, 500)));
   }
 }

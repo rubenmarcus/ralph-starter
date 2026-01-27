@@ -1,11 +1,11 @@
-import inquirer from 'inquirer';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import chalk from 'chalk';
+import inquirer from 'inquirer';
 import ora from 'ora';
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
-import { join } from 'path';
 import YAML from 'yaml';
-import { detectAvailableAgents, printAgentStatus, Agent } from '../loop/agents.js';
-import { isGitRepo, initGitRepo } from '../automation/git.js';
+import { initGitRepo, isGitRepo } from '../automation/git.js';
+import { type Agent, detectAvailableAgents, printAgentStatus } from '../loop/agents.js';
 
 interface InitOptions {
   name?: string;
@@ -132,11 +132,7 @@ export function detectRalphPlaybook(cwd: string): RalphPlaybookInfo {
 }
 
 function generateAgentsMd(project: ProjectInfo): string {
-  const validationCmds = [
-    project.testCmd,
-    project.buildCmd,
-    project.lintCmd,
-  ].filter(Boolean);
+  const validationCmds = [project.testCmd, project.buildCmd, project.lintCmd].filter(Boolean);
 
   return `# AGENTS.md
 
@@ -194,6 +190,8 @@ You are in BUILDING mode. Execute tasks from the implementation plan.
 - Validate after each change
 - Commit working code only
 - Update the plan as you learn
+- Only link to pages that exist - use "#" for placeholder links
+- Use realistic placeholder data (names, dates, content)
 
 ## Completion Signal
 
@@ -250,36 +248,7 @@ Add discoveries and learnings here as you work.
 `;
 }
 
-function generateExampleSpec(projectName: string): string {
-  return `# ${projectName} Specification
-
-## Overview
-
-Describe what this project does.
-
-## Features
-
-### Feature 1: (name)
-
-Description of the feature.
-
-**Acceptance Criteria:**
-- [ ] Criterion 1
-- [ ] Criterion 2
-
-### Feature 2: (name)
-
-Description of the feature.
-
-## Technical Requirements
-
-- List technical constraints
-- Performance requirements
-- Security considerations
-`;
-}
-
-export async function initCommand(options: InitOptions): Promise<void> {
+export async function initCommand(_options: InitOptions): Promise<void> {
   const cwd = process.cwd();
   const spinner = ora();
 
@@ -309,7 +278,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
         name: 'initGit',
         message: 'No git repo found. Initialize one?',
         default: true,
-      }
+      },
     ]);
 
     if (initGit) {
@@ -321,7 +290,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
   // Detect available agents
   spinner.start('Detecting available agents...');
   const agents = await detectAvailableAgents();
-  const availableAgents = agents.filter(a => a.available);
+  const availableAgents = agents.filter((a) => a.available);
   spinner.stop();
 
   if (availableAgents.length === 0) {
@@ -344,11 +313,11 @@ export async function initCommand(options: InitOptions): Promise<void> {
         type: 'list',
         name: 'agent',
         message: 'Select default coding agent:',
-        choices: availableAgents.map(a => ({
+        choices: availableAgents.map((a) => ({
           name: a.name,
           value: a,
         })),
-      }
+      },
     ]);
     selectedAgent = agent;
   }
@@ -366,14 +335,10 @@ export async function initCommand(options: InitOptions): Promise<void> {
   // Implementation plan
   writeFileSync(join(cwd, 'IMPLEMENTATION_PLAN.md'), generateImplementationPlan());
 
-  // specs folder with example
+  // specs folder (empty - user creates their own specs)
   const specsDir = join(cwd, 'specs');
   if (!existsSync(specsDir)) {
     mkdirSync(specsDir, { recursive: true });
-    writeFileSync(
-      join(specsDir, 'example.md'),
-      generateExampleSpec(project.name)
-    );
   }
 
   spinner.succeed('Ralph Playbook files created');
@@ -439,10 +404,10 @@ ${project.lintCmd ? `- \`${project.lintCmd}\`` : ''}
   console.log(chalk.gray('  PROMPT_build.md        # Building mode instructions'));
   console.log(chalk.gray('  PROMPT_plan.md         # Planning mode instructions'));
   console.log(chalk.gray('  IMPLEMENTATION_PLAN.md # Task list'));
-  console.log(chalk.gray('  specs/example.md       # Example spec'));
+  console.log(chalk.gray('  specs/                 # Add your specs here'));
   console.log();
   console.log(chalk.yellow('Next steps:'));
-  console.log(chalk.gray('  1. Edit specs/example.md with your requirements'));
+  console.log(chalk.gray('  1. Add your specs to the specs/ folder'));
   console.log(chalk.gray('  2. Run: ralph-starter plan    # Generate task list'));
   console.log(chalk.gray('  3. Run: ralph-starter run     # Execute tasks'));
   console.log();

@@ -3,7 +3,7 @@
  * Tests connections to various LLM providers
  */
 
-import { callLLM, type LLMProvider, PROVIDERS } from '../llm/index.js';
+import { callLLM, type LLMProvider } from '../llm/index.js';
 import { isClaudeCodeAvailable, testClaudeCodeConnection } from './agent-detector.js';
 
 export interface LLMTestResult {
