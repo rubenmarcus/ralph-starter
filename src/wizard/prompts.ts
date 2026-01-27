@@ -316,14 +316,24 @@ export async function askExecutionOptions(): Promise<{
   autoRun: boolean;
   autoCommit: boolean;
 }> {
+  console.log();
+
   const { autoRun } = await inquirer.prompt([
     {
       type: 'list',
       name: 'autoRun',
       message: 'How should we proceed?',
       choices: [
-        { name: 'Start building automatically', value: true },
-        { name: 'Just create the plan (I\'ll run it manually)', value: false },
+        {
+          name: 'Start building automatically → (AI runs immediately after setup)',
+          short: 'Build now',
+          value: true
+        },
+        {
+          name: 'Just create the plan → (run "ralph-starter run" later)',
+          short: 'Plan only',
+          value: false
+        },
       ],
     },
   ]);
@@ -334,7 +344,7 @@ export async function askExecutionOptions(): Promise<{
       {
         type: 'confirm',
         name: 'commit',
-        message: 'Auto-commit changes as we build?',
+        message: 'Auto-commit changes as we build? (creates git history)',
         default: false,
       },
     ]);
@@ -378,6 +388,8 @@ export async function askExistingProjectAction(
 ): Promise<ExistingProjectAction> {
   const projectTypeLabel = projectInfo.type === 'unknown' ? 'project' : projectInfo.type;
 
+  console.log();
+
   const { action } = await inquirer.prompt([
     {
       type: 'list',
@@ -386,14 +398,17 @@ export async function askExistingProjectAction(
       choices: [
         {
           name: 'Add features to this existing project',
+          short: 'Enhance existing',
           value: 'enhance'
         },
         {
           name: 'Create new project in a subfolder',
+          short: 'New subfolder',
           value: 'subfolder'
         },
         {
           name: 'Choose a different directory',
+          short: 'Different directory',
           value: 'different'
         },
       ],
@@ -409,15 +424,29 @@ export async function askExistingProjectAction(
 export type RalphPlaybookAction = 'continue' | 'fresh' | 'different';
 
 export async function askRalphPlaybookAction(): Promise<RalphPlaybookAction> {
+  console.log();
+
   const { action } = await inquirer.prompt([
     {
       type: 'list',
       name: 'action',
       message: 'This project is already set up for Ralph. What would you like to do?',
       choices: [
-        { name: 'Continue working on this project', value: 'continue' },
-        { name: 'Start fresh (will overwrite existing Ralph files)', value: 'fresh' },
-        { name: 'Choose a different directory', value: 'different' },
+        {
+          name: 'Continue working on this project → (run build, regenerate plan, or add specs)',
+          short: 'Continue',
+          value: 'continue'
+        },
+        {
+          name: 'Start fresh → (will overwrite AGENTS.md, specs/, and plans)',
+          short: 'Start fresh',
+          value: 'fresh'
+        },
+        {
+          name: 'Choose a different directory',
+          short: 'Different directory',
+          value: 'different'
+        },
       ],
     },
   ]);
@@ -430,15 +459,29 @@ export async function askRalphPlaybookAction(): Promise<RalphPlaybookAction> {
 export type ContinueAction = 'run' | 'plan' | 'add_spec';
 
 export async function askContinueAction(): Promise<ContinueAction> {
+  console.log();
+
   const { action } = await inquirer.prompt([
     {
       type: 'list',
       name: 'action',
       message: 'What would you like to do?',
       choices: [
-        { name: 'Run the build loop', value: 'run' },
-        { name: 'Regenerate the implementation plan', value: 'plan' },
-        { name: 'Add a new spec to the project', value: 'add_spec' },
+        {
+          name: 'Run the build loop → (AI will implement the plan)',
+          short: 'Build',
+          value: 'run'
+        },
+        {
+          name: 'Regenerate the implementation plan → (re-analyze specs)',
+          short: 'Plan',
+          value: 'plan'
+        },
+        {
+          name: 'Add a new spec to the project → (create new feature spec)',
+          short: 'Add spec',
+          value: 'add_spec'
+        },
       ],
     },
   ]);

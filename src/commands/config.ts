@@ -9,6 +9,16 @@ import {
   deleteSourceConfig,
 } from '../sources/config.js';
 import { getSource, getAllSources } from '../sources/index.js';
+import {
+  readConfig,
+  writeConfig,
+  getLLMProvider,
+  getLLMApiKey,
+  setLLMProvider,
+  setLLMApiKey,
+  type RalphConfig,
+} from '../config/manager.js';
+import { PROVIDERS, PROVIDER_NAMES, type LLMProvider } from '../llm/index.js';
 
 export interface ConfigCommandOptions {
   // No options for now
@@ -34,12 +44,30 @@ export async function configCommand(
       await listConfig();
       break;
 
+    case 'help':
+      showConfigHelp();
+      break;
+
     case 'get':
       if (args.length < 1) {
-        console.error(chalk.red('Usage: ralph-starter config get <source>'));
+        console.error(chalk.red('Usage: ralph-starter config get <source|llm>'));
+        console.log();
+        console.log(chalk.dim('Available:'));
+        console.log(chalk.dim('  - llm (LLM provider settings)'));
+        const sources = getAllSources();
+        for (const s of sources) {
+          if (s.requiresAuth()) {
+            console.log(chalk.dim(`  - ${s.name}`));
+          }
+        }
         process.exit(1);
       }
-      await getConfig(args[0]);
+      // Handle llm config separately
+      if (args[0] === 'llm') {
+        await getLLMConfig();
+      } else {
+        await getConfig(args[0]);
+      }
       break;
 
     case 'set':
@@ -47,7 +75,12 @@ export async function configCommand(
         console.error(chalk.red('Usage: ralph-starter config set <source>.<key> <value>'));
         process.exit(1);
       }
-      await setConfig(args[0], args[1]);
+      // Handle llm.* config separately
+      if (args[0].startsWith('llm.')) {
+        await setLLMConfig(args[0], args[1]);
+      } else {
+        await setConfig(args[0], args[1]);
+      }
       break;
 
     case 'delete':
@@ -56,7 +89,12 @@ export async function configCommand(
         console.error(chalk.red('Usage: ralph-starter config delete <source>[.<key>]'));
         process.exit(1);
       }
-      await deleteConfig(args[0]);
+      // Handle llm config separately
+      if (args[0] === 'llm' || args[0].startsWith('llm.')) {
+        await deleteLLMConfig(args[0]);
+      } else {
+        await deleteConfig(args[0]);
+      }
       break;
 
     case 'path':
@@ -72,6 +110,31 @@ export async function configCommand(
 async function listConfig(): Promise<void> {
   const configuredSources = listConfiguredSources();
   const allSources = getAllSources();
+
+  // Show LLM configuration first
+  console.log(chalk.bold('\nLLM Configuration'));
+  const config = readConfig();
+  const currentProvider = getLLMProvider();
+  const currentKey = getLLMApiKey(currentProvider);
+
+  if (currentKey) {
+    console.log(`  ${chalk.green('✓')} ${chalk.bold('Provider:')} ${PROVIDERS[currentProvider].displayName}`);
+    console.log(chalk.dim(`      API Key: ${maskValue(currentKey)}`));
+    if (config.llm?.model) {
+      console.log(chalk.dim(`      Model: ${config.llm.model}`));
+    }
+  } else {
+    console.log(chalk.yellow('  No LLM API key configured.'));
+    console.log(chalk.dim('\n  Available providers:'));
+    for (const provider of PROVIDER_NAMES) {
+      const p = PROVIDERS[provider];
+      console.log(chalk.dim(`    - ${provider} (${p.displayName})`));
+      console.log(chalk.dim(`      Env: ${p.envVar} | Console: ${p.consoleUrl}`));
+    }
+    console.log(chalk.dim('\n  To configure:'));
+    console.log(chalk.cyan('    ralph-starter config set llm.provider anthropic'));
+    console.log(chalk.cyan('    ralph-starter config set llm.apiKey <your-key>'));
+  }
 
   console.log(chalk.bold('\nSource Configuration'));
   console.log(chalk.dim(`Config file: ${getSourcesConfigPath()}\n`));
@@ -96,15 +159,15 @@ async function listConfig(): Promise<void> {
 
   for (const sourceName of configuredSources) {
     const source = getSource(sourceName);
-    const config = getSourceConfig(sourceName);
+    const sourceConfig = getSourceConfig(sourceName);
 
     const icon = source ? '✓' : '?';
     const description = source?.description || 'Unknown source';
 
     console.log(`  ${chalk.green(icon)} ${chalk.bold(sourceName)} - ${chalk.dim(description)}`);
 
-    if (config?.credentials) {
-      for (const [key, value] of Object.entries(config.credentials)) {
+    if (sourceConfig?.credentials) {
+      for (const [key, value] of Object.entries(sourceConfig.credentials)) {
         const masked = maskValue(value || '');
         console.log(chalk.dim(`      ${key}: ${masked}`));
       }
@@ -218,28 +281,153 @@ async function deleteConfig(keyPath: string): Promise<void> {
   }
 }
 
+async function getLLMConfig(): Promise<void> {
+  const config = readConfig();
+  const currentProvider = getLLMProvider();
+  const currentKey = getLLMApiKey(currentProvider);
+
+  console.log(chalk.bold('\nLLM Configuration\n'));
+
+  console.log(`Provider: ${chalk.cyan(PROVIDERS[currentProvider].displayName)}`);
+
+  if (currentKey) {
+    console.log(`API Key:  ${maskValue(currentKey)}`);
+  } else {
+    console.log(chalk.yellow('API Key:  Not configured'));
+  }
+
+  if (config.llm?.model) {
+    console.log(`Model:    ${config.llm.model}`);
+  } else {
+    console.log(`Model:    ${chalk.dim(PROVIDERS[currentProvider].defaultModel + ' (default)')}`);
+  }
+
+  // Show key source
+  const envKey = process.env[PROVIDERS[currentProvider].envVar];
+  if (envKey) {
+    console.log(chalk.dim(`\nKey source: Environment variable (${PROVIDERS[currentProvider].envVar})`));
+  } else if (currentKey) {
+    console.log(chalk.dim('\nKey source: Config file'));
+  }
+
+  console.log(chalk.dim(`\nConsole: ${PROVIDERS[currentProvider].consoleUrl}`));
+}
+
+async function setLLMConfig(keyPath: string, value: string): Promise<void> {
+  const key = keyPath.replace('llm.', '');
+
+  switch (key) {
+    case 'provider': {
+      if (!PROVIDER_NAMES.includes(value as LLMProvider)) {
+        console.error(chalk.red(`Invalid provider: ${value}`));
+        console.log(chalk.dim(`Valid providers: ${PROVIDER_NAMES.join(', ')}`));
+        process.exit(1);
+      }
+      setLLMProvider(value as LLMProvider);
+      console.log(chalk.green(`✓ Set LLM provider to ${PROVIDERS[value as LLMProvider].displayName}`));
+      break;
+    }
+    case 'apiKey': {
+      const provider = getLLMProvider();
+      setLLMApiKey(provider, value);
+      console.log(chalk.green(`✓ Set API key for ${PROVIDERS[provider].displayName}`));
+      break;
+    }
+    case 'model': {
+      const config = readConfig();
+      config.llm = { ...config.llm, model: value };
+      writeConfig(config);
+      console.log(chalk.green(`✓ Set model to ${value}`));
+      break;
+    }
+    default:
+      console.error(chalk.red(`Unknown LLM config key: ${key}`));
+      console.log(chalk.dim('Valid keys: provider, apiKey, model'));
+      process.exit(1);
+  }
+}
+
+async function deleteLLMConfig(keyPath: string): Promise<void> {
+  const config = readConfig();
+  const key = keyPath === 'llm' ? 'all' : keyPath.replace('llm.', '');
+
+  switch (key) {
+    case 'all': {
+      delete config.llm;
+      delete config.providers;
+      delete config.apiKey; // Legacy
+      writeConfig(config);
+      console.log(chalk.green('✓ Deleted all LLM configuration'));
+      break;
+    }
+    case 'provider': {
+      if (config.llm) {
+        delete config.llm.provider;
+        writeConfig(config);
+      }
+      console.log(chalk.green('✓ Deleted LLM provider setting'));
+      break;
+    }
+    case 'apiKey': {
+      const provider = getLLMProvider();
+      if (config.providers?.[provider]) {
+        delete config.providers[provider];
+        writeConfig(config);
+      }
+      // Also clear legacy key if it's anthropic
+      if (provider === 'anthropic' && config.apiKey) {
+        delete config.apiKey;
+        writeConfig(config);
+      }
+      console.log(chalk.green(`✓ Deleted API key for ${PROVIDERS[provider].displayName}`));
+      break;
+    }
+    case 'model': {
+      if (config.llm) {
+        delete config.llm.model;
+        writeConfig(config);
+      }
+      console.log(chalk.green('✓ Deleted model setting'));
+      break;
+    }
+    default:
+      console.error(chalk.red(`Unknown LLM config key: ${key}`));
+      process.exit(1);
+  }
+}
+
 function showConfigHelp(): void {
   console.log(`
-${chalk.bold('ralph-starter config')} - Manage source configuration
+${chalk.bold('ralph-starter config')} - Manage configuration
 
 ${chalk.bold('Commands:')}
-  list                          List all configured sources
-  get <source>                  Show configuration for a source
-  set <source>.<key> <value>    Set a configuration value
-  delete <source>[.<key>]       Delete configuration
+  list                          List all configuration (LLM + sources)
+  get <llm|source>              Show configuration
+  set <key> <value>             Set a configuration value
+  delete <key>                  Delete configuration
   path                          Show config file path
 
-${chalk.bold('Examples:')}
-  ralph-starter config list
+${chalk.bold('LLM Configuration:')}
+  ralph-starter config get llm
+  ralph-starter config set llm.provider <anthropic|openai|openrouter>
+  ralph-starter config set llm.apiKey <your-api-key>
+  ralph-starter config set llm.model <model-name>
+  ralph-starter config delete llm
+
+${chalk.bold('Source Configuration:')}
   ralph-starter config set todoist.apiKey abc123
   ralph-starter config set github.token ghp_xxx
   ralph-starter config set linear.apiKey lin_xxx
   ralph-starter config set notion.token secret_xxx
   ralph-starter config get todoist
-  ralph-starter config delete todoist.apiKey
   ralph-starter config delete todoist
 
-${chalk.bold('Getting API Keys:')}
+${chalk.bold('LLM Providers:')}
+  anthropic   https://console.anthropic.com/ (ANTHROPIC_API_KEY)
+  openai      https://platform.openai.com/api-keys (OPENAI_API_KEY)
+  openrouter  https://openrouter.ai/keys (OPENROUTER_API_KEY)
+
+${chalk.bold('Source API Keys:')}
   todoist   https://todoist.com/prefs/integrations
   github    https://github.com/settings/tokens (or use 'gh auth login')
   linear    https://linear.app/settings/api

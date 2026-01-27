@@ -1,5 +1,6 @@
-import ora from 'ora';
+import ora, { type Ora } from 'ora';
 import chalk from 'chalk';
+import inquirer from 'inquirer';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
 
@@ -40,14 +41,142 @@ import { initCommand, detectProject, detectRalphPlaybook } from '../commands/ini
 import { planCommand } from '../commands/plan.js';
 import { runCommand } from '../commands/run.js';
 import { detectBestAgent } from '../loop/agents.js';
+import { isClaudeCodeAvailable } from '../setup/agent-detector.js';
+import { getConfiguredLLM, promptForLLMSetup } from '../config/manager.js';
+import { runSetupWizard } from '../setup/wizard.js';
+
+// Global spinner reference for cleanup on exit
+let activeSpinner: Ora | null = null;
+
+/**
+ * Handle graceful exit on Ctrl+C
+ */
+function setupGracefulExit(): void {
+  const cleanup = () => {
+    if (activeSpinner) {
+      activeSpinner.stop();
+    }
+    console.log(chalk.dim('\n\nExiting...'));
+    process.exit(0);
+  };
+
+  // Handle SIGINT (Ctrl+C)
+  process.on('SIGINT', cleanup);
+
+  // Handle SIGTERM
+  process.on('SIGTERM', cleanup);
+}
+
+/**
+ * Check if error is an exit/interrupt error from inquirer
+ */
+function isExitError(error: unknown): boolean {
+  if (error instanceof Error) {
+    return (
+      error.name === 'ExitPromptError' ||
+      error.message.includes('User force closed') ||
+      error.message.includes('SIGINT')
+    );
+  }
+  return false;
+}
 
 /**
  * Run the interactive wizard
  */
 export async function runWizard(): Promise<void> {
-  const spinner = ora();
+  // Setup graceful exit handling
+  setupGracefulExit();
 
-  // Check for agent first
+  const spinner = ora();
+  activeSpinner = spinner;
+
+  try {
+    await runWizardFlow(spinner);
+  } catch (error) {
+    // Handle graceful exit (Ctrl+C)
+    if (isExitError(error)) {
+      spinner.stop();
+      console.log(chalk.dim('\n\nExiting...'));
+      process.exit(0);
+    }
+    // Re-throw other errors
+    throw error;
+  } finally {
+    activeSpinner = null;
+  }
+}
+
+/**
+ * Check if LLM is available (either Claude Code CLI or API key)
+ */
+async function checkLLMAvailability(): Promise<{
+  available: boolean;
+  usesClaudeCode: boolean;
+  needsSetup: boolean;
+}> {
+  // Priority 1: Check for Claude Code CLI
+  const claudeCheck = await isClaudeCodeAvailable();
+  if (claudeCheck.available) {
+    return { available: true, usesClaudeCode: true, needsSetup: false };
+  }
+
+  // Priority 2: Check for API key
+  const llmConfig = getConfiguredLLM();
+  if (llmConfig) {
+    return { available: true, usesClaudeCode: false, needsSetup: false };
+  }
+
+  // Nothing configured
+  return { available: false, usesClaudeCode: false, needsSetup: true };
+}
+
+/**
+ * Main wizard flow (extracted for cleaner error handling)
+ */
+async function runWizardFlow(spinner: Ora): Promise<void> {
+  // First-run detection: Check if LLM is configured
+  spinner.start('Checking configuration...');
+  const llmStatus = await checkLLMAvailability();
+  spinner.stop();
+
+  if (llmStatus.needsSetup) {
+    console.log();
+    console.log(chalk.yellow('  No LLM configured yet.'));
+    console.log(chalk.dim('  The wizard uses AI to help refine your project idea.'));
+    console.log();
+
+    const { action } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'action',
+        message: 'What would you like to do?',
+        choices: [
+          { name: 'Run setup wizard (recommended)', value: 'setup' },
+          { name: 'Enter API key now', value: 'quick' },
+          { name: 'Continue anyway (will use template fallbacks)', value: 'continue' },
+        ],
+      },
+    ]);
+
+    if (action === 'setup') {
+      const result = await runSetupWizard();
+      if (!result.success) {
+        console.log(chalk.dim('  Setup cancelled. You can run it later with: ralph-starter setup'));
+        console.log();
+        return;
+      }
+    } else if (action === 'quick') {
+      const result = await promptForLLMSetup();
+      if (!result) {
+        console.log(chalk.dim('  No API key provided. Continuing with template fallbacks...'));
+      }
+    }
+    // 'continue' - proceed with fallbacks
+    console.log();
+  }
+
+  // Check for agent
   spinner.start('Checking for coding agents...');
   const agent = await detectBestAgent();
   spinner.stop();

@@ -10,6 +10,8 @@ import { configCommand } from './commands/config.js';
 import { sourceCommand } from './commands/source.js';
 import { authCommand } from './commands/auth.js';
 import { integrationsCommand } from './commands/integrations.js';
+import { setupCommand } from './commands/setup.js';
+import { checkCommand } from './commands/check.js';
 import { runWizard, runIdeaMode } from './wizard/index.js';
 import { startMcpServer } from './mcp/server.js';
 import { formatPresetsHelp, getPresetNames } from './presets/index.js';
@@ -87,6 +89,20 @@ program
   .option('--auto', 'Run in automated mode (skip permissions)')
   .action(planCommand);
 
+// ralph-starter setup - Interactive setup wizard
+program
+  .command('setup')
+  .description('Interactive setup wizard to configure LLM and agents')
+  .option('--force', 'Force re-run setup even if already configured')
+  .action(setupCommand);
+
+// ralph-starter check - Check configuration and test connection
+program
+  .command('check')
+  .description('Check configuration and test LLM connection')
+  .option('--verbose', 'Show detailed output')
+  .action(checkCommand);
+
 // ralph-starter wizard - Interactive wizard (explicit command)
 program
   .command('wizard')
@@ -113,9 +129,14 @@ program
 
 // ralph-starter config - Manage source configuration
 program
-  .command('config <action> [args...]')
+  .command('config [action] [args...]')
   .description('Manage source configuration (list, get, set, delete)')
-  .action(async (action: string, args: string[]) => {
+  .action(async (action: string | undefined, args: string[]) => {
+    if (!action) {
+      // Show help when no action provided
+      await configCommand('help', []);
+      return;
+    }
     await configCommand(action, args);
   });
 
@@ -131,25 +152,35 @@ program
 
 // ralph-starter source - Manage input sources
 program
-  .command('source <action> [args...]')
+  .command('source [action] [args...]')
   .description('Manage input sources (list, help, test, preview)')
   .option('--project <name>', 'Project/repo name for integrations')
   .option('--label <name>', 'Label filter')
   .option('--status <status>', 'Status filter')
   .option('--limit <n>', 'Max items to fetch', '10')
-  .action(async (action: string, args: string[], options) => {
+  .action(async (action: string | undefined, args: string[], options) => {
+    if (!action) {
+      // Show help when no action provided
+      await sourceCommand('help', []);
+      return;
+    }
     await sourceCommand(action, args, options);
   });
 
 // ralph-starter integrations - Manage integrations (unified architecture)
 program
-  .command('integrations <action> [args...]')
+  .command('integrations [action] [args...]')
   .description('Manage integrations (list, help, test, fetch)')
   .option('--project <name>', 'Project/repo name')
   .option('--label <name>', 'Label filter')
   .option('--status <status>', 'Status filter')
   .option('--limit <n>', 'Max items to fetch', '10')
-  .action(async (action: string, args: string[], options) => {
+  .action(async (action: string | undefined, args: string[], options) => {
+    if (!action) {
+      // Default to list when no action provided
+      await integrationsCommand('list', [], options);
+      return;
+    }
     await integrationsCommand(action, args, options);
   });
 

@@ -17,6 +17,10 @@ export interface AgentRunOptions {
   cwd: string;
   auto?: boolean;
   maxTurns?: number;
+  /** Stream output to console in real-time */
+  streamOutput?: boolean;
+  /** Callback for each line of output */
+  onOutput?: (line: string) => void;
 }
 
 const AGENTS: Record<AgentType, { name: string; command: string; checkCmd: string[] }> = {
@@ -95,17 +99,26 @@ export async function detectBestAgent(): Promise<Agent | null> {
 
 export async function runAgent(agent: Agent, options: AgentRunOptions): Promise<{ output: string; exitCode: number }> {
   const args: string[] = [];
+  let stdinInput: string | undefined;
+  const env: Record<string, string | undefined> = { ...process.env };
 
   switch (agent.type) {
     case 'claude-code':
-      // Claude Code specific flags
-      args.push('-p', options.task);
+      // Claude Code specific flags - use structured output format
+      // Pass prompt via stdin to avoid shell escaping issues with complex prompts
+      args.push('--print');
+      args.push('--verbose');
+      args.push('--output-format', 'stream-json');
       if (options.auto) {
         args.push('--dangerously-skip-permissions');
+        // Required for --dangerously-skip-permissions on some systems
+        env.IS_SANDBOX = '1';
       }
       if (options.maxTurns) {
         args.push('--max-turns', String(options.maxTurns));
       }
+      // Pass prompt via stdin instead of command arg
+      stdinInput = options.task;
       break;
 
     case 'cursor':
@@ -134,16 +147,64 @@ export async function runAgent(agent: Agent, options: AgentRunOptions): Promise<
   }
 
   try {
-    const result = await execa(agent.command, args, {
+    // Collect output while optionally streaming
+    let output = '';
+
+    const subprocess = execa(agent.command, args, {
       cwd: options.cwd,
-      stdio: 'pipe',
       reject: false,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      env,
+      // Pass prompt via stdin for agents that support it (e.g., Claude Code)
+      input: stdinInput,
     });
 
-    return {
-      output: result.stdout + result.stderr,
-      exitCode: result.exitCode ?? 0,
-    };
+    // Stream output if requested
+    if (options.streamOutput || options.onOutput) {
+      subprocess.stdout?.on('data', (data: Buffer) => {
+        const text = data.toString();
+        output += text;
+        if (options.streamOutput) {
+          process.stdout.write(chalk.dim(text));
+        }
+        if (options.onOutput) {
+          // Call callback for each line
+          const lines = text.split('\n').filter(l => l.trim());
+          for (const line of lines) {
+            options.onOutput(line);
+          }
+        }
+      });
+
+      subprocess.stderr?.on('data', (data: Buffer) => {
+        const text = data.toString();
+        output += text;
+        if (options.streamOutput) {
+          process.stderr.write(chalk.dim(text));
+        }
+        if (options.onOutput) {
+          const lines = text.split('\n').filter(l => l.trim());
+          for (const line of lines) {
+            options.onOutput(line);
+          }
+        }
+      });
+
+      // Wait for completion
+      const result = await subprocess;
+      return {
+        output,
+        exitCode: result.exitCode ?? 0,
+      };
+    } else {
+      // Original behavior - just capture output
+      const result = await subprocess;
+      return {
+        output: result.stdout + result.stderr,
+        exitCode: result.exitCode ?? 0,
+      };
+    }
   } catch (error) {
     return {
       output: error instanceof Error ? error.message : 'Unknown error',

@@ -140,6 +140,45 @@ function detectCompletion(
   return 'continue';
 }
 
+/**
+ * Get human-readable reason for completion (UX 3)
+ */
+function getCompletionReason(output: string, options: CompletionOptions): string {
+  const { completionPromise, requireExitSignal } = options;
+
+  // Check explicit completion promise first
+  if (completionPromise && output.includes(completionPromise)) {
+    return `Found completion promise: "${completionPromise}"`;
+  }
+
+  // Check for <promise>COMPLETE</promise> tag
+  if (/<promise>COMPLETE<\/promise>/i.test(output)) {
+    return 'Found <promise>COMPLETE</promise> marker';
+  }
+
+  // Check for explicit EXIT_SIGNAL
+  if (hasExitSignal(output)) {
+    return 'Found EXIT_SIGNAL: true';
+  }
+
+  // Check completion markers
+  const upperOutput = output.toUpperCase();
+  for (const marker of COMPLETION_MARKERS) {
+    if (upperOutput.includes(marker.toUpperCase())) {
+      return `Found completion marker: "${marker}"`;
+    }
+  }
+
+  // Use semantic analysis
+  const analysis = analyzeResponse(output);
+  if (analysis.completionScore >= 0.7) {
+    const indicators = analysis.indicators.completion.slice(0, 3);
+    return `Semantic analysis (${Math.round(analysis.completionScore * 100)}% confident): ${indicators.join(', ')}`;
+  }
+
+  return 'Task marked as complete by agent';
+}
+
 function summarizeChanges(output: string): string {
   // Try to extract a meaningful summary from the output
   const lines = output.split('\n').filter(l => l.trim());
@@ -225,19 +264,33 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
       break;
     }
 
-    // Check rate limiter
+    // Check rate limiter with countdown (UX 10)
     if (rateLimiter && !rateLimiter.canMakeCall()) {
-      const stats = rateLimiter.getStats();
-      spinner.warn(chalk.yellow(`Rate limited. Waiting...`));
+      const waitTimeMs = rateLimiter.getWaitTime();
+      const waitTimeSec = Math.ceil(waitTimeMs / 1000);
+
+      console.log(chalk.yellow(`\n⏳ Rate limited. Waiting ${waitTimeSec}s...`));
       console.log(chalk.dim(rateLimiter.formatStats()));
 
+      // Show countdown
+      const countdownInterval = setInterval(() => {
+        const remaining = rateLimiter.getWaitTime();
+        if (remaining > 0) {
+          process.stdout.write(chalk.dim(`\r  ⏱  ${Math.ceil(remaining / 1000)}s remaining...  `));
+        }
+      }, 1000);
+
       const acquired = await rateLimiter.waitAndAcquire(60000); // Wait up to 1 minute
+      clearInterval(countdownInterval);
+      process.stdout.write('\r' + ' '.repeat(40) + '\r'); // Clear countdown line
+
       if (!acquired) {
-        spinner.fail(chalk.red('Rate limit timeout - stopping loop'));
+        console.log(chalk.red('✗ Rate limit timeout - stopping loop'));
         finalIteration = i - 1;
         exitReason = 'rate_limit';
         break;
       }
+      console.log(chalk.green('✓ Rate limit cleared, continuing...\n'));
     } else if (rateLimiter) {
       rateLimiter.recordCall();
     }
@@ -261,8 +314,6 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
       console.log(chalk.yellow(`⚠️  Warning: 80% of iterations used (${i}/${maxIterations})`));
     }
 
-    spinner.start(chalk.yellow(`Loop ${i}/${maxIterations}: Running ${options.agent.name}...`));
-
     // Track progress entry
     let progressEntry: ProgressEntry | null = null;
     if (progressTracker) {
@@ -274,15 +325,23 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
       };
     }
 
-    // Run the agent
+    // Show loop header
+    console.log(chalk.cyan(`\n═══════════════════════════════════════════════════════════════`));
+    console.log(chalk.cyan.bold(`  Loop ${i}/${maxIterations} │ Running ${options.agent.name}`));
+    console.log(chalk.cyan(`═══════════════════════════════════════════════════════════════\n`));
+
+    // Run the agent with streaming output
     const agentOptions: AgentRunOptions = {
       task: options.task,
       cwd: options.cwd,
       auto: options.auto,
       maxTurns: 10, // Limit turns per loop iteration
+      streamOutput: true, // Stream output so user can see progress
     };
 
     const result = await runAgent(options.agent, agentOptions);
+
+    console.log(); // Newline after streaming output
 
     // Track cost for this iteration
     if (costTracker) {
@@ -295,7 +354,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     const status = detectCompletion(result.output, completionOptions);
 
     if (status === 'blocked') {
-      spinner.fail(chalk.red(`Loop ${i}: Task blocked`));
+      console.log(chalk.red(`✗ Loop ${i}: Task blocked`));
       console.log(chalk.dim(result.output.slice(0, 200)));
 
       if (progressTracker && progressEntry) {
@@ -328,7 +387,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     let validationResults: ValidationResult[] = [];
 
     if (validationCommands.length > 0 && await hasUncommittedChanges(options.cwd)) {
-      spinner.text = chalk.yellow(`Loop ${i}: Running validation...`);
+      spinner.start(chalk.yellow(`Loop ${i}: Running validation...`));
 
       validationResults = await runAllValidations(options.cwd, validationCommands);
       const allPassed = validationResults.every(r => r.success);
@@ -338,6 +397,24 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
         validationFailures++;
         const feedback = formatValidationFeedback(validationResults);
         spinner.fail(chalk.red(`Loop ${i}: Validation failed`));
+
+        // Show which validations failed (UX 4: specific validation errors)
+        for (const vr of validationResults) {
+          if (!vr.success) {
+            console.log(chalk.red(`  ✗ ${vr.command}`));
+            if (vr.error) {
+              const errorLines = vr.error.split('\n').slice(0, 5);
+              for (const line of errorLines) {
+                console.log(chalk.dim(`    ${line}`));
+              }
+            } else if (vr.output) {
+              const outputLines = vr.output.split('\n').slice(0, 5);
+              for (const line of outputLines) {
+                console.log(chalk.dim(`    ${line}`));
+              }
+            }
+          }
+        }
 
         // Record failure in circuit breaker
         const errorMsg = validationResults
@@ -376,6 +453,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
         continue; // Go to next iteration to fix issues
       } else {
         // Validation passed - record success
+        spinner.succeed(chalk.green(`Loop ${i}: Validation passed`));
         circuitBreaker.recordSuccess();
       }
     }
@@ -391,12 +469,12 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
         await gitCommit(options.cwd, commitMsg);
         commits.push(commitMsg);
         committed = true;
-        spinner.succeed(chalk.green(`Loop ${i}: Committed - ${commitMsg}`));
+        console.log(chalk.green(`✓ Loop ${i}: Committed - ${commitMsg}`));
       } catch (error) {
-        spinner.warn(chalk.yellow(`Loop ${i}: Completed (commit failed)`));
+        console.log(chalk.yellow(`⚠ Loop ${i}: Completed (commit failed)`));
       }
     } else {
-      spinner.succeed(chalk.green(`Loop ${i}: Completed`));
+      console.log(chalk.green(`✓ Loop ${i}: Completed`));
     }
 
     // Update progress entry
@@ -419,7 +497,24 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
 
     if (status === 'done') {
       console.log();
-      console.log(chalk.green.bold('Task completed successfully!'));
+      console.log(chalk.green.bold('═══════════════════════════════════════════════════════════════'));
+      console.log(chalk.green.bold('  ✓ Task completed successfully!'));
+      console.log(chalk.green.bold('═══════════════════════════════════════════════════════════════'));
+
+      // Show completion reason (UX 3: clear completion signals)
+      const completionReason = getCompletionReason(result.output, completionOptions);
+      console.log(chalk.dim(`  Reason: ${completionReason}`));
+      console.log(chalk.dim(`  Iterations: ${i}`));
+      if (costTracker) {
+        const stats = costTracker.getStats();
+        console.log(chalk.dim(`  Total cost: ${formatCost(stats.totalCost.totalCost)}`));
+      }
+      const duration = Date.now() - startTime;
+      const minutes = Math.floor(duration / 60000);
+      const seconds = Math.floor((duration % 60000) / 1000);
+      console.log(chalk.dim(`  Time: ${minutes}m ${seconds}s`));
+      console.log();
+
       finalIteration = i;
       exitReason = 'completed';
       break;
