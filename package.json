@@ -8,6 +8,7 @@
   },
   "type": "module",
   "scripts": {
+    "commit": "cz",
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/cli.js",
@@ -79,6 +80,8 @@
     "@commitlint/config-conventional": "^20.3.1",
     "@types/inquirer": "^9.0.7",
     "@types/node": "^22.10.7",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
     "husky": "^9.1.0",
     "lint-staged": "^15.2.0",
     "typescript": "^5.7.3",
@@ -88,5 +91,10 @@
     "src/**/*.ts": [
       "biome check --write --no-errors-on-unmatched"
     ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
   }
 }

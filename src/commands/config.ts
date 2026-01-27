@@ -233,7 +233,7 @@ async function setConfig(keyPath: string, value: string): Promise<void> {
 
   if (!key) {
     console.error(chalk.red('Invalid key path. Use: <source>.<key>'));
-    console.error(chalk.dim('Example: ralph-starter config set todoist.apiKey abc123'));
+    console.error(chalk.dim('Example: ralph-starter config set github.token ghp_xxx'));
     process.exit(1);
   }
 
@@ -417,12 +417,11 @@ ${chalk.bold('LLM Configuration:')}
   ralph-starter config delete llm
 
 ${chalk.bold('Source Configuration:')}
-  ralph-starter config set todoist.apiKey abc123
   ralph-starter config set github.token ghp_xxx
   ralph-starter config set linear.apiKey lin_xxx
   ralph-starter config set notion.token secret_xxx
-  ralph-starter config get todoist
-  ralph-starter config delete todoist
+  ralph-starter config get github
+  ralph-starter config delete github
 
 ${chalk.bold('LLM Providers:')}
   anthropic   https://console.anthropic.com/ (ANTHROPIC_API_KEY)
@@ -430,7 +429,6 @@ ${chalk.bold('LLM Providers:')}
   openrouter  https://openrouter.ai/keys (OPENROUTER_API_KEY)
 
 ${chalk.bold('Source API Keys:')}
-  todoist   https://todoist.com/prefs/integrations
   github    https://github.com/settings/tokens (or use 'gh auth login')
   linear    https://linear.app/settings/api
   notion    https://www.notion.so/my-integrations

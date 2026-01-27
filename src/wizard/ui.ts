@@ -3,6 +3,7 @@ import type { ProjectInfo, RalphPlaybookInfo } from '../commands/init.js';
 import {
   getRandomRalphQuote,
   RALPH_ERROR,
+  RALPH_FULL,
   RALPH_WELCOME_SMALL,
   RALPH_WORKING_SMALL,
 } from './ascii-art.js';
@@ -33,7 +34,7 @@ export function renderSteps(steps: WizardStep[]): string {
  */
 export function showWelcome(): void {
   console.log();
-  console.log(RALPH_WELCOME_SMALL);
+  console.log(RALPH_FULL);
   console.log(chalk.cyan.bold('  ralph-starter'));
   console.log(chalk.dim('  AI-powered project generator'));
   console.log();
