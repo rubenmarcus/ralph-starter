@@ -1,24 +1,77 @@
-import { readConfig } from '../config/manager.js';
+import chalk from 'chalk';
+import type { Ora } from 'ora';
+import { getConfiguredLLM, getLLMModel } from '../config/manager.js';
+import { callLLM, type LLMProvider, PROVIDERS } from '../llm/index.js';
 import { detectBestAgent, runAgent } from '../loop/agents.js';
+import { RalphAnimator } from './ascii-art.js';
 import type { RefinedIdea, ProjectType, Complexity, TechStack } from './types.js';
 
+// Timeout for agent calls (60 seconds - agents take longer)
+const AGENT_TIMEOUT_MS = 60000;
+
 /**
- * Get API key silently (no prompt) - for wizard use
- * Returns null if no key is available (won't prompt user)
+ * Wrap a promise with a timeout
  */
-function getApiKeySilent(): string | null {
-  // Check environment variable first
-  if (process.env.ANTHROPIC_API_KEY) {
-    return process.env.ANTHROPIC_API_KEY;
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(message)), timeoutMs)
+    ),
+  ]);
+}
+
+/**
+ * Parse JSONL stream output from Claude Code to extract text content.
+ * Claude Code's stream-json format emits one JSON object per line.
+ * We look for:
+ * 1. "type": "result" -> contains the final response in "result" field
+ * 2. "type": "assistant" -> contains message content with text blocks
+ */
+function parseStreamJsonOutput(output: string): string {
+  const lines = output.split('\n').filter(Boolean);
+  let resultText = '';
+  let assistantText = '';
+
+  for (const line of lines) {
+    try {
+      const parsed = JSON.parse(line);
+
+      // Check for result event (contains final summary)
+      if (parsed.type === 'result' && parsed.result) {
+        resultText = parsed.result;
+      }
+
+      // Check for assistant message (contains actual response content)
+      if (parsed.type === 'assistant' && parsed.message?.content) {
+        for (const block of parsed.message.content) {
+          if (block.type === 'text' && typeof block.text === 'string') {
+            assistantText += block.text;
+          }
+        }
+      }
+    } catch {
+      // Ignore non-JSON lines
+    }
   }
 
-  // Check config file
-  const config = readConfig();
-  if (config.apiKey) {
-    return config.apiKey;
+  // Prefer result text if available, fall back to assistant text
+  return resultText || assistantText;
+}
+
+/**
+ * Extract JSON object from text (handles markdown code blocks and plain JSON)
+ */
+function extractJsonFromText(text: string): string | null {
+  // First, try to find JSON in markdown code blocks
+  const codeBlockMatch = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+  if (codeBlockMatch) {
+    return codeBlockMatch[1];
   }
 
-  return null;
+  // Fall back to raw JSON match
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  return jsonMatch ? jsonMatch[0] : null;
 }
 
 const REFINEMENT_PROMPT = `You are a product analyst helping to refine a project idea.
@@ -51,24 +104,42 @@ Guidelines:
 
 /**
  * Refine user's idea using LLM (hybrid approach)
+ * Priority: Claude Code CLI (no API key needed) > Direct API > Template fallback
+ * @param spinner - Optional spinner to stop before streaming output
  */
-export async function refineIdea(idea: string): Promise<RefinedIdea> {
-  // 1. Try direct API if key available
-  const apiKey = getApiKeySilent();
-  if (apiKey) {
-    try {
-      return await refineViaApi(idea, apiKey);
-    } catch (error) {
-      // Fall through to agent
-      // Silent fallback - don't log error to user
-    }
-  }
-
-  // 2. Fall back to Claude Code agent
+export async function refineIdea(idea: string, spinner?: Ora): Promise<RefinedIdea> {
+  // 1. Try Claude Code agent FIRST (most frictionless - no API key needed!)
   const agent = await detectBestAgent();
   if (agent) {
     try {
-      return await refineViaAgent(idea, agent);
+      // Stop spinner before showing loading animation
+      if (spinner) {
+        spinner.stop();
+        console.log();
+      }
+
+      // Use loading animation while agent works
+      const animator = new RalphAnimator();
+      animator.start('Analyzing your idea...');
+
+      try {
+        const result = await refineViaAgentWithAnimator(idea, agent, animator);
+        animator.stop(chalk.green('✓ Idea analyzed!'));
+        return result;
+      } catch (error) {
+        animator.stop(chalk.red('✗ Could not analyze idea'));
+        // Fall through to API
+      }
+    } catch (error) {
+      // Fall through to API - silent fallback
+    }
+  }
+
+  // 2. Try direct API if key available (supports Anthropic, OpenAI, OpenRouter)
+  const llmConfig = getConfiguredLLM();
+  if (llmConfig) {
+    try {
+      return await refineViaApi(idea, llmConfig.provider, llmConfig.apiKey);
     } catch (error) {
       // Fall through to template - silent fallback
     }
@@ -79,43 +150,24 @@ export async function refineIdea(idea: string): Promise<RefinedIdea> {
 }
 
 /**
- * Refine via direct Anthropic API
+ * Refine via LLM API (supports multiple providers)
  */
-async function refineViaApi(idea: string, apiKey: string): Promise<RefinedIdea> {
+async function refineViaApi(
+  idea: string,
+  provider: LLMProvider,
+  apiKey: string
+): Promise<RefinedIdea> {
   const prompt = REFINEMENT_PROMPT.replace('{IDEA}', idea);
+  const model = getLLMModel() || PROVIDERS[provider].defaultModel;
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-    }),
+  const response = await callLLM(provider, apiKey, {
+    prompt,
+    maxTokens: 1024,
+    model,
   });
 
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const content = data.content?.[0]?.text;
-
-  if (!content) {
-    throw new Error('No response content');
-  }
-
   // Parse JSON from response
-  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  const jsonMatch = response.content.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
     throw new Error('No JSON in response');
   }
@@ -129,24 +181,92 @@ async function refineViaApi(idea: string, apiKey: string): Promise<RefinedIdea> 
 async function refineViaAgent(idea: string, agent: any): Promise<RefinedIdea> {
   const prompt = REFINEMENT_PROMPT.replace('{IDEA}', idea);
 
-  const result = await runAgent(agent, {
-    task: prompt,
-    cwd: process.cwd(),
-    auto: true,
-    maxTurns: 1,
-  });
+  // NOTE: Don't use maxTurns:1 - it's too restrictive and causes "Reached max turns" error
+  const result = await withTimeout(
+    runAgent(agent, {
+      task: prompt,
+      cwd: process.cwd(),
+      auto: true,
+      // Don't stream - Ralph animation provides visual feedback
+      // No maxTurns - let agent complete naturally
+    }),
+    AGENT_TIMEOUT_MS,
+    `Agent timed out after ${AGENT_TIMEOUT_MS / 1000}s`
+  );
 
   if (result.exitCode !== 0) {
     throw new Error('Agent failed');
   }
 
-  // Parse JSON from output
-  const jsonMatch = result.output.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
+  // Parse JSONL stream output to extract text content
+  const textContent = parseStreamJsonOutput(result.output);
+
+  // Extract JSON from the text content
+  const jsonText = extractJsonFromText(textContent || result.output);
+  if (!jsonText) {
     throw new Error('No JSON in agent output');
   }
 
-  return JSON.parse(jsonMatch[0]) as RefinedIdea;
+  return JSON.parse(jsonText) as RefinedIdea;
+}
+
+/**
+ * Refine via Claude Code agent with streaming output to animator
+ */
+async function refineViaAgentWithAnimator(
+  idea: string,
+  agent: any,
+  animator: RalphAnimator
+): Promise<RefinedIdea> {
+  const prompt = REFINEMENT_PROMPT.replace('{IDEA}', idea);
+
+  const result = await withTimeout(
+    runAgent(agent, {
+      task: prompt,
+      cwd: process.cwd(),
+      auto: true,
+      onOutput: (line: string) => {
+        // Parse JSONL lines to extract meaningful text for display
+        try {
+          const parsed = JSON.parse(line);
+          // Show assistant text content (not tool calls or system messages)
+          if (parsed.type === 'assistant' && parsed.message?.content) {
+            for (const block of parsed.message.content) {
+              if (block.type === 'text' && typeof block.text === 'string') {
+                const text = block.text.trim();
+                // Filter out JSON fragments, only show meaningful text
+                if (text && !text.startsWith('{') && !text.startsWith('"') && text.length > 10) {
+                  animator.addOutput(text);
+                }
+              }
+            }
+          }
+        } catch {
+          // Not JSON - show if meaningful
+          if (line && !line.startsWith('{') && !line.startsWith('"') && line.trim().length > 10) {
+            animator.addOutput(line.trim());
+          }
+        }
+      },
+    }),
+    AGENT_TIMEOUT_MS,
+    `Agent timed out after ${AGENT_TIMEOUT_MS / 1000}s`
+  );
+
+  if (result.exitCode !== 0) {
+    throw new Error('Agent failed');
+  }
+
+  // Parse JSONL stream output to extract text content
+  const textContent = parseStreamJsonOutput(result.output);
+
+  // Extract JSON from the text content
+  const jsonText = extractJsonFromText(textContent || result.output);
+  if (!jsonText) {
+    throw new Error('No JSON in agent output');
+  }
+
+  return JSON.parse(jsonText) as RefinedIdea;
 }
 
 /**
@@ -216,11 +336,14 @@ function getTemplateSuggestions(idea: string): RefinedIdea {
 
 /**
  * Check if LLM refinement is available
+ * Priority: Claude Code agent (no API key needed) > API key configured
  */
 export async function isLlmAvailable(): Promise<boolean> {
-  const apiKey = getApiKeySilent();
-  if (apiKey) return true;
-
+  // Check for Claude Code agent first (most frictionless)
   const agent = await detectBestAgent();
-  return agent !== null;
+  if (agent) return true;
+
+  // Check for API key
+  const llmConfig = getConfiguredLLM();
+  return llmConfig !== null;
 }

@@ -37,8 +37,9 @@ export async function sourceCommand(
 
     case 'help':
       if (args.length < 1) {
-        console.error(chalk.red('Usage: ralph-starter source help <source>'));
-        process.exit(1);
+        // Show general help when no source specified
+        showSourceCommandHelp();
+        return;
       }
       showSourceHelp(args[0]);
       break;

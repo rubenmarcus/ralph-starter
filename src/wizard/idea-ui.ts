@@ -5,52 +5,53 @@ import inquirer from 'inquirer';
 import type { IdeaSuggestion, IdeaDiscoveryMethod, IdeaContext } from './types.js';
 
 /**
+ * Create a box with properly aligned borders
+ */
+function createBox(lines: Array<{ text: string; style?: (s: string) => string }>, width: number = 55): string[] {
+  const output: string[] = [];
+  const border = chalk.yellow;
+
+  // Top border
+  output.push(border(`  ╭${'─'.repeat(width)}╮`));
+
+  // Empty line
+  output.push(border('  │') + ' '.repeat(width) + border('│'));
+
+  // Content lines
+  for (const line of lines) {
+    const styled = line.style ? line.style(line.text) : line.text;
+    // Calculate visible length (without ANSI codes)
+    const visibleLen = line.text.length;
+    const padding = width - 3 - visibleLen; // 3 for "   " prefix
+    output.push(border('  │') + '   ' + styled + ' '.repeat(Math.max(0, padding)) + border('│'));
+  }
+
+  // Empty line
+  output.push(border('  │') + ' '.repeat(width) + border('│'));
+
+  // Bottom border
+  output.push(border(`  ╰${'─'.repeat(width)}╯`));
+
+  return output;
+}
+
+/**
  * Display the idea mode welcome banner
  */
 export function showIdeaWelcome(): void {
   console.log();
-  console.log(
-    chalk.magenta('  ╭─────────────────────────────────────────────────────────────╮')
-  );
-  console.log(
-    chalk.magenta('  │') +
-      '                                                             ' +
-      chalk.magenta('│')
-  );
-  console.log(
-    chalk.magenta('  │') +
-      '   ' +
-      chalk.bold.white("Let's discover what to build!") +
-      '                          ' +
-      chalk.magenta('│')
-  );
-  console.log(
-    chalk.magenta('  │') +
-      '                                                             ' +
-      chalk.magenta('│')
-  );
-  console.log(
-    chalk.magenta('  │') +
-      '   ' +
-      chalk.dim("Don't have a project idea? No problem.") +
-      '                  ' +
-      chalk.magenta('│')
-  );
-  console.log(
-    chalk.magenta('  │') +
-      '   ' +
-      chalk.dim("I'll help you brainstorm something awesome.") +
-      '              ' +
-      chalk.magenta('│')
-  );
-  console.log(
-    chalk.magenta('  │') +
-      '                                                             ' +
-      chalk.magenta('│')
-  );
-  console.log(
-    chalk.magenta('  ╰─────────────────────────────────────────────────────────────╯')
-  );
+
+  const lines = createBox([
+    { text: "Let's discover what to build!", style: chalk.bold.white },
+    { text: '' },
+    { text: "Don't have a project idea? No problem.", style: chalk.dim },
+    { text: "I'll help you brainstorm something awesome.", style: chalk.dim },
+  ]);
+
+  for (const line of lines) {
+    console.log(line);
+  }
+
   console.log();
 }
 
