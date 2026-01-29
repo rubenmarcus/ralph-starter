@@ -55,6 +55,8 @@ program
   .option('--label <name>', 'Label filter for --from integrations')
   .option('--status <status>', 'Status filter for --from integrations')
   .option('--limit <n>', 'Max items to fetch for --from integrations', '20')
+  .option('--issue <n>', 'Specific issue number to fetch (for github)')
+  .option('--output-dir <path>', 'Directory to run the task in (skips location prompt)')
   // New options
   .option(
     '--preset <name>',
@@ -161,6 +163,7 @@ program
   .option('--label <name>', 'Label filter')
   .option('--status <status>', 'Status filter')
   .option('--limit <n>', 'Max items to fetch', '10')
+  .option('--issue <n>', 'Specific issue number to fetch (for github)')
   .action(async (action: string | undefined, args: string[], options) => {
     if (!action) {
       // Show help when no action provided

@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { homedir } from 'node:os';
+import { join, resolve } from 'node:path';
 import chalk from 'chalk';
 import { execa } from 'execa';
 import inquirer from 'inquirer';
@@ -80,6 +81,8 @@ export interface RunCommandOptions {
   label?: string;
   status?: string;
   limit?: number;
+  issue?: number;
+  outputDir?: string;
   // New options
   preset?: string;
   completionPromise?: string;
@@ -95,8 +98,17 @@ export async function runCommand(
   task: string | undefined,
   options: RunCommandOptions
 ): Promise<void> {
-  const cwd = process.cwd();
+  let cwd = process.cwd();
   const spinner = ora();
+
+  // Handle --output-dir flag
+  if (options.outputDir) {
+    const expandedPath = options.outputDir.replace(/^~/, homedir());
+    cwd = resolve(expandedPath);
+    if (!existsSync(cwd)) {
+      mkdirSync(cwd, { recursive: true });
+    }
+  }
 
   console.log();
   console.log(chalk.cyan.bold('ralph-starter'));
@@ -133,11 +145,11 @@ export async function runCommand(
   if (options.from) {
     spinner.start('Fetching spec from source...');
     try {
-      const result = await fetchFromSource(options.from, {
-        project: options.project,
+      const result = await fetchFromSource(options.from, options.project || '', {
         label: options.label,
         status: options.status,
         limit: options.limit,
+        issue: options.issue,
       });
 
       spinner.succeed(`Fetched spec from ${result.source}`);
@@ -155,6 +167,70 @@ export async function runCommand(
       const specPath = join(specsDir, specFilename);
       writeFileSync(specPath, sourceSpec);
       console.log(chalk.dim(`  Written to: ${specPath}`));
+
+      // Prompt for project location when fetching from integration sources
+      // Skip if --auto or --output-dir was provided
+      const integrationSources = ['github', 'linear', 'notion', 'todoist'];
+      const isIntegrationSource = integrationSources.includes(options.from?.toLowerCase() || '');
+
+      if (isIntegrationSource && !options.auto && !options.outputDir) {
+        const { projectLocation } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'projectLocation',
+            message: 'Where do you want to run this task?',
+            choices: [
+              { name: `Current directory (${cwd})`, value: 'current' },
+              { name: 'Create new project folder', value: 'new' },
+              { name: 'Enter custom path', value: 'custom' },
+            ],
+          },
+        ]);
+
+        if (projectLocation === 'new') {
+          // Generate default name from spec title
+          const defaultName =
+            result.title
+              ?.toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-|-$/g, '')
+              .slice(0, 50) || 'new-project';
+
+          const { folderName } = await inquirer.prompt([
+            {
+              type: 'input',
+              name: 'folderName',
+              message: 'Project folder name:',
+              default: defaultName,
+            },
+          ]);
+
+          const newCwd = join(process.cwd(), folderName);
+          if (!existsSync(newCwd)) {
+            mkdirSync(newCwd, { recursive: true });
+          }
+          cwd = newCwd;
+          console.log(chalk.dim(`  Created: ${cwd}`));
+        } else if (projectLocation === 'custom') {
+          const { customPath } = await inquirer.prompt([
+            {
+              type: 'input',
+              name: 'customPath',
+              message: 'Enter path:',
+            },
+          ]);
+
+          // Expand ~ to home directory
+          const expandedPath = customPath.replace(/^~/, homedir());
+          cwd = resolve(expandedPath);
+
+          if (!existsSync(cwd)) {
+            mkdirSync(cwd, { recursive: true });
+          }
+          console.log(chalk.dim(`  Using: ${cwd}`));
+        }
+        // 'current' - no change needed
+      }
     } catch (error) {
       spinner.fail('Failed to fetch from source');
       console.error(chalk.red((error as Error).message));

@@ -1,0 +1,70 @@
+name: Documentation Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-docs-updated:
+    name: Check docs updated with code changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files_yaml: |
+            src:
+              - 'src/**/*.ts'
+            docs:
+              - 'README.md'
+              - 'CHANGELOG.md'
+              - 'docs/docs/**/*.md'
+
+      - name: Check if docs were updated with src changes
+        if: steps.changed-files.outputs.src_any_changed == 'true'
+        run: |
+          if [ "${{ steps.changed-files.outputs.docs_any_changed }}" != "true" ]; then
+            echo "::warning::Source code was changed but no documentation was updated."
+            echo ""
+            echo "Please ensure documentation is updated when making code changes:"
+            echo "  - README.md (for new features/flags)"
+            echo "  - docs/docs/cli/*.md (for CLI changes)"
+            echo "  - docs/docs/sources/*.md (for source changes)"
+            echo "  - CHANGELOG.md (under [Unreleased])"
+            echo ""
+            echo "See CONTRIBUTING.md for documentation requirements."
+            echo ""
+            echo "If this change doesn't require documentation updates, add [skip-docs-check] to your PR title."
+          else
+            echo "Documentation was updated with source changes."
+          fi
+
+      - name: Skip check if marked
+        if: contains(github.event.pull_request.title, '[skip-docs-check]')
+        run: echo "Documentation check skipped via PR title."
+
+  build-docs:
+    name: Build documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: docs/package-lock.json
+
+      - name: Install dependencies
+        working-directory: docs
+        run: npm ci
+
+      - name: Build docs
+        working-directory: docs
+        run: npm run build

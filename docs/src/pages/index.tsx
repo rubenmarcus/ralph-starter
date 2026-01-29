@@ -7,7 +7,7 @@ import FeatureSections from '@site/src/components/FeatureSections';
 import IntegrationShowcase from '@site/src/components/IntegrationShowcase';
 
 export default function Home(): ReactNode {
-  const { siteConfig } = useDocusaurusContext();
+  useDocusaurusContext();
 
   // Add homepage class for special navbar styling
   useEffect(() => {

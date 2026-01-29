@@ -74,16 +74,46 @@ git checkout -b fix/my-fix
 - Keep changes focused - one feature or fix per PR
 - Follow existing code style
 - Add types for new code
-- Update docs if you add/change features
+- **Update docs if you add/change features** (see Documentation Requirements below)
 
-### 3. Test Locally
+### 3. Documentation Requirements
+
+**Every code change that affects user-facing behavior MUST include documentation updates.**
+
+#### What Needs Documentation?
+
+- New CLI flags or options
+- New commands
+- Changed behavior
+- New features
+- New integrations
+
+#### Documentation Checklist
+
+Before submitting a PR, ensure:
+
+- [ ] **README.md** updated (if adding flags/features)
+- [ ] **docs/docs/cli/*.md** updated (if changing CLI)
+- [ ] **docs/docs/sources/*.md** updated (if changing sources)
+- [ ] **CHANGELOG.md** updated (under `[Unreleased]`)
+
+#### Where to Update
+
+| Change Type | Files to Update |
+|-------------|-----------------|
+| New CLI flag | README.md, docs/docs/cli/run.md |
+| New source | docs/docs/sources/, README.md integrations table |
+| New command | README.md commands table, new file in docs/docs/cli/ |
+| Bug fix | CHANGELOG.md only |
+
+### 4. Test Locally
 
 ```bash
 npm run build
 ralph-starter --help
 ```
 
-### 4. Commit with Conventional Commits
+### 5. Commit with Conventional Commits
 
 ```bash
 git commit -m "feat: add trello source integration"
@@ -100,7 +130,7 @@ Prefixes:
 - `test:` - Adding tests
 - `chore:` - Maintenance tasks
 
-### 5. Submit a Pull Request
+### 6. Submit a Pull Request
 
 - Fill out the PR template
 - Link any related issues

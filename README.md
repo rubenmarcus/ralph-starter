@@ -177,6 +177,12 @@ ralph-starter run "refactor auth" --commit --validate
 ralph-starter run --from https://example.com/spec.md
 ralph-starter run --from github --project myorg/myrepo --label "ready"
 ralph-starter run --from linear --project "Mobile App"
+
+# Fetch a specific GitHub issue
+ralph-starter run --from github --project owner/repo --issue 123
+
+# Specify output directory (skips "where to run?" prompt)
+ralph-starter run --from github --project owner/repo --issue 42 --output-dir ~/projects/new-app
 ```
 
 ### Working with Existing Projects
@@ -528,6 +534,8 @@ ralph-starter run --circuit-breaker-failures 2 "build Y"
 | `--label <name>` | Label filter for sources |
 | `--status <status>` | Status filter for sources |
 | `--limit <n>` | Max items from source |
+| `--issue <n>` | Specific issue number (GitHub) |
+| `--output-dir <path>` | Directory to run task in (skips prompt) |
 | `--prd <file>` | Read tasks from markdown |
 
 ## Config Commands

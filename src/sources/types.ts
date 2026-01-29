@@ -34,6 +34,8 @@ export interface SourceOptions {
   limit?: number;
   /** Custom headers for URL fetches */
   headers?: Record<string, string>;
+  /** Specific issue/item number to fetch */
+  issue?: number;
 }
 
 /**

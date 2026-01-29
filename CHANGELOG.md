@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Single issue fetching with `--issue <n>` flag for GitHub source
+- `--output-dir <path>` flag to specify task directory
+- Project location prompt when fetching from integration sources
+- Support for GitHub issue URLs as project identifiers
+
 ## [0.1.0-beta.1] - 2025-01-27
 
 ### Added
