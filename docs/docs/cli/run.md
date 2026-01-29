@@ -42,6 +42,8 @@ The `run` command executes an autonomous coding loop. The AI agent works on task
 | `--label <name>` | Label filter for sources | - |
 | `--status <status>` | Status filter for sources | - |
 | `--limit <n>` | Max items from source | 20 |
+| `--issue <n>` | Specific issue number (for GitHub) | - |
+| `--output-dir <path>` | Directory to run the task in | cwd |
 
 ## Examples
 
@@ -87,8 +89,32 @@ ralph-starter run --from https://example.com/spec.md
 # From GitHub
 ralph-starter run --from github --project owner/repo --label "ready"
 
+# From a specific GitHub issue
+ralph-starter run --from github --project owner/repo --issue 123
+
 # From Todoist
 ralph-starter run --from todoist --project "My App"
+```
+
+### Project Location
+
+When fetching from integration sources (GitHub, Linear, Notion), you'll be prompted where to run the task:
+
+```
+? Where do you want to run this task?
+  ❯ Current directory (/Users/you/current)
+    Create new project folder
+    Enter custom path
+```
+
+To skip the prompt:
+
+```bash
+# Use --output-dir to specify the directory
+ralph-starter run --from github --project owner/repo --issue 42 --output-dir ~/projects/new-app
+
+# Use --auto for non-interactive mode (uses current directory)
+ralph-starter run --from github --project owner/repo --issue 42 --auto
 ```
 
 ### Advanced

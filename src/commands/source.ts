@@ -7,6 +7,7 @@ export interface SourceCommandOptions {
   label?: string;
   status?: string;
   limit?: number;
+  issue?: number;
 }
 
 /**
@@ -135,12 +136,29 @@ async function previewSource(identifier: string, options?: SourceCommandOptions)
   const spinner = ora('Fetching content...').start();
 
   try {
-    const result = await fetchFromSource(identifier, {
-      project: options?.project,
-      label: options?.label,
-      status: options?.status,
-      limit: options?.limit || 5,
-    });
+    // If identifier is a source name (like 'github') and project is provided, use explicit format
+    const integrationSources = ['github', 'linear', 'notion', 'todoist'];
+    const isSourceName = integrationSources.includes(identifier.toLowerCase());
+
+    let result;
+    if (isSourceName && options?.project) {
+      // Explicit source: fetchFromSource(source, identifier, options)
+      result = await fetchFromSource(identifier, options.project, {
+        label: options?.label,
+        status: options?.status,
+        limit: options?.limit || 5,
+        issue: options?.issue,
+      });
+    } else {
+      // Auto-detect: fetchFromSource(identifier, options)
+      result = await fetchFromSource(identifier, {
+        project: options?.project,
+        label: options?.label,
+        status: options?.status,
+        limit: options?.limit || 5,
+        issue: options?.issue,
+      });
+    }
 
     spinner.succeed('Content fetched');
 
@@ -189,15 +207,16 @@ ${chalk.bold('Preview Options:')}
   --label <name>                Filter by label
   --status <status>             Filter by status (e.g., open, closed)
   --limit <n>                   Maximum items to fetch
+  --issue <n>                   Specific issue number (for github)
 
 ${chalk.bold('Examples:')}
   ralph-starter source list
   ralph-starter source help github
-  ralph-starter source test todoist
+  ralph-starter source test github
   ralph-starter source preview ./spec.md
   ralph-starter source preview https://example.com/spec.md
   ralph-starter source preview github --project owner/repo --label bug
-  ralph-starter source preview todoist --project "My Project"
+  ralph-starter source preview github --project owner/repo --issue 123
 
 ${chalk.bold('Identifier Formats:')}
   ./path/to/file.md             Local file

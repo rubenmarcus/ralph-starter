@@ -54,6 +54,25 @@ ralph-starter run --from github --project owner/repo --limit 5
 ralph-starter run --from github --project owner/repo --label "sprint-1" --status open --limit 10
 ```
 
+## Fetching a Single Issue
+
+Fetch a specific issue by number:
+
+```bash
+# By issue number
+ralph-starter run --from github --project owner/repo --issue 123
+
+# By full URL
+ralph-starter run --from github --project https://github.com/owner/repo/issues/123
+```
+
+This fetches:
+- Issue title and body
+- Labels and state
+- All comments
+
+Perfect for building features from well-specified issues.
+
 ## Options
 
 | Option | Description | Default |
@@ -62,6 +81,7 @@ ralph-starter run --from github --project owner/repo --label "sprint-1" --status
 | `--label` | Filter by label name | None |
 | `--status` | Filter by status (`open`, `closed`, `all`) | `open` |
 | `--limit` | Maximum issues to fetch | 20 |
+| `--issue` | Specific issue number to fetch | None |
 
 ## Issue Format
 

@@ -6,7 +6,9 @@ node_modules/
 
 # ralph-starter config (may contain API keys)
 .ralph-starter/
+.ralph/
 config.json
+specs/
 coverage/
 .nyc_output/
 dist/

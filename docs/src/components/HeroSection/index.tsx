@@ -80,7 +80,7 @@ export default function HeroSection(): React.ReactElement {
           <div className={styles.terminalBody}>
             <div className={styles.terminalLine}>
               <span className={styles.terminalPrompt}>$</span>
-              <span className={styles.terminalCommand}> ralph-starter run "build a todo app" --commit</span>
+              <span className={styles.terminalCommand}> ralph-starter run &quot;build a todo app&quot; --commit</span>
             </div>
             <div className={styles.terminalOutput}>
               <div>✓ Loop 1: Analyzing requirements...</div>
