@@ -27,6 +27,26 @@ const integrations: Integration[] = [
   },
 ];
 
+function IntegrationCard({ integration, index }: { integration: Integration; index: number }): React.ReactElement {
+  const logoSrc = useBaseUrl(integration.logo);
+  return (
+    <div
+      className={`${styles.card} ${styles.animateIn}`}
+      style={{ transitionDelay: `${0.2 + index * 0.1}s` }}
+    >
+      <img
+        src={logoSrc}
+        alt={integration.name}
+        className={styles.cardLogo}
+      />
+      <div className={styles.cardInfo}>
+        <h3 className={styles.cardName}>{integration.name}</h3>
+        <p className={styles.cardDescription}>{integration.description}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function IntegrationShowcase(): React.ReactElement {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -63,21 +83,7 @@ export default function IntegrationShowcase(): React.ReactElement {
 
             <div className={styles.grid}>
               {integrations.map((integration, index) => (
-                <div
-                  key={integration.name}
-                  className={`${styles.card} ${styles.animateIn}`}
-                  style={{ transitionDelay: `${0.2 + index * 0.1}s` }}
-                >
-                  <img
-                    src={useBaseUrl(integration.logo)}
-                    alt={integration.name}
-                    className={styles.cardLogo}
-                  />
-                  <div className={styles.cardInfo}>
-                    <h3 className={styles.cardName}>{integration.name}</h3>
-                    <p className={styles.cardDescription}>{integration.description}</p>
-                  </div>
-                </div>
+                <IntegrationCard key={integration.name} integration={integration} index={index} />
               ))}
             </div>
 
