@@ -94,8 +94,9 @@ export function detectSource(identifier: string): InputSource | null {
   initializeSources();
 
   // Check for explicit source prefix (e.g., "github:owner/repo")
+  // But NOT URL schemes like http:// or https://
   const prefixMatch = identifier.match(/^([a-z]+):/i);
-  if (prefixMatch) {
+  if (prefixMatch && !identifier.startsWith('http://') && !identifier.startsWith('https://')) {
     const sourceName = prefixMatch[1].toLowerCase();
     return sources.get(sourceName) || null;
   }
