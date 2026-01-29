@@ -37,7 +37,7 @@ Output:
 Configuration:
   apiKey: sk-ant-...
   linear.apiKey: lin_api_...
-  notion.apiKey: secret_...
+  notion.token: secret_...
 ```
 
 ### Get Value
@@ -52,7 +52,7 @@ ralph-starter config get linear.apiKey
 # Set API keys
 ralph-starter config set apiKey sk-ant-xxxx
 ralph-starter config set linear.apiKey lin_api_xxxx
-ralph-starter config set notion.apiKey secret_xxxx
+ralph-starter config set notion.token secret_xxxx
 ralph-starter config set github.token ghp_xxxx
 ```
 
@@ -68,7 +68,7 @@ ralph-starter config delete linear.apiKey
 |-----|-------------|
 | `apiKey` | Anthropic API key for LLM features |
 | `linear.apiKey` | Linear API key |
-| `notion.apiKey` | Notion integration token |
+| `notion.token` | Notion integration token |
 | `github.token` | GitHub personal access token |
 
 ## Storage Location

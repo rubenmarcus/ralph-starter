@@ -46,6 +46,19 @@ const config: Config = {
     },
   ],
 
+  plugins: [
+    [
+      'docusaurus-plugin-llms',
+      {
+        generateLLMsTxt: true,
+        generateLLMsFullTxt: true,
+        docsDir: 'docs',
+        title: 'ralph-starter Documentation',
+        description: 'AI-powered autonomous coding tool. Connect GitHub, Linear, Notion and run AI coding loops from specs to production.',
+      },
+    ],
+  ],
+
   presets: [
     [
       'classic',
@@ -105,6 +118,10 @@ const config: Config = {
           sidebarId: 'docsSidebar',
           position: 'left',
           label: 'Docs',
+        },
+        {
+          type: 'custom-machineToggle',
+          position: 'right',
         },
         {
           href: 'https://github.com/rubenmarcus/ralph-starter',

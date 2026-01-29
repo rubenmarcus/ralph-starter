@@ -61,7 +61,7 @@ Store credentials for integration sources:
 ```bash
 # Set credentials
 ralph-starter config set linear.apiKey <your-key>
-ralph-starter config set notion.apiKey <your-key>
+ralph-starter config set notion.token <your-key>
 ralph-starter config set github.token <your-token>
 
 # View all config
