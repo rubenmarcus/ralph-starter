@@ -156,7 +156,7 @@ const config: Config = {
         width: 130,
         height: 29,
       },
-      copyright: `Copyright © ${new Date().getFullYear()} MultiVM Labs. All rights reserved.`,
+      copyright: `vibecoded with love ❤️ by <a href="https://github.com/rubenmarcus" target="_blank" rel="noopener noreferrer">rubenmarcus</a>`,
     },
     prism: {
       theme: prismThemes.dracula,
