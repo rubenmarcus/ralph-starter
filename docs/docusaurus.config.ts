@@ -28,7 +28,7 @@ const config: Config = {
     locales: ['en'],
   },
 
-  // SEO metadata
+  // SEO metadata and structured data for AEO
   headTags: [
     {
       tagName: 'meta',
@@ -43,6 +43,64 @@ const config: Config = {
         name: 'author',
         content: 'ralph-starter contributors',
       },
+    },
+    // AI crawler hints
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'robots',
+        content: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+      },
+    },
+    // JSON-LD: SoftwareApplication schema
+    {
+      tagName: 'script',
+      attributes: {
+        type: 'application/ld+json',
+      },
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'ralph-starter',
+        description: 'AI-powered autonomous coding tool. Connect GitHub, Linear, Notion and run AI coding loops from specs to production.',
+        url: 'https://ralph-starter.pages.dev',
+        applicationCategory: 'DeveloperApplication',
+        operatingSystem: 'macOS, Linux, Windows',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+        },
+        author: {
+          '@type': 'Person',
+          name: 'rubenmarcus',
+          url: 'https://github.com/rubenmarcus',
+        },
+        softwareRequirements: 'Node.js 18+',
+        downloadUrl: 'https://www.npmjs.com/package/ralph-starter',
+        codeRepository: 'https://github.com/rubenmarcus/ralph-starter',
+        programmingLanguage: 'TypeScript',
+        keywords: ['AI coding', 'autonomous coding', 'claude code', 'MCP server', 'developer tools'],
+      }),
+    },
+    // JSON-LD: WebSite schema for docs
+    {
+      tagName: 'script',
+      attributes: {
+        type: 'application/ld+json',
+      },
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'ralph-starter Documentation',
+        url: 'https://ralph-starter.pages.dev',
+        description: 'Documentation for ralph-starter - AI-powered autonomous coding from specs to production',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: 'https://ralph-starter.pages.dev/search?q={search_term_string}',
+          'query-input': 'required name=search_term_string',
+        },
+      }),
     },
   ],
 
