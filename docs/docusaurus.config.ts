@@ -178,10 +178,6 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          type: 'custom-machineToggle',
-          position: 'right',
-        },
-        {
           href: 'https://github.com/rubenmarcus/ralph-starter',
           label: 'GitHub',
           position: 'right',
