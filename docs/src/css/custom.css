@@ -978,3 +978,177 @@ code {
     font-size: 0.8rem;
   }
 }
+
+/* ============================================
+   MACHINE MODE - Raw markdown-like view
+   ============================================ */
+html.machine-mode {
+  --ifm-font-family-base: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --ifm-heading-font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+html.machine-mode body {
+  background: #0A0A0C;
+  color: #C8C8CD;
+}
+
+/* Strip all fancy backgrounds and gradients */
+html.machine-mode .hero,
+html.machine-mode .heroBanner,
+html.machine-mode [class*="hero"] {
+  background: #0A0A0C !important;
+  padding: 2rem 1rem;
+}
+
+html.machine-mode .hero__title,
+html.machine-mode h1, html.machine-mode h2, html.machine-mode h3,
+html.machine-mode h4, html.machine-mode h5, html.machine-mode h6 {
+  color: #E8E8EA;
+  font-weight: 400;
+}
+
+/* Add markdown-style prefixes to headings */
+html.machine-mode h1::before { content: "# "; color: #808088; }
+html.machine-mode h2::before { content: "## "; color: #808088; }
+html.machine-mode h3::before { content: "### "; color: #808088; }
+html.machine-mode h4::before { content: "#### "; color: #808088; }
+
+/* Strip decorative elements */
+html.machine-mode .gradient-divider,
+html.machine-mode [class*="glow"],
+html.machine-mode [class*="gradient"],
+html.machine-mode .hero::before,
+html.machine-mode .hero::after {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* Plain links with markdown-style brackets */
+html.machine-mode a:not(.navbar__link):not(.menu__link):not(.pagination-nav__link) {
+  color: #60A5FA;
+  text-decoration: none;
+}
+
+html.machine-mode a:not(.navbar__link):not(.menu__link):not(.pagination-nav__link)::before {
+  content: "[";
+  color: #808088;
+}
+
+html.machine-mode a:not(.navbar__link):not(.menu__link):not(.pagination-nav__link)::after {
+  content: "]";
+  color: #808088;
+}
+
+/* Code blocks - simplified */
+html.machine-mode pre,
+html.machine-mode code {
+  background: #111114 !important;
+  border: 1px solid #28282E !important;
+  border-radius: 0 !important;
+}
+
+/* Lists with dashes instead of bullets */
+html.machine-mode ul {
+  list-style: none;
+  padding-left: 1rem;
+}
+
+html.machine-mode ul li::before {
+  content: "- ";
+  color: #808088;
+}
+
+/* Simplify cards/features */
+html.machine-mode [class*="card"],
+html.machine-mode [class*="feature"],
+html.machine-mode .quantum-card {
+  background: #111114 !important;
+  border: 1px solid #28282E !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Simplify buttons */
+html.machine-mode .quantum-button,
+html.machine-mode button:not([class*="toggle"]):not([class*="option"]) {
+  background: transparent !important;
+  border: 1px solid #28282E !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Remove animations */
+html.machine-mode * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Navbar in machine mode */
+html.machine-mode .navbar {
+  background: #0A0A0C !important;
+  border-bottom: 1px solid #28282E;
+  box-shadow: none !important;
+}
+
+/* Footer in machine mode */
+html.machine-mode .footer {
+  background: #0A0A0C !important;
+  border-top: 1px solid #28282E;
+}
+
+/* Sidebar in machine mode */
+html.machine-mode .menu {
+  background: transparent;
+}
+
+html.machine-mode .menu__link {
+  border-radius: 0;
+}
+
+html.machine-mode .menu__link--active {
+  background: #18181B;
+}
+
+/* Doc pages */
+html.machine-mode .markdown {
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+/* Tables */
+html.machine-mode table {
+  border: 1px solid #28282E;
+}
+
+html.machine-mode th,
+html.machine-mode td {
+  border: 1px solid #28282E;
+  padding: 0.5rem;
+}
+
+html.machine-mode th {
+  background: #111114;
+}
+
+/* Blockquotes */
+html.machine-mode blockquote {
+  background: transparent;
+  border-left: 2px solid #28282E;
+  color: #808088;
+}
+
+/* Show llms.txt link in machine mode */
+html.machine-mode .llms-txt-link {
+  display: block !important;
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.8rem;
+  color: #808088;
+  border-top: 1px solid #28282E;
+}
+
+/* Hide decorative images in machine mode */
+html.machine-mode img:not(.navbar__logo img):not([alt*="logo"]) {
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
