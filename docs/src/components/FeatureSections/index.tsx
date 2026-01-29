@@ -190,7 +190,7 @@ function FeatureRow({ feature, index }: { feature: Feature; index: number }) {
 
           {feature.link && (
             <Link to={feature.link} className={`${styles.featureLink} ${styles.animateIn} ${styles.delay4}`}>
-              {feature.linkText} →
+              {feature.linkText}
             </Link>
           )}
         </div>

@@ -55,16 +55,7 @@ const config: Config = {
           editUrl: 'https://github.com/rubenmarcus/ralph-starter/tree/main/docs/',
           routeBasePath: 'docs',
         },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          editUrl: 'https://github.com/rubenmarcus/ralph-starter/tree/main/docs/',
-          blogTitle: 'ralph-starter Blog',
-          blogDescription: 'Updates and tutorials for ralph-starter',
-        },
+        blog: false, // Disabled for now
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -81,7 +72,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/ralph-starter-social-card.png',
+    image: 'img/thumbnail.png',
     colorMode: {
       defaultMode: 'dark',
       disableSwitch: true,
@@ -109,7 +100,6 @@ const config: Config = {
           position: 'left',
           label: 'Docs',
         },
-        { to: '/blog', label: 'Blog', position: 'left' },
         {
           href: 'https://github.com/rubenmarcus/ralph-starter',
           label: 'GitHub',
@@ -144,7 +134,6 @@ const config: Config = {
         {
           title: 'More',
           items: [
-            { label: 'Blog', to: '/blog' },
             { label: 'npm', href: 'https://www.npmjs.com/package/ralph-starter' },
           ],
         },
@@ -156,7 +145,7 @@ const config: Config = {
         width: 130,
         height: 29,
       },
-      copyright: `Copyright © ${new Date().getFullYear()} MultiVM Labs. All rights reserved.`,
+      copyright: `vibecoded with love ❤️ by <a href="https://github.com/rubenmarcus" target="_blank" rel="noopener noreferrer">rubenmarcus</a>`,
     },
     prism: {
       theme: prismThemes.dracula,

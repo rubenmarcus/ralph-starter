@@ -107,7 +107,7 @@ export default function HeroSection(): React.ReactElement {
 
         {/* Install command */}
         <div className={`${styles.installCommand} ${styles.animateIn} ${styles.delay5}`}>
-          <code>npm install -g ralph-starter</code>
+          <code>npx ralph-starter</code>
         </div>
       </div>
     </section>

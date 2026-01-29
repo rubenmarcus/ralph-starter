@@ -311,24 +311,182 @@ body::before {
   opacity: 1;
 }
 
+/* Remove default external link arrows in footer */
+.footer__link-item[href^="http"]::after {
+  display: none !important;
+}
+
+/* Hide external link icon SVGs */
+.footer__link-item svg {
+  display: none !important;
+}
+
+/* Vibecoded attribution link styling */
+.footer__copyright a {
+  color: var(--quantum-white);
+  text-decoration: underline;
+  text-decoration-color: var(--quantum-steel);
+  text-underline-offset: 2px;
+  transition: text-decoration-color 0.2s ease;
+}
+
+.footer__copyright a:hover {
+  text-decoration-color: var(--quantum-white);
+}
+
 /* ============================================
-   DOCS PAGE STYLING
+   SEARCH BAR - Dark gray style like Next.js/molt.bot
+   ============================================ */
+.navbar__search {
+  margin-left: auto;
+}
+
+.navbar__search-input,
+[class*="searchBox"] input,
+.DocSearch-Button {
+  background: var(--quantum-surface) !important;
+  border: 1px solid var(--quantum-tungsten) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--quantum-silver) !important;
+  font-family: var(--font-body) !important;
+  font-size: 0.875rem !important;
+  padding: 0.5rem 1rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.navbar__search-input:focus,
+[class*="searchBox"] input:focus,
+.DocSearch-Button:hover {
+  border-color: var(--quantum-steel) !important;
+  background: var(--quantum-dark) !important;
+  outline: none !important;
+}
+
+.navbar__search-input::placeholder,
+[class*="searchBox"] input::placeholder,
+.DocSearch-Button-Placeholder {
+  color: var(--quantum-ash) !important;
+}
+
+/* DocSearch button styling - compact like Next.js */
+.DocSearch-Button {
+  height: 32px !important;
+  min-width: 140px !important;
+  padding: 0 0.75rem !important;
+}
+
+.DocSearch-Button-Keys {
+  background: var(--quantum-tungsten) !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+}
+
+.DocSearch-Button-Key {
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--quantum-silver) !important;
+  font-size: 0.75rem !important;
+}
+
+.DocSearch-Search-Icon {
+  color: var(--quantum-ash) !important;
+}
+
+/* DocSearch modal styling */
+.DocSearch-Modal {
+  background: var(--quantum-void) !important;
+  border: 1px solid var(--quantum-tungsten) !important;
+}
+
+.DocSearch-SearchBar {
+  background: var(--quantum-surface) !important;
+  border-bottom: 1px solid var(--quantum-tungsten) !important;
+}
+
+.DocSearch-Form {
+  background: var(--quantum-dark) !important;
+  border: 1px solid var(--quantum-tungsten) !important;
+}
+
+.DocSearch-Input {
+  color: var(--quantum-white) !important;
+}
+
+.DocSearch-Hit {
+  background: var(--quantum-surface) !important;
+  border: 1px solid var(--quantum-tungsten) !important;
+}
+
+.DocSearch-Hit[aria-selected="true"] {
+  background: var(--quantum-dark) !important;
+  border-color: var(--quantum-steel) !important;
+}
+
+/* ============================================
+   DOCS PAGE STYLING - More spacing like Next.js
    ============================================ */
 .main-wrapper {
   background: var(--quantum-void);
 }
 
-/* Sidebar */
+/* Doc page container - balanced spacing like Next.js */
+.docMainContainer {
+  padding: var(--space-lg) var(--space-md) !important;
+}
+
+@media (min-width: 997px) {
+  .docMainContainer {
+    padding: var(--space-xl) var(--space-lg) !important;
+  }
+}
+
+/* Article content area */
+article {
+  max-width: 800px;
+}
+
+/* Sidebar - cleaner spacing */
+.theme-doc-sidebar-container {
+  border-right: 1px solid var(--quantum-tungsten) !important;
+}
+
+/* Align all three columns at same top position */
+@media (min-width: 997px) {
+  .theme-doc-sidebar-container,
+  .docMainContainer,
+  .col.col--3 {
+    padding-top: var(--space-lg) !important;
+  }
+
+  .theme-doc-sidebar-menu {
+    padding-top: 0 !important;
+  }
+}
+
 .menu {
   background: transparent;
+  padding: var(--space-md) var(--space-sm) !important;
+}
+
+.menu__list {
+  padding-left: 0;
+}
+
+.menu__list .menu__list {
+  padding-left: var(--space-md);
+  margin-left: 0;
 }
 
 .menu__link {
   font-family: var(--font-body);
   font-weight: 500;
+  font-size: 0.9rem;
   color: var(--quantum-silver);
   transition: all 0.2s ease;
   border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  margin: 2px 0;
 }
 
 .menu__link:hover {
@@ -339,12 +497,38 @@ body::before {
 .menu__link--active {
   color: var(--quantum-white);
   font-weight: 600;
-  background: rgba(152, 152, 159, 0.1);
+  background: rgba(152, 152, 159, 0.12);
 }
 
-/* Table of contents */
+/* Sidebar category labels */
+.menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-category > .menu__list-item-collapsible > .menu__link {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--quantum-mist);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding: var(--space-md) 0.75rem var(--space-sm);
+}
+
+/* Table of contents - right sidebar */
+.table-of-contents {
+  padding: 0 var(--space-md);
+  border-left: none;
+  font-size: 0.8rem;
+}
+
+.table-of-contents__left-border {
+  border-left: none;
+}
+
 .table-of-contents__link {
   color: var(--quantum-silver);
+  font-size: 0.8rem;
+  padding: 0.25rem 0;
+  display: block;
+  line-height: 1.5;
 }
 
 .table-of-contents__link:hover,
@@ -352,19 +536,84 @@ body::before {
   color: var(--quantum-white);
 }
 
-/* Markdown content */
-.markdown h1,
-.markdown h2,
-.markdown h3,
+.table-of-contents__link--active {
+  font-weight: 500;
+}
+
+/* TOC header "On this page" */
+.theme-doc-toc-desktop > ul::before {
+  content: 'On this page';
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--quantum-white);
+  margin-bottom: var(--space-sm);
+}
+
+/* Markdown content - improved spacing */
+.markdown {
+  line-height: 1.8;
+}
+
+.markdown h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.25rem;
+  color: var(--quantum-white);
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-md);
+  margin-top: 0;
+}
+
+.markdown h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--quantum-white);
+  letter-spacing: -0.02em;
+  margin-top: var(--space-xl);
+  margin-bottom: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--quantum-tungsten);
+}
+
+.markdown h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--quantum-white);
+  letter-spacing: -0.01em;
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-sm);
+}
+
 .markdown h4 {
   font-family: var(--font-display);
   font-weight: 600;
+  font-size: 1.1rem;
   color: var(--quantum-white);
-  letter-spacing: -0.02em;
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-xs);
 }
 
 .markdown p {
   color: var(--quantum-light);
+  margin-bottom: var(--space-md);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.markdown ul,
+.markdown ol {
+  margin-bottom: var(--space-md);
+  padding-left: var(--space-lg);
+}
+
+.markdown li {
+  color: var(--quantum-light);
+  margin-bottom: var(--space-xs);
+  line-height: 1.65;
 }
 
 .markdown a {
@@ -379,11 +628,41 @@ body::before {
   text-decoration-color: var(--quantum-white);
 }
 
-/* Code blocks */
+/* Tables - balanced spacing */
+.markdown table {
+  margin: var(--space-md) 0;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.markdown th {
+  background: var(--quantum-surface);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--quantum-light);
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  border-bottom: 1px solid var(--quantum-tungsten);
+}
+
+.markdown td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--quantum-tungsten);
+  color: var(--quantum-light);
+}
+
+.markdown tr:hover td {
+  background: rgba(152, 152, 159, 0.03);
+}
+
+/* Code blocks - balanced spacing */
 .prism-code {
   background: var(--quantum-deep) !important;
   border: 1px solid var(--quantum-tungsten);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
+  margin: var(--space-md) 0 !important;
+  padding: var(--space-md) !important;
 }
 
 code {
@@ -392,13 +671,74 @@ code {
   border-radius: var(--radius-sm);
   color: var(--quantum-white);
   font-family: var(--font-mono);
+  padding: 0.15rem 0.4rem;
+  font-size: 0.9em;
 }
 
-/* Admonitions */
+/* Inline code in tables */
+.markdown td code {
+  background: rgba(152, 152, 159, 0.15);
+}
+
+/* Admonitions - balanced spacing */
 .alert {
   background: var(--quantum-surface);
   border: 1px solid var(--quantum-tungsten);
+  border-radius: var(--radius-sm);
+  margin: var(--space-md) 0;
+  padding: var(--space-md);
+}
+
+/* Blockquotes */
+.markdown blockquote {
+  border-left: 3px solid var(--quantum-steel);
+  padding-left: var(--space-md);
+  margin: var(--space-md) 0;
+  color: var(--quantum-mist);
+  font-style: italic;
+}
+
+/* Breadcrumbs */
+.breadcrumbs__link {
+  color: var(--quantum-silver);
+  font-size: 0.85rem;
+}
+
+.breadcrumbs__link:hover {
+  color: var(--quantum-white);
+}
+
+/* Pagination */
+.pagination-nav {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--quantum-tungsten);
+}
+
+.pagination-nav__link {
+  background: var(--quantum-surface);
+  border: 1px solid var(--quantum-tungsten);
   border-radius: var(--radius-md);
+  padding: var(--space-md);
+  transition: all 0.2s ease;
+}
+
+.pagination-nav__link:hover {
+  border-color: var(--quantum-steel);
+  background: var(--quantum-dark);
+}
+
+.pagination-nav__sublabel {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--quantum-mist);
+}
+
+.pagination-nav__label {
+  color: var(--quantum-white);
+  font-weight: 500;
 }
 
 /* ============================================
