@@ -18,7 +18,6 @@ You have two options for storing API keys:
 Set environment variables in your shell profile (`~/.bashrc`, `~/.zshrc`) or a `.env` file:
 
 ```bash
-export TODOIST_API_KEY=your_api_key
 export LINEAR_API_KEY=lin_api_xxxxx
 export NOTION_API_KEY=secret_xxxxx
 export GITHUB_TOKEN=ghp_xxxxx
@@ -27,7 +26,7 @@ export GITHUB_TOKEN=ghp_xxxxx
 ### Option 2: Config Command
 
 ```bash
-ralph-starter config set todoist.apiKey your_api_key
+ralph-starter config set linear.apiKey your_api_key
 ```
 
 :::tip
@@ -141,50 +140,6 @@ If you prefer not to use `gh`:
 ```bash
 ralph-starter config set github.token ghp_xxxxxxxxxxxx
 ralph-starter source test github
-```
-
----
-
-## Todoist Integration
-
-### Get Your API Key
-
-1. Go to [todoist.com/app/settings/integrations/developer](https://todoist.com/app/settings/integrations/developer)
-2. Scroll to "API token"
-3. Click "Copy to clipboard"
-
-### Configure
-
-```bash
-ralph-starter config set todoist.apiKey your_api_key_here
-```
-
-### Test Connection
-
-```bash
-ralph-starter source test todoist
-```
-
-### Test Fetching Tasks
-
-```bash
-# Preview tasks from a project
-ralph-starter source preview todoist --project "Inbox" --limit 5
-
-# Or list all projects first to see what's available
-ralph-starter run --from todoist --limit 3
-```
-
-### Create a Test Task
-
-In Todoist:
-1. Create a new task: "Build a simple todo app with React"
-2. Add a description with more details
-3. Optionally add a label like "ralph-test"
-
-Then fetch it:
-```bash
-ralph-starter run --from todoist --label "ralph-test"
 ```
 
 ---
@@ -308,7 +263,6 @@ ralph-starter source list
 
 # Test each configured source
 ralph-starter source test github
-ralph-starter source test todoist
 ralph-starter source test linear
 ralph-starter source test notion
 ```
@@ -322,7 +276,6 @@ ralph-starter config list
 ### Check Specific Config
 
 ```bash
-ralph-starter config get todoist
 ralph-starter config get linear
 ralph-starter config get notion
 ralph-starter config get github
@@ -340,12 +293,12 @@ ralph-starter config get github
 
 ```bash
 # Re-enter the API key
-ralph-starter config set todoist.apiKey <new-key>
+ralph-starter config set linear.apiKey <new-key>
 ```
 
 ### "No items found"
 
-1. For Todoist/Linear: Make sure you have tasks/issues matching your filter
+1. For Linear: Make sure you have issues matching your filter
 2. For Notion: Ensure the page/database is shared with your integration
 3. For GitHub: Check the repo exists and you have access
 
@@ -378,10 +331,10 @@ You can manually edit this file if needed.
 
 ```bash
 # Remove a specific key
-ralph-starter config delete todoist.apiKey
+ralph-starter config delete linear.apiKey
 
 # Remove all config for a source
-ralph-starter config delete todoist
+ralph-starter config delete linear
 ```
 
 ---
@@ -396,7 +349,7 @@ mkdir test-project && cd test-project
 git init
 
 # 2. Fetch a spec from your favorite source
-ralph-starter run --from todoist --label "ralph-test" --commit
+ralph-starter run --from linear --label "ralph-test" --commit
 
 # 3. Watch the magic happen!
 ```

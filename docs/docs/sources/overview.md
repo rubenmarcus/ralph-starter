@@ -1,8 +1,8 @@
 ---
 sidebar_position: 1
 title: Overview
-description: Fetch specs from anywhere - GitHub, Todoist, Linear, Notion, URLs, PDFs
-keywords: [sources, integrations, github, todoist, linear, notion]
+description: Fetch specs from anywhere - GitHub, Linear, Notion, URLs, PDFs
+keywords: [sources, integrations, github, linear, notion]
 ---
 
 # Input Sources
@@ -24,7 +24,6 @@ ralph-starter can fetch specifications from various external sources, allowing y
 | Source | Description | Auth Required |
 |--------|-------------|---------------|
 | `github` | GitHub Issues | Optional (gh CLI or token) |
-| `todoist` | Todoist tasks | Yes (API key) |
 | `linear` | Linear issues | Yes (API key) |
 | `notion` | Notion pages | Yes (API key) |
 
@@ -48,9 +47,6 @@ ralph-starter run --from ./requirements.pdf
 # From GitHub Issues
 ralph-starter run --from github --project owner/repo --label "sprint-1"
 
-# From Todoist
-ralph-starter run --from todoist --project "My App" --label "urgent"
-
 # From Linear
 ralph-starter run --from linear --label "in-progress" --limit 5
 
@@ -64,7 +60,6 @@ Store credentials for integration sources:
 
 ```bash
 # Set credentials
-ralph-starter config set todoist.apiKey <your-key>
 ralph-starter config set linear.apiKey <your-key>
 ralph-starter config set notion.apiKey <your-key>
 ralph-starter config set github.token <your-token>
@@ -73,10 +68,10 @@ ralph-starter config set github.token <your-token>
 ralph-starter config list
 
 # Get specific value
-ralph-starter config get todoist.apiKey
+ralph-starter config get linear.apiKey
 
 # Remove
-ralph-starter config delete todoist.apiKey
+ralph-starter config delete linear.apiKey
 ```
 
 Credentials are stored in `~/.ralph-starter/sources.json`.
@@ -91,7 +86,7 @@ ralph-starter source list
 ralph-starter source help github
 
 # Test connectivity
-ralph-starter source test todoist
+ralph-starter source test linear
 
 # Preview items from source
 ralph-starter source preview github --project owner/repo
@@ -116,6 +111,5 @@ ralph-starter source preview github --project owner/repo
 ## Next Steps
 
 - [GitHub](/docs/sources/github) - Fetch from GitHub Issues
-- [Todoist](/docs/sources/todoist) - Fetch from Todoist tasks
 - [Linear](/docs/sources/linear) - Fetch from Linear issues
 - [Notion](/docs/sources/notion) - Fetch from Notion pages

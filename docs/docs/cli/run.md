@@ -92,8 +92,8 @@ ralph-starter run --from github --project owner/repo --label "ready"
 # From a specific GitHub issue
 ralph-starter run --from github --project owner/repo --issue 123
 
-# From Todoist
-ralph-starter run --from todoist --project "My App"
+# From Linear
+ralph-starter run --from linear --label "in-progress"
 ```
 
 ### Project Location

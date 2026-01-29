@@ -36,14 +36,14 @@ Output:
 ```
 Configuration:
   apiKey: sk-ant-...
-  todoist.apiKey: abc123...
   linear.apiKey: lin_api_...
+  notion.apiKey: secret_...
 ```
 
 ### Get Value
 
 ```bash
-ralph-starter config get todoist.apiKey
+ralph-starter config get linear.apiKey
 ```
 
 ### Set Value
@@ -51,7 +51,6 @@ ralph-starter config get todoist.apiKey
 ```bash
 # Set API keys
 ralph-starter config set apiKey sk-ant-xxxx
-ralph-starter config set todoist.apiKey your-todoist-key
 ralph-starter config set linear.apiKey lin_api_xxxx
 ralph-starter config set notion.apiKey secret_xxxx
 ralph-starter config set github.token ghp_xxxx
@@ -60,7 +59,7 @@ ralph-starter config set github.token ghp_xxxx
 ### Delete Value
 
 ```bash
-ralph-starter config delete todoist.apiKey
+ralph-starter config delete linear.apiKey
 ```
 
 ## Configuration Keys
@@ -68,7 +67,6 @@ ralph-starter config delete todoist.apiKey
 | Key | Description |
 |-----|-------------|
 | `apiKey` | Anthropic API key for LLM features |
-| `todoist.apiKey` | Todoist API key |
 | `linear.apiKey` | Linear API key |
 | `notion.apiKey` | Notion integration token |
 | `github.token` | GitHub personal access token |
@@ -85,14 +83,14 @@ Example file:
 ```json
 {
   "sources": {
-    "todoist": {
-      "credentials": {
-        "apiKey": "your-todoist-key"
-      }
-    },
     "linear": {
       "credentials": {
         "apiKey": "lin_api_xxxx"
+      }
+    },
+    "notion": {
+      "credentials": {
+        "apiKey": "secret_xxxx"
       }
     }
   }

@@ -35,7 +35,7 @@ const FeatureList: FeatureItem[] = [
     emoji: '🔗',
     description: (
       <>
-        Fetch specs from GitHub Issues, Todoist, Linear, Notion, URLs, or PDFs.
+        Fetch specs from GitHub Issues, Linear, Notion, URLs, or PDFs.
         Turn your existing tasks into built projects.
       </>
     ),

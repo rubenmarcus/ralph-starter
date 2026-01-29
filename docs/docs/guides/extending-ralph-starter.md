@@ -21,7 +21,7 @@ ralph-starter/
 │   │   ├── types.ts        # Source interface definitions
 │   │   ├── base.ts         # Base source class
 │   │   ├── builtin/        # Built-in sources (file, url, pdf)
-│   │   └── integrations/   # Integration sources (todoist, linear, etc.)
+│   │   └── integrations/   # Integration sources (linear, notion, etc.)
 │   ├── wizard/             # Interactive wizard
 │   ├── loop/               # Autonomous loop engine
 │   ├── mcp/                # MCP server
@@ -256,13 +256,13 @@ await buildFeature('Add dark mode toggle to settings page');
 ```typescript
 import { getSource } from 'ralph-starter';
 
-async function fetchTodistTasks() {
-  const source = getSource('todoist');
+async function fetchLinearIssues() {
+  const source = getSource('linear');
   if (!source) {
-    throw new Error('Todoist source not found');
+    throw new Error('Linear source not found');
   }
 
-  const result = await source.fetch('inbox', {
+  const result = await source.fetch('team-id', {
     label: 'ready-to-build',
     limit: 5,
   });
@@ -445,7 +445,7 @@ npm run lint
 
 ```
 feat: add trello source integration
-fix: handle empty todoist responses
+fix: handle empty linear responses
 docs: add extension guide
 refactor: extract source base class
 ```

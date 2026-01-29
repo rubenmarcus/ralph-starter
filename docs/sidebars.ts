@@ -20,7 +20,6 @@ const sidebars: SidebarsConfig = {
       items: [
         'sources/overview',
         'sources/github',
-        'sources/todoist',
         'sources/linear',
         'sources/notion',
       ],

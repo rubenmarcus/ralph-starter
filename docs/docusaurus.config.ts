@@ -3,19 +3,19 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'ralph-starter',
-  tagline: 'Get specs from anywhere, run AI loops from zero to prod.',
+  title: 'ralph-starter - AI-Powered Autonomous Coding from Specs to Production',
+  tagline: 'Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically with autonomous loops.',
   favicon: 'img/favicon.ico',
 
   future: {
     v4: true,
   },
 
-  // GitHub Pages URL
-  url: 'https://rubenmarcus.github.io',
+  // Cloudflare Pages URL
+  url: 'https://ralph-starter.pages.dev',
   baseUrl: '/',
 
-  // GitHub pages deployment config
+  // Project config
   organizationName: 'rubenmarcus',
   projectName: 'ralph-starter',
   trailingSlash: false,
@@ -81,6 +81,12 @@ const config: Config = {
     metadata: [
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'og:type', content: 'website' },
+      { property: 'og:title', content: 'ralph-starter - AI-Powered Autonomous Coding' },
+      { property: 'og:description', content: 'Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically.' },
+      { property: 'og:image', content: 'https://ralph-starter.pages.dev/img/thumbnail.png' },
+      { name: 'twitter:title', content: 'ralph-starter - AI-Powered Autonomous Coding' },
+      { name: 'twitter:description', content: 'Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically.' },
+      { name: 'twitter:image', content: 'https://ralph-starter.pages.dev/img/thumbnail.png' },
     ],
     navbar: {
       title: '',

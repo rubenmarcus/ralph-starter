@@ -52,7 +52,6 @@ Built-in:
 
 Integrations:
   github   - GitHub Issues [configured]
-  todoist  - Todoist tasks [configured]
   linear   - Linear issues [not configured]
   notion   - Notion pages [not configured]
 ```
@@ -86,14 +85,14 @@ Options:
 ### Test Connectivity
 
 ```bash
-ralph-starter source test todoist
+ralph-starter source test linear
 ```
 
 Output:
 ```
-Testing Todoist connection...
+Testing Linear connection...
 ✓ Connected successfully
-✓ Found 3 projects
+✓ Found 3 teams
 ✓ API access verified
 ```
 
@@ -137,7 +136,6 @@ Found 3 items matching filters.
 | Source | Auth Method |
 |--------|-------------|
 | `github` | gh CLI or token |
-| `todoist` | API key |
 | `linear` | API key |
 | `notion` | Integration token |
 
@@ -148,16 +146,16 @@ Found 3 items matching filters.
 ralph-starter source list
 
 # 2. Configure if needed
-ralph-starter config set todoist.apiKey <key>
+ralph-starter config set linear.apiKey <key>
 
 # 3. Test connection
-ralph-starter source test todoist
+ralph-starter source test linear
 
 # 4. Preview items
-ralph-starter source preview todoist --project "My App"
+ralph-starter source preview linear --label "in-progress"
 
 # 5. Run with source
-ralph-starter run --from todoist --project "My App"
+ralph-starter run --from linear --label "in-progress"
 ```
 
 ## See Also
@@ -165,4 +163,4 @@ ralph-starter run --from todoist --project "My App"
 - [ralph-starter config](/docs/cli/config)
 - [Input Sources Overview](/docs/sources/overview)
 - [GitHub Source](/docs/sources/github)
-- [Todoist Source](/docs/sources/todoist)
+- [Linear Source](/docs/sources/linear)
