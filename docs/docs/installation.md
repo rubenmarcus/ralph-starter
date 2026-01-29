@@ -22,13 +22,60 @@ npx ralph-starter
 ## Requirements
 
 - **Node.js 18+** - Required for running ralph-starter
-- **Coding Agent** - At least one of:
-  - [Claude Code](https://claude.ai/claude-code) (recommended)
-  - [Cursor](https://cursor.sh/)
-  - [Codex](https://openai.com/codex/)
-  - [OpenCode](https://github.com/opencode-ai/opencode)
+- **Coding Agent** - At least one of the supported agents (see setup below)
 - **Git** - For version control features (`--commit`, `--push`, `--pr`)
 - **GitHub CLI** - For PR creation and GitHub source integration
+
+## Setting Up a Coding Agent
+
+ralph-starter works with several AI coding agents. You need at least one installed:
+
+### Claude Code (Recommended)
+
+The official Anthropic CLI for Claude.
+
+```bash
+# Install via npm
+npm install -g @anthropic-ai/claude-code
+
+# Authenticate
+claude login
+```
+
+Claude Code offers the best integration with ralph-starter's autonomous loops.
+
+### Cursor
+
+AI-powered code editor with built-in agent capabilities.
+
+1. Download from [cursor.sh](https://cursor.sh/)
+2. Install and open Cursor
+3. Sign in with your account
+4. Enable the Cursor CLI: `Cursor → Install 'cursor' command`
+
+### Codex (OpenAI)
+
+OpenAI's coding assistant.
+
+```bash
+# Install the OpenAI CLI
+npm install -g openai
+
+# Set your API key
+export OPENAI_API_KEY=your-key-here
+```
+
+### OpenCode
+
+Open-source alternative with multiple model support.
+
+```bash
+# Install
+npm install -g opencode-ai
+
+# Configure
+opencode setup
+```
 
 ## Verify Installation
 
