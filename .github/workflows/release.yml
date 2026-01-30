@@ -107,41 +107,40 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Optional: Publish to npm
-  # Uncomment this job when ready to auto-publish
-  # publish:
-  #   name: Publish to npm
-  #   needs: release
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
-  #         cache: 'npm'
-  #         registry-url: 'https://registry.npmjs.org'
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Build
-  #       run: npm run build
-  #
-  #     - name: Extract version info
-  #       id: version
-  #       run: |
-  #         TAG_NAME=${GITHUB_REF#refs/tags/}
-  #         VERSION=${TAG_NAME#v}
-  #         if [[ "$VERSION" == *"-"* ]]; then
-  #           echo "npm_tag=beta" >> $GITHUB_OUTPUT
-  #         else
-  #           echo "npm_tag=latest" >> $GITHUB_OUTPUT
-  #         fi
-  #
-  #     - name: Publish to npm
-  #       run: npm publish --tag ${{ steps.version.outputs.npm_tag }}
-  #       env:
-  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  # Publish to npm
+  publish:
+    name: Publish to npm
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Extract version info
+        id: version
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+          if [[ "$VERSION" == *"-"* ]]; then
+            echo "npm_tag=beta" >> $GITHUB_OUTPUT
+          else
+            echo "npm_tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to npm
+        run: npm publish --tag ${{ steps.version.outputs.npm_tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
