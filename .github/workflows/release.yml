@@ -1,66 +1,25 @@
 name: Release
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - main
-    paths:
-      # Only trigger on actual package changes
-      - 'src/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.json'
-      - 'tsconfig.build.json'
-    # Note: path exclusions don't work with branches, so we filter in the job
 
 permissions:
   contents: write
 
 jobs:
-  check-version:
-    name: Check Version Change
-    runs-on: ubuntu-latest
-    outputs:
-      should_release: ${{ steps.check.outputs.should_release }}
-      version: ${{ steps.check.outputs.version }}
-      is_prerelease: ${{ steps.check.outputs.is_prerelease }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Check if version changed
-        id: check
-        run: |
-          # Get current version from package.json
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-
-          # Get the version from the previous commit
-          PREV_VERSION=$(git show HEAD^:package.json 2>/dev/null | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).version" 2>/dev/null || echo "")
-
-          echo "Current version: $CURRENT_VERSION"
-          echo "Previous version: $PREV_VERSION"
-
-          if [ "$CURRENT_VERSION" != "$PREV_VERSION" ] && [ -n "$PREV_VERSION" ]; then
-            echo "Version changed from $PREV_VERSION to $CURRENT_VERSION"
-            echo "should_release=true" >> $GITHUB_OUTPUT
-            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-            if [[ "$CURRENT_VERSION" == *"-"* ]]; then
-              echo "is_prerelease=true" >> $GITHUB_OUTPUT
-            else
-              echo "is_prerelease=false" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "No version change detected, skipping release"
-            echo "should_release=false" >> $GITHUB_OUTPUT
-          fi
-
   release:
     name: Create Release
-    needs: check-version
-    if: needs.check-version.outputs.should_release == 'true'
+    # Only run when a release PR is merged
+    if: |
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/v')
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -73,6 +32,20 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Get version from package.json
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          if [[ "$VERSION" == *"-"* ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "Version: $VERSION"
+
       - name: Install dependencies
         run: npm ci
 
@@ -84,22 +57,23 @@ jobs:
 
       - name: Create and push tag
         run: |
-          VERSION=${{ needs.check-version.outputs.version }}
+          VERSION=${{ steps.version.outputs.version }}
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Check if tag already exists
-          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
-            echo "Tag v$VERSION already exists, skipping tag creation"
-          else
+          # Create tag if it doesn't exist
+          if ! git rev-parse "v$VERSION" >/dev/null 2>&1; then
             git tag -a "v$VERSION" -m "Release v$VERSION"
             git push origin "v$VERSION"
+            echo "Created tag v$VERSION"
+          else
+            echo "Tag v$VERSION already exists"
           fi
 
       - name: Generate release notes
         run: |
-          VERSION=${{ needs.check-version.outputs.version }}
-          IS_PRERELEASE=${{ needs.check-version.outputs.is_prerelease }}
+          VERSION=${{ steps.version.outputs.version }}
+          IS_PRERELEASE=${{ steps.version.outputs.is_prerelease }}
 
           # Get previous tag
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
@@ -108,7 +82,7 @@ jobs:
           NOTES="## What's Changed\n\n"
 
           if [ -n "$PREV_TAG" ]; then
-            COMMITS=$(git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD --no-merges 2>/dev/null || echo "")
+            COMMITS=$(git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD --no-merges 2>/dev/null | grep -v "chore(release)" || echo "")
             if [ -n "$COMMITS" ]; then
               NOTES+="$COMMITS\n\n"
             fi
@@ -137,18 +111,17 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ needs.check-version.outputs.version }}
-          name: v${{ needs.check-version.outputs.version }}
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
           body_path: release_notes.md
-          prerelease: ${{ needs.check-version.outputs.is_prerelease }}
+          prerelease: ${{ steps.version.outputs.is_prerelease }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish:
     name: Publish to npm
-    needs: [check-version, release]
-    if: needs.check-version.outputs.should_release == 'true'
+    needs: release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -169,7 +142,7 @@ jobs:
 
       - name: Publish to npm
         run: |
-          VERSION=${{ needs.check-version.outputs.version }}
+          VERSION=${{ needs.release.outputs.version }}
           if [[ "$VERSION" == *"-"* ]]; then
             npm publish --tag beta
           else
@@ -177,3 +150,16 @@ jobs:
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const version = '${{ needs.release.outputs.version }}';
+
+            await github.rest.issues.createComment({
+              owner, repo,
+              issue_number: context.payload.pull_request.number,
+              body: `✅ **v${version}** has been released!\n\n- 📦 [npm](https://www.npmjs.com/package/ralph-starter/v/${version})\n- 🏷️ [GitHub Release](https://github.com/${owner}/${repo}/releases/tag/v${version})`
+            });

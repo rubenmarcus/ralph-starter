@@ -1,0 +1,207 @@
+name: Prepare Release
+
+on:
+  pull_request:
+    types: [labeled, closed]
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # Auto-add candidate-release label when src/ files change
+  auto-label:
+    name: Auto Label Release Candidate
+    if: github.event.action != 'labeled' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for package changes
+        id: changes
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            package:
+              - 'src/**'
+              - 'package.json'
+              - '!**/*.md'
+              - '!docs/**'
+
+      - name: Add candidate-release label
+        if: steps.changes.outputs.package == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            // Check if label already exists
+            const labels = await github.rest.issues.listLabelsOnIssue({
+              owner, repo, issue_number
+            });
+
+            if (!labels.data.find(l => l.name === 'candidate-release')) {
+              await github.rest.issues.addLabels({
+                owner, repo, issue_number,
+                labels: ['candidate-release']
+              });
+              console.log('Added candidate-release label');
+            }
+
+  # Create release PR when candidate-release label is added
+  create-release-pr:
+    name: Create Release PR
+    if: |
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'candidate-release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Determine version bump
+        id: bump
+        run: |
+          # Get commits in this PR to determine bump type
+          # feat: = minor, fix: = patch, BREAKING CHANGE = major
+          PR_TITLE="${{ github.event.pull_request.title }}"
+
+          if [[ "$PR_TITLE" == *"BREAKING"* ]] || [[ "$PR_TITLE" == *"!"* ]]; then
+            echo "bump=major" >> $GITHUB_OUTPUT
+          elif [[ "$PR_TITLE" == feat* ]] || [[ "$PR_TITLE" == *"feat("* ]]; then
+            echo "bump=minor" >> $GITHUB_OUTPUT
+          else
+            echo "bump=patch" >> $GITHUB_OUTPUT
+          fi
+
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Calculate new version
+        id: version
+        run: |
+          CURRENT="${{ steps.bump.outputs.current }}"
+          BUMP="${{ steps.bump.outputs.bump }}"
+
+          # Parse version (handle prerelease)
+          if [[ "$CURRENT" == *"-"* ]]; then
+            # It's a prerelease, just bump the prerelease number
+            BASE=$(echo "$CURRENT" | sed 's/-.*$//')
+            PRE_TYPE=$(echo "$CURRENT" | sed 's/.*-\([a-z]*\).*/\1/')
+            PRE_NUM=$(echo "$CURRENT" | sed 's/.*\.\([0-9]*\)$/\1/')
+            NEW_PRE_NUM=$((PRE_NUM + 1))
+            NEW_VERSION="${BASE}-${PRE_TYPE}.${NEW_PRE_NUM}"
+          else
+            # Parse semver
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+            case "$BUMP" in
+              major)
+                NEW_VERSION="$((MAJOR + 1)).0.0"
+                ;;
+              minor)
+                NEW_VERSION="${MAJOR}.$((MINOR + 1)).0"
+                ;;
+              patch)
+                NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+                ;;
+            esac
+          fi
+
+          echo "new=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version will be: $NEW_VERSION (bump: $BUMP)"
+
+      - name: Check for existing release PR
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prs = await github.rest.pulls.list({
+              owner, repo,
+              state: 'open',
+              head: `${owner}:release/v${{ steps.version.outputs.new }}`
+            });
+            return prs.data.length > 0;
+          result-encoding: string
+
+      - name: Create release branch and PR
+        if: steps.check.outputs.result != 'true'
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.new }}"
+          CURRENT_VERSION="${{ steps.bump.outputs.current }}"
+          SOURCE_PR="${{ github.event.pull_request.number }}"
+          SOURCE_TITLE="${{ github.event.pull_request.title }}"
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create release branch from main
+          git checkout main
+          git pull origin main
+          git checkout -b "release/v${NEW_VERSION}"
+
+          # Update package.json version
+          npm version "$NEW_VERSION" --no-git-tag-version
+
+          # Commit changes
+          git add package.json package-lock.json
+          git commit -m "chore(release): bump version to ${NEW_VERSION}"
+
+          # Push branch
+          git push origin "release/v${NEW_VERSION}"
+
+          # Create PR
+          gh pr create \
+            --title "chore(release): v${NEW_VERSION}" \
+            --body "$(cat <<EOF
+          ## Release v${NEW_VERSION}
+
+          This PR was automatically created to prepare release v${NEW_VERSION}.
+
+          ### Changes included
+          - From PR #${SOURCE_PR}: ${SOURCE_TITLE}
+
+          ### Version bump
+          - Previous: ${CURRENT_VERSION}
+          - New: ${NEW_VERSION}
+          - Type: ${{ steps.bump.outputs.bump }}
+
+          ### What happens when this PR is merged
+          1. Git tag \`v${NEW_VERSION}\` will be created
+          2. GitHub Release will be published
+          3. Package will be published to npm
+
+          ---
+          🤖 This PR was auto-generated by the release workflow.
+          EOF
+          )" \
+            --label "release" \
+            --base main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on source PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const newVersion = '${{ steps.version.outputs.new }}';
+
+            await github.rest.issues.createComment({
+              owner, repo, issue_number,
+              body: `🚀 Release PR created for **v${newVersion}**!\n\nOnce this PR is merged, a release PR will be ready. Merge the release PR to publish.`
+            });
