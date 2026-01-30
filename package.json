@@ -67,7 +67,7 @@
     "commander": "^14.0.2",
     "execa": "^9.5.2",
     "gradient-string": "^3.0.0",
-    "inquirer": "^12.3.2",
+    "inquirer": "^13.2.2",
     "ora": "^8.1.1",
     "pdf-parse": "^2.4.5",
     "simple-git": "^3.27.0",
