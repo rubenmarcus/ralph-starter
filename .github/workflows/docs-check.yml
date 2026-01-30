@@ -3,6 +3,10 @@ name: Documentation Check
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
 
 jobs:
   check-docs-updated:
