@@ -35,7 +35,7 @@
     "@typescript-eslint/parser": "^8.0.0",
     "docusaurus-plugin-llms": "^0.2.2",
     "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^7.0.1",
     "prettier": "^3.3.0",
