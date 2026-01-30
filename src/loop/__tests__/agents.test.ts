@@ -1,3 +1,5 @@
+import { spawn } from 'node:child_process';
+import { EventEmitter } from 'node:events';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   type Agent,
@@ -12,9 +14,39 @@ vi.mock('execa', () => ({
   execa: vi.fn(),
 }));
 
+// Mock spawn from node:child_process
+vi.mock('node:child_process', () => ({
+  spawn: vi.fn(),
+}));
+
 import { execa } from 'execa';
 
 const mockExeca = vi.mocked(execa);
+const mockSpawn = vi.mocked(spawn);
+
+// Helper to create a mock child process
+function createMockChildProcess(exitCode: number, stdout = '', stderr = '') {
+  const proc = new EventEmitter();
+  const stdoutEmitter = new EventEmitter();
+  const stderrEmitter = new EventEmitter();
+
+  (proc as any).stdout = stdoutEmitter;
+  (proc as any).stderr = stderrEmitter;
+  (proc as any).kill = vi.fn();
+
+  // Schedule emitting data and close
+  setTimeout(() => {
+    if (stdout) {
+      stdoutEmitter.emit('data', Buffer.from(stdout));
+    }
+    if (stderr) {
+      stderrEmitter.emit('data', Buffer.from(stderr));
+    }
+    proc.emit('close', exitCode);
+  }, 0);
+
+  return proc;
+}
 
 describe('agents', () => {
   beforeEach(() => {
@@ -36,7 +68,7 @@ describe('agents', () => {
 
       const result = await checkAgentAvailable('claude-code');
       expect(result).toBe(true);
-      expect(mockExeca).toHaveBeenCalledWith('claude', ['--version']);
+      expect(mockExeca).toHaveBeenCalledWith('claude', ['--version'], { timeout: 5000 });
     });
 
     it('should return false when agent command fails', async () => {
@@ -109,24 +141,25 @@ describe('agents', () => {
     };
 
     it('should run claude-code with correct arguments', async () => {
-      mockExeca.mockResolvedValueOnce({
-        stdout: 'Task completed',
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      mockSpawn.mockReturnValueOnce(createMockChildProcess(0, 'Task completed\n') as any);
 
       const result = await runAgent(mockAgent, {
         task: 'Fix the bug',
         cwd: '/test/dir',
       });
 
-      // Claude Code uses --print, --verbose, --output-format stream-json
-      // and passes prompt via stdin (input option)
-      expect(mockExeca).toHaveBeenCalledWith(
+      // Claude Code uses -p for prompt, --verbose, --output-format stream-json
+      expect(mockSpawn).toHaveBeenCalledWith(
         'claude',
-        expect.arrayContaining(['--print', '--verbose', '--output-format', 'stream-json']),
+        expect.arrayContaining([
+          '-p',
+          'Fix the bug',
+          '--verbose',
+          '--output-format',
+          'stream-json',
+        ]),
         expect.objectContaining({
-          input: 'Fix the bug',
+          cwd: '/test/dir',
         })
       );
       expect(result.output).toContain('Task completed');
@@ -134,11 +167,7 @@ describe('agents', () => {
     });
 
     it('should add auto flag when specified', async () => {
-      mockExeca.mockResolvedValueOnce({
-        stdout: '',
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      mockSpawn.mockReturnValueOnce(createMockChildProcess(0) as any);
 
       await runAgent(mockAgent, {
         task: 'Task',
@@ -146,7 +175,7 @@ describe('agents', () => {
         auto: true,
       });
 
-      expect(mockExeca).toHaveBeenCalledWith(
+      expect(mockSpawn).toHaveBeenCalledWith(
         'claude',
         expect.arrayContaining(['--dangerously-skip-permissions']),
         expect.any(Object)
@@ -154,11 +183,7 @@ describe('agents', () => {
     });
 
     it('should add max-turns flag when specified', async () => {
-      mockExeca.mockResolvedValueOnce({
-        stdout: '',
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      mockSpawn.mockReturnValueOnce(createMockChildProcess(0) as any);
 
       await runAgent(mockAgent, {
         task: 'Task',
@@ -166,7 +191,7 @@ describe('agents', () => {
         maxTurns: 10,
       });
 
-      expect(mockExeca).toHaveBeenCalledWith(
+      expect(mockSpawn).toHaveBeenCalledWith(
         'claude',
         expect.arrayContaining(['--max-turns', '10']),
         expect.any(Object)
@@ -181,18 +206,14 @@ describe('agents', () => {
         available: true,
       };
 
-      mockExeca.mockResolvedValueOnce({
-        stdout: '',
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      mockSpawn.mockReturnValueOnce(createMockChildProcess(0) as any);
 
       await runAgent(cursorAgent, {
         task: 'Task',
         cwd: '/test',
       });
 
-      expect(mockExeca).toHaveBeenCalledWith('cursor', ['--agent', 'Task'], expect.any(Object));
+      expect(mockSpawn).toHaveBeenCalledWith('cursor', ['--agent', 'Task'], expect.any(Object));
     });
 
     it('should handle codex agent arguments', async () => {
@@ -203,11 +224,7 @@ describe('agents', () => {
         available: true,
       };
 
-      mockExeca.mockResolvedValueOnce({
-        stdout: '',
-        stderr: '',
-        exitCode: 0,
-      } as any);
+      mockSpawn.mockReturnValueOnce(createMockChildProcess(0) as any);
 
       await runAgent(codexAgent, {
         task: 'Task',
@@ -215,7 +232,7 @@ describe('agents', () => {
         auto: true,
       });
 
-      expect(mockExeca).toHaveBeenCalledWith(
+      expect(mockSpawn).toHaveBeenCalledWith(
         'codex',
         expect.arrayContaining(['-p', 'Task', '--auto-approve']),
         expect.any(Object)
@@ -223,12 +240,27 @@ describe('agents', () => {
     });
 
     it('should handle execution errors', async () => {
-      mockExeca.mockRejectedValueOnce(new Error('Command failed'));
+      // Create a mock process that emits an error
+      const proc = new EventEmitter();
+      const stdoutEmitter = new EventEmitter();
+      const stderrEmitter = new EventEmitter();
+      (proc as any).stdout = stdoutEmitter;
+      (proc as any).stderr = stderrEmitter;
+      (proc as any).kill = vi.fn();
 
-      const result = await runAgent(mockAgent, {
+      mockSpawn.mockReturnValueOnce(proc as any);
+
+      const resultPromise = runAgent(mockAgent, {
         task: 'Task',
         cwd: '/test',
       });
+
+      // Emit error after a short delay
+      setTimeout(() => {
+        proc.emit('error', new Error('Command failed'));
+      }, 0);
+
+      const result = await resultPromise;
 
       expect(result.exitCode).toBe(1);
       expect(result.output).toContain('Command failed');
