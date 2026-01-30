@@ -382,17 +382,15 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     ? 'Ralph: Implementation from plan'
     : `Ralph: ${finalTask.slice(0, 50)}`;
 
-  // Calculate smart iterations based on tasks (if in build mode and no explicit override)
-  let smartIterations = 10; // default
-  if (isBuildMode && !options.maxIterations && !preset?.maxIterations) {
-    const { iterations, taskCount, reason } = calculateOptimalIterations(cwd);
-    smartIterations = iterations;
+  // Calculate smart iterations based on tasks (always, unless explicitly overridden)
+  const { iterations: smartIterations, taskCount, reason } = calculateOptimalIterations(cwd);
+  if (!options.maxIterations && !preset?.maxIterations) {
     if (taskCount.total > 0) {
       console.log(
         chalk.dim(`Tasks: ${taskCount.pending} pending, ${taskCount.completed} completed`)
       );
-      console.log(chalk.dim(`Max iterations: ${iterations} (${reason})`));
     }
+    console.log(chalk.dim(`Max iterations: ${smartIterations} (${reason})`));
   }
 
   // Apply preset values with CLI overrides

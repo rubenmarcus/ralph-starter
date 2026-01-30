@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { detectBestAgent } from '../../loop/agents.js';
 import { type LoopOptions, runLoop } from '../../loop/executor.js';
+import { calculateOptimalIterations } from '../../loop/task-counter.js';
 import { fetchFromSource } from '../../sources/index.js';
 
 export interface RunCoreOptions {
@@ -120,11 +121,14 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
       ? 'Ralph: Implementation from plan'
       : `Ralph: ${finalTask.slice(0, 50)}`;
 
+    // Calculate smart iterations based on tasks
+    const { iterations: smartIterations } = calculateOptimalIterations(cwd);
+
     const loopOptions: LoopOptions = {
       task: finalTask,
       cwd,
       agent,
-      maxIterations: options.maxIterations || 50,
+      maxIterations: options.maxIterations ?? smartIterations,
       auto: options.auto,
       commit: options.commit,
       push: options.push,

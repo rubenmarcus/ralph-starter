@@ -55,7 +55,7 @@ program
   .option('--validate', 'Run tests/lint/build after each iteration (backpressure)')
   .option('--docker', 'Run in Docker sandbox (coming soon)')
   .option('--prd <file>', 'Read tasks from a PRD markdown file')
-  .option('--max-iterations <n>', 'Maximum loop iterations', '50')
+  .option('--max-iterations <n>', 'Maximum loop iterations (auto-calculated if not specified)')
   .option('--agent <name>', 'Specify agent (claude-code, cursor, codex, opencode)')
   .option('--from <source>', 'Fetch spec from source (file, url, github, todoist, linear, notion)')
   .option('--project <name>', 'Project/repo name for --from integrations')
