@@ -208,7 +208,7 @@ Notion requires a few more steps because you need to create an integration and s
 ### 2. Configure ralph-starter
 
 ```bash
-ralph-starter config set notion.apiKey secret_xxxxxxxxxxxx
+ralph-starter config set notion.token secret_xxxxxxxxxxxx
 ```
 
 ### 3. Share Pages with the Integration

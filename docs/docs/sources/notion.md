@@ -22,7 +22,7 @@ Fetch specifications from Notion pages and databases to build from your document
 ### 2. Configure ralph-starter
 
 ```bash
-ralph-starter config set notion.apiKey secret_xxxxxxxxxxxx
+ralph-starter config set notion.token secret_xxxxxxxxxxxx
 ```
 
 ### 3. Share Pages with Integration
@@ -31,6 +31,16 @@ In Notion:
 1. Open the page/database you want to use
 2. Click "..." menu → "Add connections"
 3. Select "ralph-starter"
+
+## Public Pages (No Auth Required)
+
+For **public** Notion pages, you can use the URL source directly without any API key:
+
+```bash
+ralph-starter run --from https://notion.so/Your-Public-Page-abc123
+```
+
+Note: Public page fetching has limited content extraction because Notion renders content client-side. For full content access, use the API integration above.
 
 ## Usage
 

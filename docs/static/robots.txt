@@ -1,0 +1,43 @@
+# ralph-starter Documentation - robots.txt
+# https://ralph-starter.pages.dev
+
+User-agent: *
+Allow: /
+
+# Explicitly allow AI crawlers for Answer Engine Optimization (AEO)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+# Sitemap location
+Sitemap: https://ralph-starter.pages.dev/sitemap.xml
+
+# LLM-friendly documentation files
+# https://ralph-starter.pages.dev/llms.txt
+# https://ralph-starter.pages.dev/llms-full.txt
