@@ -68,7 +68,7 @@
     "execa": "^9.5.2",
     "gradient-string": "^3.0.0",
     "inquirer": "^13.2.2",
-    "ora": "^8.1.1",
+    "ora": "^9.1.0",
     "pdf-parse": "^2.4.5",
     "simple-git": "^3.27.0",
     "yaml": "^2.7.0",
