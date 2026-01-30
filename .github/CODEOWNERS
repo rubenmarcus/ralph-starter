@@ -1,0 +1,20 @@
+# CODEOWNERS - defines who is responsible for code review
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @rubenmarcus
+
+# Core CLI source code
+/src/ @rubenmarcus
+
+# Documentation
+/docs/ @rubenmarcus
+*.md @rubenmarcus
+
+# CI/CD and GitHub configuration
+/.github/ @rubenmarcus
+
+# Package configuration
+package.json @rubenmarcus
+package-lock.json @rubenmarcus
+tsconfig.json @rubenmarcus
