@@ -18,7 +18,7 @@ We take security seriously at ralph-starter. If you discover a security vulnerab
 
 ### Do
 
-1. **Email us directly** at security@rubenmarcus.dev (or open a private security advisory on GitHub)
+1. **Email us directly** at ruben@rubenmarcus.dev (or open a private security advisory on GitHub)
 2. Include as much detail as possible:
    - Type of vulnerability
    - Steps to reproduce
