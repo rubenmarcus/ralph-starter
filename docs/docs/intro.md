@@ -39,6 +39,18 @@ ralph-starter ideas
 
 This launches **Idea Mode** - a brainstorming session to help you discover project ideas.
 
+### Use a Template
+
+```bash
+# Browse available templates
+ralph-starter template list
+
+# Use a template to start a project
+ralph-starter template use nextjs-saas
+```
+
+Templates are pre-built project specs - just pick one and let the AI build it.
+
 ### For Developers
 
 ```bash
@@ -56,6 +68,7 @@ ralph-starter run --from github --project myorg/myrepo --label "ready"
 
 - **Interactive Wizard** - Guided project creation for everyone
 - **Idea Mode** - AI-powered brainstorming when you don't know what to build
+- **Project Templates** - Pre-built specs for common project types (SaaS, CLI tools, etc.)
 - **Input Sources** - Fetch specs from GitHub, Linear, Notion, URLs, PDFs
 - **MCP Server** - Use from Claude Desktop or any MCP client
 - **Git Automation** - Auto-commit, push, and create PRs
@@ -66,5 +79,6 @@ ralph-starter run --from github --project myorg/myrepo --label "ready"
 
 - [Installation](/docs/installation) - Get ralph-starter installed
 - [Interactive Wizard](/docs/wizard/overview) - Learn about the guided experience
+- [Project Templates](/docs/cli/template) - Use pre-built project templates
 - [Input Sources](/docs/sources/overview) - Connect to GitHub, Linear, and more
 - [MCP Integration](/docs/mcp/setup) - Use from Claude Desktop
