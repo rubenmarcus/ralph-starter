@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { authCommand } from './commands/auth.js';
@@ -16,7 +19,11 @@ import { startMcpServer } from './mcp/server.js';
 import { formatPresetsHelp, getPresetNames } from './presets/index.js';
 import { runIdeaMode, runWizard } from './wizard/index.js';
 
-const VERSION = '0.1.0';
+// Read version from package.json dynamically
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
+const VERSION = packageJson.version;
 
 const program = new Command();
 
