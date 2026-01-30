@@ -145,7 +145,14 @@ export async function runCommand(
   if (options.from) {
     spinner.start('Fetching spec from source...');
     try {
-      const result = await fetchFromSource(options.from, options.project || '', {
+      // Default to ralph-ideas repo when using --issue without --project for GitHub
+      let projectId = options.project || '';
+      if (options.from.toLowerCase() === 'github' && options.issue && !options.project) {
+        projectId = 'rubenmarcus/ralph-ideas';
+        console.log(chalk.dim(`  Using default repo: ${projectId}`));
+      }
+
+      const result = await fetchFromSource(options.from, projectId, {
         label: options.label,
         status: options.status,
         limit: options.limit,

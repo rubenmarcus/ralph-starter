@@ -374,6 +374,7 @@ export class GitHubSource extends IntegrationSource {
 github: Fetch issues from GitHub repositories
 
 Usage:
+  ralph-starter run --from github --issue 123
   ralph-starter run --from github --project owner/repo
   ralph-starter run --from github --project owner/repo --label bug
   ralph-starter run --from github --project owner/repo --issue 123
@@ -381,6 +382,7 @@ Usage:
 
 Options:
   --project  Repository in owner/repo format or GitHub URL
+             (defaults to rubenmarcus/ralph-ideas when using --issue alone)
   --issue    Specific issue number to fetch
   --label    Filter by label name (for listing issues)
   --status   Issue state: open, closed, all (default: open)
@@ -391,7 +393,10 @@ Authentication:
   Otherwise requires: ralph-starter config set github.token <token>
 
 Examples:
-  # Fetch a single issue
+  # Fetch from ralph-ideas (default repo)
+  ralph-starter run --from github --issue 18
+
+  # Fetch a single issue from specific repo
   ralph-starter run --from github --project facebook/react --issue 12345
   ralph-starter run --from github --project https://github.com/facebook/react/issues/12345
 
