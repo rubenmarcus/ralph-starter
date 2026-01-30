@@ -15,6 +15,7 @@ import { runCommand } from './commands/run.js';
 import { setupCommand } from './commands/setup.js';
 import { skillCommand } from './commands/skill.js';
 import { sourceCommand } from './commands/source.js';
+import { templateCommand } from './commands/template.js';
 import { startMcpServer } from './mcp/server.js';
 import { formatPresetsHelp, getPresetNames } from './presets/index.js';
 import { runIdeaMode, runWizard } from './wizard/index.js';
@@ -48,7 +49,8 @@ program
 program
   .command('run [task]')
   .description('Run an autonomous AI coding loop')
-  .option('--auto', 'Run in fully automated mode (skip permissions)')
+  .option('--auto', 'Run in fully automated mode (skip permissions)', true)
+  .option('--no-auto', 'Require manual permission approval')
   .option('--commit', 'Auto-commit after each successful task')
   .option('--push', 'Push commits to remote')
   .option('--pr', 'Create a pull request when done')
@@ -98,7 +100,8 @@ program
 program
   .command('plan')
   .description('Analyze specs and create implementation plan (Ralph Playbook planning mode)')
-  .option('--auto', 'Run in automated mode (skip permissions)')
+  .option('--auto', 'Run in automated mode (skip permissions)', true)
+  .option('--no-auto', 'Require manual permission approval')
   .action(planCommand);
 
 // ralph-starter setup - Interactive setup wizard
@@ -214,6 +217,24 @@ program
     console.log(formatPresetsHelp());
     console.log('Use with: ralph-starter run --preset <name> [task]');
     console.log();
+  });
+
+// ralph-starter template - Browse and use project templates
+program
+  .command('template [action] [args...]')
+  .description('Browse and use project templates from ralph-templates')
+  .option('--category <name>', 'Filter by category (web-dev, blockchain, devops, mobile, tools)')
+  .option('--refresh', 'Force refresh the cache')
+  .option('--auto', 'Skip confirmation prompts')
+  .option('--output-dir <path>', 'Directory to create the project in')
+  .option('--commit', 'Auto-commit after each successful task')
+  .option('--push', 'Push commits to remote')
+  .option('--pr', 'Create a pull request when done')
+  .option('--validate', 'Run tests/lint/build after each iteration')
+  .option('--max-iterations <n>', 'Maximum loop iterations')
+  .option('--agent <name>', 'Specify agent (claude-code, cursor, codex, opencode)')
+  .action(async (action: string | undefined, args: string[], options) => {
+    await templateCommand(action, args, options);
   });
 
 // Default action - launch interactive wizard

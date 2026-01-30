@@ -20,3 +20,6 @@ docs/.docusaurus/
 
 # Reference projects (not part of ralph-starter)
 projects/
+
+refs/
+refs/*

@@ -466,13 +466,32 @@ This creates:
 
 | Flag | Description |
 |------|-------------|
-| `--auto` | Skip permission prompts |
+| `--auto` | Skip permission prompts **(default: true)** |
+| `--no-auto` | Require manual permission approval |
 | `--commit` | Auto-commit after tasks |
 | `--push` | Push commits to remote |
 | `--pr` | Create pull request |
 | `--validate` | Run tests/lint/build (backpressure) |
 | `--agent <name>` | Specify agent to use |
 | `--max-iterations <n>` | Max loop iterations (default: 50) |
+
+### Debug Mode
+
+Use `RALPH_DEBUG=1` to see detailed output during execution:
+
+```bash
+# See detailed agent output, timing, and prompts
+RALPH_DEBUG=1 ralph-starter run "build a todo app"
+
+# Debug with GitHub issue
+RALPH_DEBUG=1 ralph-starter run --from github --issue 42
+```
+
+Debug mode shows:
+- Exact commands being run
+- Agent output in real-time
+- Timing information
+- Error details
 
 ### Workflow Presets
 

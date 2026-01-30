@@ -294,14 +294,16 @@ Provide a prioritized list of suggestions with explanations.`;
     }
     answers.rawIdea = idea;
 
-    // Refine with LLM
+    // Refine with LLM - pass spinner and agent to avoid conflicts and double detection
     spinner.start('Thinking about your idea...');
     let refinedIdea: RefinedIdea;
 
     try {
-      refinedIdea = await refineIdea(idea);
-      spinner.succeed('Got it!');
+      // Pass spinner (so it stops before animator starts) and agent (to avoid re-detecting)
+      refinedIdea = await refineIdea(idea, spinner, agent);
+      // Success message is shown by refineIdea, but catch needs spinner handling
     } catch (_error) {
+      // Make sure spinner is stopped on error
       spinner.fail('Could not analyze idea');
       // Use fallback
       refinedIdea = {

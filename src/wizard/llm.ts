@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import type { Ora } from 'ora';
 import { getConfiguredLLM, getLLMModel } from '../config/manager.js';
 import { callLLM, type LLMProvider, PROVIDERS } from '../llm/index.js';
-import { detectBestAgent, runAgent } from '../loop/agents.js';
+import { type Agent, detectBestAgent, runAgent } from '../loop/agents.js';
 import { RalphAnimator } from './ascii-art.js';
 import type { ProjectType, RefinedIdea, TechStack } from './types.js';
 
@@ -10,13 +10,14 @@ import type { ProjectType, RefinedIdea, TechStack } from './types.js';
 const AGENT_TIMEOUT_MS = 60000;
 
 /**
- * Wrap a promise with a timeout
+ * Wrap a promise with a timeout - properly cleans up the timer
  */
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(message)), timeoutMs)),
-  ]);
+  let timeoutId: NodeJS.Timeout;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
 }
 
 /**
@@ -55,6 +56,24 @@ function parseStreamJsonOutput(output: string): string {
 
   // Prefer result text if available, fall back to assistant text
   return resultText || assistantText;
+}
+
+/**
+ * Check for error events in stream-json output
+ */
+function checkForErrors(output: string): string | null {
+  const lines = output.split('\n').filter(Boolean);
+  for (const line of lines) {
+    try {
+      const parsed = JSON.parse(line);
+      if (parsed.type === 'error') {
+        return parsed.error?.message || parsed.message || 'Unknown error';
+      }
+    } catch {
+      // Ignore non-JSON lines
+    }
+  }
+  return null;
 }
 
 /**
@@ -112,14 +131,21 @@ Guidelines:
 /**
  * Refine user's idea using LLM (hybrid approach)
  * Priority: Claude Code CLI (no API key needed) > Direct API > Template fallback
+ * @param idea - The user's project idea
  * @param spinner - Optional spinner to stop before streaming output
+ * @param providedAgent - Optional pre-detected agent to avoid duplicate detection
  */
-export async function refineIdea(idea: string, spinner?: Ora): Promise<RefinedIdea> {
+export async function refineIdea(
+  idea: string,
+  spinner?: Ora,
+  providedAgent?: Agent | null
+): Promise<RefinedIdea> {
   // 1. Try Claude Code agent FIRST (most frictionless - no API key needed!)
-  const agent = await detectBestAgent();
+  // Use provided agent or detect (avoids calling detectBestAgent twice)
+  const agent = providedAgent !== undefined ? providedAgent : await detectBestAgent();
   if (agent) {
     try {
-      // Stop spinner before showing loading animation
+      // Stop spinner before showing loading animation (avoids two spinners)
       if (spinner) {
         spinner.stop();
         console.log();
@@ -140,6 +166,9 @@ export async function refineIdea(idea: string, spinner?: Ora): Promise<RefinedId
     } catch (_error) {
       // Fall through to API - silent fallback
     }
+  } else if (spinner) {
+    // No agent available, stop spinner before API fallback
+    spinner.stop();
   }
 
   // 2. Try direct API if key available (supports Anthropic, OpenAI, OpenRouter)
@@ -183,7 +212,7 @@ async function refineViaApi(
 }
 
 /**
- * Refine via Claude Code agent
+ * Refine via Claude Code agent (unused - kept for reference)
  */
 async function _refineViaAgent(idea: string, agent: any): Promise<RefinedIdea> {
   const prompt = REFINEMENT_PROMPT.replace('{IDEA}', idea);
@@ -194,15 +223,20 @@ async function _refineViaAgent(idea: string, agent: any): Promise<RefinedIdea> {
       task: prompt,
       cwd: process.cwd(),
       auto: true,
-      // Don't stream - Ralph animation provides visual feedback
       // No maxTurns - let agent complete naturally
     }),
     AGENT_TIMEOUT_MS,
     `Agent timed out after ${AGENT_TIMEOUT_MS / 1000}s`
   );
 
+  // Check for errors in stream-json output first
+  const error = checkForErrors(result.output);
+  if (error) {
+    throw new Error(`Claude error: ${error}`);
+  }
+
   if (result.exitCode !== 0) {
-    throw new Error('Agent failed');
+    throw new Error(`Agent failed with exit code ${result.exitCode}`);
   }
 
   // Parse JSONL stream output to extract text content
@@ -274,32 +308,26 @@ async function refineViaAgentWithAnimator(
 ): Promise<RefinedIdea> {
   const prompt = REFINEMENT_PROMPT.replace('{IDEA}', idea);
 
+  // NOTE: Don't use maxTurns:1 - it's too restrictive and causes "Reached max turns" error
+  // Let the agent complete naturally within the timeout
   const result = await withTimeout(
     runAgent(agent, {
       task: prompt,
       cwd: process.cwd(),
       auto: true,
-      onOutput: (line: string) => {
-        // Parse JSONL lines to update status message
-        try {
-          const parsed = JSON.parse(line);
-
-          // Update animator message based on event type
-          const status = getStatusFromEvent(parsed);
-          if (status) {
-            animator.updateMessage(status);
-          }
-        } catch {
-          // Not JSON - ignore
-        }
-      },
     }),
     AGENT_TIMEOUT_MS,
     `Agent timed out after ${AGENT_TIMEOUT_MS / 1000}s`
   );
 
+  // Check for errors in stream-json output first
+  const error = checkForErrors(result.output);
+  if (error) {
+    throw new Error(`Claude error: ${error}`);
+  }
+
   if (result.exitCode !== 0) {
-    throw new Error('Agent failed');
+    throw new Error(`Agent failed with exit code ${result.exitCode}`);
   }
 
   // Parse JSONL stream output to extract text content
@@ -308,7 +336,9 @@ async function refineViaAgentWithAnimator(
   // Extract JSON from the text content
   const jsonText = extractJsonFromText(textContent || result.output);
   if (!jsonText) {
-    throw new Error('No JSON in agent output');
+    // Include output preview for debugging
+    const preview = result.output.slice(0, 200);
+    throw new Error(`No JSON in agent output. Preview: ${preview}`);
   }
 
   return JSON.parse(jsonText) as RefinedIdea;

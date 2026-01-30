@@ -5,6 +5,7 @@ export interface PlanTask {
   name: string;
   completed: boolean;
   index: number;
+  subtasks?: { name: string; completed: boolean }[];
 }
 
 export interface TaskCount {
@@ -16,7 +17,8 @@ export interface TaskCount {
 
 /**
  * Parse tasks from IMPLEMENTATION_PLAN.md
- * Tasks are identified by markdown checkboxes: - [ ] or - [x]
+ * Supports hierarchical format with ### Task N: headers and subtasks
+ * Falls back to flat checkbox format if no headers found
  */
 export function parsePlanTasks(cwd: string): TaskCount {
   const planPath = join(cwd, 'IMPLEMENTATION_PLAN.md');
@@ -27,23 +29,67 @@ export function parsePlanTasks(cwd: string): TaskCount {
 
   try {
     const content = readFileSync(planPath, 'utf-8');
+    const lines = content.split('\n');
     const tasks: PlanTask[] = [];
 
-    // Match checkbox items with their text
-    // Pattern: - [ ] Task name or - [x] Task name
-    const taskRegex = /- \[([xX ])\] (.+)/g;
-    let match;
-    let index = 0;
+    let currentTask: PlanTask | null = null;
+    let taskIndex = 0;
 
-    while ((match = taskRegex.exec(content)) !== null) {
-      const completed = match[1].toLowerCase() === 'x';
-      const name = match[2].trim();
+    // First pass: look for "### Task N:" headers (hierarchical format)
+    for (const line of lines) {
+      // Match "### Task N: Description"
+      const taskHeaderMatch = line.match(/^#{2,3}\s*Task\s*\d+[:\s]+(.+)/i);
+      if (taskHeaderMatch) {
+        // Save previous task if exists
+        if (currentTask) {
+          tasks.push(currentTask);
+        }
+        currentTask = {
+          name: taskHeaderMatch[1].trim(),
+          completed: false, // Will be determined by subtasks
+          index: taskIndex++,
+          subtasks: [],
+        };
+        continue;
+      }
 
-      tasks.push({
-        name,
-        completed,
-        index: index++,
-      });
+      // Collect subtasks under current task
+      if (currentTask) {
+        const checkboxMatch = line.match(/^\s*[-*]\s*\[([xX ])\]\s*(.+)/);
+        if (checkboxMatch) {
+          const completed = checkboxMatch[1].toLowerCase() === 'x';
+          const subtaskName = checkboxMatch[2].trim();
+          currentTask.subtasks?.push({ name: subtaskName, completed });
+        }
+      }
+    }
+
+    // Don't forget the last task
+    if (currentTask) {
+      tasks.push(currentTask);
+    }
+
+    // If hierarchical format found, determine task completion from subtasks
+    if (tasks.length > 0 && tasks.some((t) => t.subtasks && t.subtasks.length > 0)) {
+      for (const task of tasks) {
+        if (task.subtasks && task.subtasks.length > 0) {
+          // Task is complete when ALL subtasks are complete
+          task.completed = task.subtasks.every((st) => st.completed);
+        }
+      }
+    } else {
+      // Fallback: flat checkbox format (no task headers)
+      tasks.length = 0;
+      taskIndex = 0;
+      const taskRegex = /^[-*]\s*\[([xX ])\]\s*(.+)/gm;
+      let match;
+      while ((match = taskRegex.exec(content)) !== null) {
+        tasks.push({
+          name: match[2].trim(),
+          completed: match[1].toLowerCase() === 'x',
+          index: taskIndex++,
+        });
+      }
     }
 
     const completed = tasks.filter((t) => t.completed).length;

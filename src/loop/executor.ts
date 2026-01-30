@@ -280,15 +280,46 @@ function summarizeChanges(output: string): string {
   // Try to extract a meaningful summary from the output
   const lines = output.split('\n').filter((l) => l.trim());
 
-  // Look for common patterns
+  // If output is JSONL (from Claude Code --output-format stream-json), extract text
+  const textContent: string[] = [];
   for (const line of lines) {
-    if (line.includes('Created') || line.includes('Added') || line.includes('Updated')) {
-      return line.slice(0, 50).trim();
+    if (line.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(line);
+        // Extract text from result message (final summary)
+        if (parsed.type === 'result' && parsed.result) {
+          return parsed.result.slice(0, 100);
+        }
+        // Extract text from assistant messages
+        if (parsed.type === 'assistant' && parsed.message?.content) {
+          const content = parsed.message.content;
+          if (Array.isArray(content)) {
+            for (const block of content) {
+              if (block.type === 'text' && block.text) {
+                textContent.push(block.text);
+              }
+            }
+          }
+        }
+      } catch {
+        // Not valid JSON, treat as regular text
+      }
+    } else {
+      // Regular text line - check for action patterns
+      if (line.includes('Created') || line.includes('Added') || line.includes('Updated')) {
+        return line.slice(0, 100).trim();
+      }
+      textContent.push(line);
     }
   }
 
-  // Fallback to first meaningful line
-  return lines[0]?.slice(0, 50) || 'Update from ralph loop';
+  // Return last meaningful text content (usually the summary)
+  const lastText = textContent[textContent.length - 1];
+  if (lastText) {
+    return lastText.slice(0, 100).trim();
+  }
+
+  return 'Update from ralph loop';
 }
 
 export async function runLoop(options: LoopOptions): Promise<LoopResult> {
@@ -499,22 +530,81 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     const iterProgress = new ProgressRenderer();
     iterProgress.start('Working...');
 
+    // Build iteration-specific task with current task context
+    let iterationTask: string;
+    if (currentTask && totalTasks > 0) {
+      const taskNum = completedTasks + 1;
+      // Get subtasks for current task
+      const subtasksList = currentTask.subtasks?.map((st) => `- [ ] ${st.name}`).join('\n') || '';
+
+      if (i === 1) {
+        // First iteration: include full context
+        iterationTask = `${taskWithSkills}
+
+## Current Task (${taskNum}/${totalTasks}): ${currentTask.name}
+
+Subtasks:
+${subtasksList}
+
+Complete these subtasks, then mark them done in IMPLEMENTATION_PLAN.md by changing [ ] to [x].`;
+      } else {
+        // Subsequent iterations: focused task only (context already established)
+        iterationTask = `Continue working on the project. Check IMPLEMENTATION_PLAN.md for progress.
+
+## Current Task (${taskNum}/${totalTasks}): ${currentTask.name}
+
+Subtasks:
+${subtasksList}
+
+Complete these subtasks, then mark them done in IMPLEMENTATION_PLAN.md by changing [ ] to [x].`;
+      }
+    } else {
+      iterationTask = taskWithSkills;
+    }
+
+    // Debug: log the prompt being sent
+    if (process.env.RALPH_DEBUG) {
+      console.error('\n[DEBUG] === LOOP ITERATION START ===');
+      console.error('[DEBUG] Task prompt length:', iterationTask.length);
+      console.error(
+        '[DEBUG] Task prompt preview:',
+        iterationTask.slice(0, 300).replace(/\n/g, '\\n')
+      );
+      console.error('[DEBUG] Agent:', options.agent.name, '| Auto:', options.auto);
+    }
+
     // Run the agent with step detection (include skills in task)
+    // NOTE: Don't use maxTurns - it can cause issues. Let agent complete naturally.
     const agentOptions: AgentRunOptions = {
-      task: taskWithSkills,
+      task: iterationTask,
       cwd: options.cwd,
       auto: options.auto,
-      maxTurns: 10, // Limit turns per loop iteration
-      streamOutput: false, // Don't dump raw JSON - use progress renderer instead
+      // maxTurns removed - was causing issues, match wizard behavior
+      streamOutput: !!process.env.RALPH_DEBUG, // Show raw JSON when debugging
       onOutput: (line: string) => {
         const step = detectStepFromOutput(line);
         if (step) {
           iterProgress.updateStep(step);
         }
+        // Debug: log each output line
+        if (process.env.RALPH_DEBUG) {
+          console.error('[DEBUG] Output:', line.slice(0, 200));
+        }
       },
     };
 
+    const startAgentTime = Date.now();
     const result = await runAgent(options.agent, agentOptions);
+
+    // Debug: log agent completion
+    if (process.env.RALPH_DEBUG) {
+      const duration = Date.now() - startAgentTime;
+      console.error('\n[DEBUG] === AGENT COMPLETED ===');
+      console.error('[DEBUG] Duration:', duration, 'ms');
+      console.error('[DEBUG] Exit code:', result.exitCode);
+      console.error('[DEBUG] Output length:', result.output.length);
+      console.error('[DEBUG] Output preview:', result.output.slice(0, 500).replace(/\n/g, '\\n'));
+    }
 
     iterProgress.stop('Iteration complete');
 
@@ -564,7 +654,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
         console.log(chalk.red.bold('  ⚠ Permission denied'));
         console.log();
         console.log(chalk.yellow('  Claude Code requires permission to continue.'));
-        console.log(chalk.dim('  Run without --auto flag to approve permissions interactively.'));
+        console.log(chalk.dim('  Run with --no-auto to approve permissions interactively.'));
       } else {
         console.log(chalk.red(`  ✗ Task blocked - cannot continue`));
         console.log();
@@ -686,11 +776,13 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     let committed = false;
     let commitMsg = '';
 
-    // Get current task info for display
+    // Get current task info for display (re-parse to catch updates from agent)
     const displayTaskInfo = parsePlanTasks(options.cwd);
+    // Show the task number we just worked on (completed count after this iteration)
+    const currentTaskNum = Math.min(displayTaskInfo.completed + 1, displayTaskInfo.total);
     const iterationLabel =
       displayTaskInfo.total > 0
-        ? `Task ${displayTaskInfo.completed}/${displayTaskInfo.total}`
+        ? `Task ${currentTaskNum}/${displayTaskInfo.total}`
         : `Iteration ${i}`;
 
     if (options.commit && (await hasUncommittedChanges(options.cwd))) {

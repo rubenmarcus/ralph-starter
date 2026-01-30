@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import chalk from 'chalk';
 import { execa } from 'execa';
 
@@ -54,7 +55,7 @@ export async function checkAgentAvailable(type: AgentType): Promise<boolean> {
 
   const agent = AGENTS[type];
   try {
-    await execa(agent.checkCmd[0], agent.checkCmd.slice(1));
+    await execa(agent.checkCmd[0], agent.checkCmd.slice(1), { timeout: 5000 });
     return true;
   } catch {
     return false;
@@ -100,35 +101,29 @@ export async function runAgent(
   options: AgentRunOptions
 ): Promise<{ output: string; exitCode: number }> {
   const args: string[] = [];
-  let stdinInput: string | undefined;
-  const env: Record<string, string | undefined> = { ...process.env };
 
   switch (agent.type) {
     case 'claude-code':
-      // Claude Code specific flags - use structured output format
-      // Pass prompt via stdin to avoid shell escaping issues with complex prompts
-      args.push('--print');
-      args.push('--verbose');
-      args.push('--output-format', 'stream-json');
+      // Prompt first
+      args.push('-p', options.task);
+      // Auto mode
       if (options.auto) {
         args.push('--dangerously-skip-permissions');
-        // Required for --dangerously-skip-permissions on some systems
-        env.IS_SANDBOX = '1';
       }
+      // Streaming JSONL output for real-time progress
+      args.push('--verbose');
+      args.push('--output-format', 'stream-json');
+      // Turn limit
       if (options.maxTurns) {
         args.push('--max-turns', String(options.maxTurns));
       }
-      // Pass prompt via stdin instead of command arg
-      stdinInput = options.task;
       break;
 
     case 'cursor':
-      // Cursor agent mode
       args.push('--agent', options.task);
       break;
 
     case 'codex':
-      // Codex specific flags
       args.push('-p', options.task);
       if (options.auto) {
         args.push('--auto-approve');
@@ -136,7 +131,6 @@ export async function runAgent(
       break;
 
     case 'opencode':
-      // OpenCode specific flags
       args.push('-p', options.task);
       if (options.auto) {
         args.push('--auto');
@@ -147,71 +141,120 @@ export async function runAgent(
       throw new Error(`Unknown agent type: ${agent.type}`);
   }
 
-  try {
-    // Collect output while optionally streaming
-    let output = '';
+  // Use spawn for real-time streaming with timeout
+  return new Promise((resolve) => {
+    // Debug: log the exact command being run
+    if (process.env.RALPH_DEBUG) {
+      console.error('\n[DEBUG] === SPAWNING AGENT ===');
+      console.error('[DEBUG] Command:', agent.command);
+      console.error(
+        '[DEBUG] Args:',
+        args.map((a) => (a.length > 100 ? a.slice(0, 100) + '...' : a))
+      );
+      console.error('[DEBUG] CWD:', options.cwd);
+    }
 
-    const subprocess = execa(agent.command, args, {
+    const proc = spawn(agent.command, args, {
       cwd: options.cwd,
-      reject: false,
-      stdout: 'pipe',
-      stderr: 'pipe',
-      env,
-      // Pass prompt via stdin for agents that support it (e.g., Claude Code)
-      input: stdinInput,
+      // stdin: 'ignore' - we don't need stdin, and leaving it as 'pipe' without closing causes hangs!
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
 
-    // Stream output if requested
-    if (options.streamOutput || options.onOutput) {
-      subprocess.stdout?.on('data', (data: Buffer) => {
-        const text = data.toString();
-        output += text;
-        if (options.streamOutput) {
-          process.stdout.write(chalk.dim(text));
-        }
-        if (options.onOutput) {
-          // Call callback for each line
-          const lines = text.split('\n').filter((l) => l.trim());
-          for (const line of lines) {
+    let output = '';
+    let stdoutBuffer = '';
+
+    // Track data timing for debugging and silence warnings
+    let lastDataTime = Date.now();
+    let silenceWarningShown = false;
+
+    // Warn if no data received for 30 seconds
+    const silenceChecker = setInterval(() => {
+      const silentMs = Date.now() - lastDataTime;
+      if (silentMs > 30000 && !silenceWarningShown) {
+        silenceWarningShown = true;
+        console.warn('\n[WARNING] No output from agent for 30+ seconds. Claude may be:');
+        console.warn('  - Processing a complex task');
+        console.warn('  - Stuck/rate limited');
+        console.warn('  - Waiting for something');
+        console.warn('Use RALPH_DEBUG=1 for detailed output\n');
+      }
+    }, 5000);
+
+    // Timeout: 5 minutes for actual work
+    const timeoutMs = 300000;
+    const timeout = setTimeout(() => {
+      clearInterval(silenceChecker);
+      if (process.env.RALPH_DEBUG) {
+        console.error('[DEBUG] TIMEOUT reached after', timeoutMs, 'ms');
+        console.error('[DEBUG] Output so far:', output.slice(-500));
+      }
+      proc.kill('SIGTERM');
+      resolve({ output: output + '\nProcess timed out', exitCode: 124 });
+    }, timeoutMs);
+
+    // Process stdout line-by-line for real-time updates
+    proc.stdout?.on('data', (data: Buffer) => {
+      const chunk = data.toString();
+      output += chunk;
+      stdoutBuffer += chunk;
+      lastDataTime = Date.now();
+      silenceWarningShown = false; // Reset warning flag when data received
+
+      // Debug: log data timing
+      if (process.env.RALPH_DEBUG) {
+        console.error('[DEBUG] Data chunk received, length:', chunk.length);
+      }
+
+      // Split into lines and process complete ones
+      const lines = stdoutBuffer.split('\n');
+      stdoutBuffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.trim()) {
+          // Call onOutput callback for each line (enables progress detection)
+          if (options.onOutput) {
             options.onOutput(line);
           }
-        }
-      });
-
-      subprocess.stderr?.on('data', (data: Buffer) => {
-        const text = data.toString();
-        output += text;
-        if (options.streamOutput) {
-          process.stderr.write(chalk.dim(text));
-        }
-        if (options.onOutput) {
-          const lines = text.split('\n').filter((l) => l.trim());
-          for (const line of lines) {
-            options.onOutput(line);
+          // Optionally stream to console
+          if (options.streamOutput) {
+            process.stdout.write(chalk.dim(line + '\n'));
           }
         }
-      });
+      }
+    });
 
-      // Wait for completion
-      const result = await subprocess;
-      return {
-        output,
-        exitCode: result.exitCode ?? 0,
-      };
-    } else {
-      // Original behavior - just capture output
-      const result = await subprocess;
-      return {
-        output: result.stdout + result.stderr,
-        exitCode: result.exitCode ?? 0,
-      };
-    }
-  } catch (error) {
-    return {
-      output: error instanceof Error ? error.message : 'Unknown error',
-      exitCode: 1,
-    };
-  }
+    proc.stderr?.on('data', (data: Buffer) => {
+      const chunk = data.toString();
+      output += chunk;
+      // Debug: log stderr output
+      if (process.env.RALPH_DEBUG) {
+        console.error('[DEBUG] STDERR:', chunk.slice(0, 200));
+      }
+    });
+
+    proc.on('close', (code: number | null) => {
+      clearTimeout(timeout);
+      clearInterval(silenceChecker);
+      // Debug: log process close
+      if (process.env.RALPH_DEBUG) {
+        console.error('[DEBUG] Process closed with code:', code);
+        console.error('[DEBUG] Total output length:', output.length);
+      }
+      // Process any remaining buffer
+      if (stdoutBuffer.trim()) {
+        if (options.onOutput) {
+          options.onOutput(stdoutBuffer);
+        }
+      }
+      resolve({ output, exitCode: code ?? 0 });
+    });
+
+    proc.on('error', (err: Error) => {
+      clearTimeout(timeout);
+      clearInterval(silenceChecker);
+      resolve({ output: err.message, exitCode: 1 });
+    });
+  });
 }
 
 export function printAgentStatus(agents: Agent[]): void {

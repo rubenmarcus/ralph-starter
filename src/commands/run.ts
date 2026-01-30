@@ -71,24 +71,107 @@ function detectRunCommand(
 
 /**
  * Extract tasks from spec content and format as implementation plan
- * Looks for markdown checkboxes: - [ ] or - [x]
+ * Handles "### Task N:" headers with subtasks underneath
+ * Ignores code blocks and example sections
  */
 function extractTasksFromSpec(specContent: string): string | null {
   const lines = specContent.split('\n');
-  const tasks: string[] = [];
+  const planLines: string[] = [];
+  let currentTaskNum = 0;
+  let inTaskSection = false;
+  let inCodeBlock = false;
+  let inExampleSection = false;
 
-  for (const line of lines) {
-    // Match checkbox items
-    const taskMatch = line.match(/^[-*]\s*\[([xX ])\]\s*(.+)/);
-    if (taskMatch) {
-      const completed = taskMatch[1].toLowerCase() === 'x';
-      const taskName = taskMatch[2].trim();
-      const checkbox = completed ? '[x]' : '[ ]';
-      tasks.push(`- ${checkbox} ${taskName}`);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Track code blocks (skip content inside ```)
+    if (line.trim().startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+    if (inCodeBlock) continue;
+
+    // Track example sections (skip tasks inside examples)
+    // But don't skip task headers that contain "format" or "example"
+    const isTaskHeader = line.match(/^#{2,3}\s*Task\s*\d+/i);
+    if (
+      !isTaskHeader &&
+      (line.match(/^#{1,3}\s+.*example/i) || line.match(/^#{1,2}\s+.*format\s*$/i))
+    ) {
+      inExampleSection = true;
+      inTaskSection = false;
+      continue;
+    }
+
+    // Exit example section on new main header (## Tasks, ## Overview, etc.)
+    if (line.match(/^#{1,2}\s+[A-Z]/) && !line.toLowerCase().includes('example')) {
+      inExampleSection = false;
+    }
+
+    // Skip if in example section
+    if (inExampleSection) continue;
+
+    // Match "### Task N: Description" or "## Task N: Description"
+    const taskHeaderMatch = line.match(/^#{2,3}\s*Task\s*(\d+)[:\s]+(.+)/i);
+    if (taskHeaderMatch) {
+      currentTaskNum++;
+      const taskName = taskHeaderMatch[2].trim();
+      planLines.push(`\n### Task ${currentTaskNum}: ${taskName}`);
+      planLines.push('');
+      inTaskSection = true;
+      continue;
+    }
+
+    // If we hit another major header, end the task section
+    if (line.match(/^#{1,2}\s+[A-Z]/) && !line.toLowerCase().includes('task')) {
+      inTaskSection = false;
+    }
+
+    // Collect checkboxes (subtasks) under the current task
+    if (inTaskSection) {
+      const checkboxMatch = line.match(/^(\s*)[-*]\s*\[([xX ])\]\s*(.+)/);
+      if (checkboxMatch) {
+        const indent = checkboxMatch[1] || '';
+        const completed = checkboxMatch[2].toLowerCase() === 'x';
+        const subtaskName = checkboxMatch[3].trim();
+        const checkbox = completed ? '[x]' : '[ ]';
+        planLines.push(`${indent}- ${checkbox} ${subtaskName}`);
+      }
     }
   }
 
-  if (tasks.length === 0) {
+  // If no task headers found, fall back to just collecting top-level checkboxes
+  if (currentTaskNum === 0) {
+    inCodeBlock = false;
+    inExampleSection = false;
+    for (const line of lines) {
+      if (line.trim().startsWith('```')) {
+        inCodeBlock = !inCodeBlock;
+        continue;
+      }
+      if (inCodeBlock) continue;
+      if (line.match(/^#{1,3}\s+.*example/i)) {
+        inExampleSection = true;
+        continue;
+      }
+      if (line.match(/^#{1,2}\s+[A-Z]/) && !line.toLowerCase().includes('example')) {
+        inExampleSection = false;
+      }
+      if (inExampleSection) continue;
+
+      // Only match non-indented checkboxes (top-level tasks)
+      const taskMatch = line.match(/^[-*]\s*\[([xX ])\]\s*(.+)/);
+      if (taskMatch) {
+        const completed = taskMatch[1].toLowerCase() === 'x';
+        const taskName = taskMatch[2].trim();
+        const checkbox = completed ? '[x]' : '[ ]';
+        planLines.push(`- ${checkbox} ${taskName}`);
+      }
+    }
+  }
+
+  if (planLines.length === 0) {
     return null;
   }
 
@@ -98,8 +181,7 @@ function extractTasksFromSpec(specContent: string): string | null {
 *Auto-generated from spec*
 
 ## Tasks
-
-${tasks.join('\n')}
+${planLines.join('\n')}
 `;
 
   return planContent;
