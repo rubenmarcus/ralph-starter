@@ -4,21 +4,6 @@ import chalk from 'chalk';
  * Ralph Wiggum ASCII art for terminal display
  */
 
-// ASCII text banner for ralph-starter
-export const RALPH_STARTER_BANNER = `
-${chalk.cyan('██████   █████  ██      ██████  ██   ██')}
-${chalk.cyan('██   ██ ██   ██ ██      ██   ██ ██   ██')}
-${chalk.cyan('██████  ███████ ██      ██████  ███████')}
-${chalk.cyan('██   ██ ██   ██ ██      ██      ██   ██')}
-${chalk.cyan('██   ██ ██   ██ ███████ ██      ██   ██')}
-
-${chalk.yellow('███████ ████████  █████  ██████  ████████ ███████ ██████')}
-${chalk.yellow('██         ██    ██   ██ ██   ██    ██    ██      ██   ██')}
-${chalk.yellow('███████    ██    ███████ ██████     ██    █████   ██████')}
-${chalk.yellow('     ██    ██    ██   ██ ██   ██    ██    ██      ██   ██')}
-${chalk.yellow('███████    ██    ██   ██ ██   ██    ██    ███████ ██   ██')}
-`;
-
 // Full Ralph Wiggum ASCII art - detailed version for welcome screen
 export const RALPH_FULL = chalk.yellow(`
                                     ˆ    5
@@ -58,17 +43,6 @@ export const RALPH_FULL = chalk.yellow(`
 
 `);
 
-// Welcome Ralph (head only) - shown at startup
-export const RALPH_WELCOME = `
-${chalk.yellow('        ╭──────────────╮')}
-${chalk.yellow('       ╱')}${chalk.yellow('  ┌─┐  ┌─┐')}${chalk.yellow('    ╲')}
-${chalk.yellow('      │')}${chalk.cyan('   ◉')}${chalk.yellow('    ')}${chalk.cyan('◉')}${chalk.yellow('     │')}
-${chalk.yellow('      │')}${chalk.yellow('      ◡')}${chalk.yellow('       │')}
-${chalk.yellow('      │')}${chalk.yellow('    ╰───╯')}${chalk.yellow('     │')}
-${chalk.yellow('       ╲')}${chalk.blue('  ▄▄▄▄▄')}${chalk.yellow('    ╱')}
-${chalk.blue('         ▀▀▀▀▀▀▀')}
-`;
-
 // Simpler welcome for smaller terminals
 export const RALPH_WELCOME_SMALL = `
 ${chalk.yellow('   ╭─────────╮')}
@@ -77,36 +51,12 @@ ${chalk.yellow('   │')}  ${chalk.yellow('‿‿‿')}  ${chalk.yellow('│')}
 ${chalk.yellow('   ╰')}${chalk.blue('─▄▄▄▄─')}${chalk.yellow('╯')}
 `;
 
-// Working Ralph (waving) - shown during processing
-export const RALPH_WORKING = `
-${chalk.yellow('        ╭──────────────╮')}
-${chalk.yellow('       ╱')}${chalk.yellow('  ┌─┐  ┌─┐')}${chalk.yellow('    ╲')}    ${chalk.yellow('o')}
-${chalk.yellow('      │')}${chalk.cyan('   ◉')}${chalk.yellow('    ')}${chalk.cyan('◉')}${chalk.yellow('     │')}  ${chalk.yellow('/')}
-${chalk.yellow('      │')}${chalk.yellow('      ◡')}${chalk.yellow('       │')}${chalk.yellow('╱')}
-${chalk.yellow('      │')}${chalk.yellow('    ╰───╯')}${chalk.yellow('     ├──')}${chalk.gray('┐')}
-${chalk.yellow('       ╲')}${chalk.blue('  ▄▄▄▄▄')}${chalk.yellow('    ╱')}   ${chalk.gray('│')}
-${chalk.blue('         ▀▀▀▀▀▀▀')}      ${chalk.gray('│')}
-${chalk.gray('           │ │')}        ${chalk.gray('│')}
-${chalk.gray('          ═╧═╧═')}
-`;
-
 // Working Ralph small version
 export const RALPH_WORKING_SMALL = `
 ${chalk.yellow('   ╭─────────╮')} ${chalk.yellow('o')}
 ${chalk.yellow('   │')} ${chalk.cyan('◉')}   ${chalk.cyan('◉')} ${chalk.yellow('│')}${chalk.yellow('/')}
 ${chalk.yellow('   │')}  ${chalk.yellow('‿‿‿')}  ${chalk.yellow('├─')}
 ${chalk.yellow('   ╰')}${chalk.blue('─▄▄▄▄─')}${chalk.yellow('╯')}
-`;
-
-// Success Ralph (happy)
-export const RALPH_SUCCESS = `
-${chalk.yellow('        ╭──────────────╮')}
-${chalk.yellow('       ╱')}${chalk.yellow('  ┌─┐  ┌─┐')}${chalk.yellow('    ╲')}
-${chalk.yellow('      │')}${chalk.green('   ★')}${chalk.yellow('    ')}${chalk.green('★')}${chalk.yellow('     │')}
-${chalk.yellow('      │')}${chalk.yellow('     ╰‿╯')}${chalk.yellow('      │')}
-${chalk.yellow('      │')}${chalk.yellow('    ╰───╯')}${chalk.yellow('     │')}
-${chalk.yellow('       ╲')}${chalk.blue('  ▄▄▄▄▄')}${chalk.yellow('    ╱')}
-${chalk.blue('         ▀▀▀▀▀▀▀')}
 `;
 
 // Error Ralph (sad)
@@ -119,74 +69,6 @@ ${chalk.yellow('      │')}${chalk.yellow('    ╰───╯')}${chalk.yellow
 ${chalk.yellow('       ╲')}${chalk.blue('  ▄▄▄▄▄')}${chalk.yellow('    ╱')}
 ${chalk.blue('         ▀▀▀▀▀▀▀')}
 `;
-
-// Thinking Ralph (dots animate)
-export function getRalphThinking(frame: number): string {
-  const dots = ['.  ', '.. ', '...', '   '][frame % 4];
-  return `
-${chalk.yellow('   ╭─────────╮')} ${chalk.dim(dots)}
-${chalk.yellow('   │')} ${chalk.cyan('◉')}   ${chalk.cyan('◉')} ${chalk.yellow('│')}
-${chalk.yellow('   │')}  ${chalk.yellow('───')}  ${chalk.yellow('│')}
-${chalk.yellow('   ╰')}${chalk.blue('─▄▄▄▄─')}${chalk.yellow('╯')}
-`;
-}
-
-// Loading animation frames
-export const RALPH_LOADING_FRAMES = [
-  // Frame 1 - hand down
-  `${chalk.yellow('   ╭─────────╮')}
-${chalk.yellow('   │')} ${chalk.cyan('◉')}   ${chalk.cyan('◉')} ${chalk.yellow('│')}
-${chalk.yellow('   │')}  ${chalk.yellow('‿‿‿')}  ${chalk.yellow('│')}
-${chalk.yellow('   ╰')}${chalk.blue('─▄▄▄▄─')}${chalk.yellow('╯')}`,
-
-  // Frame 2 - hand up
-  `${chalk.yellow('   ╭─────────╮')} ${chalk.yellow('o')}
-${chalk.yellow('   │')} ${chalk.cyan('◉')}   ${chalk.cyan('◉')} ${chalk.yellow('│/')}
-${chalk.yellow('   │')}  ${chalk.yellow('‿‿‿')}  ${chalk.yellow('│')}
-${chalk.yellow('   ╰')}${chalk.blue('─▄▄▄▄─')}${chalk.yellow('╯')}`,
-
-  // Frame 3 - hand wave
-  `${chalk.yellow('   ╭─────────╮')}  ${chalk.yellow('o')}
-${chalk.yellow('   │')} ${chalk.cyan('◉')}   ${chalk.cyan('◉')} ${chalk.yellow('│─')}
-${chalk.yellow('   │')}  ${chalk.yellow('‿‿‿')}  ${chalk.yellow('│')}
-${chalk.yellow('   ╰')}${chalk.blue('─▄▄▄▄─')}${chalk.yellow('╯')}`,
-
-  // Frame 4 - hand up again
-  `${chalk.yellow('   ╭─────────╮')} ${chalk.yellow('o')}
-${chalk.yellow('   │')} ${chalk.cyan('◉')}   ${chalk.cyan('◉')} ${chalk.yellow('│/')}
-${chalk.yellow('   │')}  ${chalk.yellow('‿‿‿')}  ${chalk.yellow('│')}
-${chalk.yellow('   ╰')}${chalk.blue('─▄▄▄▄─')}${chalk.yellow('╯')}`,
-];
-
-/**
- * Get a loading frame for animation
- */
-export function getRalphLoadingFrame(frame: number): string {
-  return RALPH_LOADING_FRAMES[frame % RALPH_LOADING_FRAMES.length];
-}
-
-/**
- * Print Ralph with a message
- */
-export function printRalphWithMessage(art: string, message: string): void {
-  const lines = art.split('\n').filter((l) => l);
-  const messageLines = message.split('\n');
-
-  console.log();
-  lines.forEach((line, i) => {
-    const msg = messageLines[i] || '';
-    console.log(`  ${line}  ${msg}`);
-  });
-  console.log();
-}
-
-/**
- * Show the full welcome with banner and Ralph
- */
-export function showFullWelcome(): void {
-  console.log(RALPH_STARTER_BANNER);
-  console.log(RALPH_FULL);
-}
 
 /**
  * Ralph quotes for fun
@@ -205,22 +87,6 @@ export const RALPH_QUOTES = [
 export function getRandomRalphQuote(): string {
   return RALPH_QUOTES[Math.floor(Math.random() * RALPH_QUOTES.length)];
 }
-
-// ═══════════════════════════════════════════════════════════════
-// GRADIENT LOADING ANIMATION - Cool gradient fill on Ralph
-// ═══════════════════════════════════════════════════════════════
-
-// Custom gradient presets
-const _GRADIENT_PRESETS = [
-  ['#FF6B6B', '#4ECDC4'], // Coral to Teal
-  ['#A770EF', '#CF8BF3', '#FDB99B'], // Purple to peach
-  ['#00C9FF', '#92FE9D'], // Blue to green
-  ['#FC466B', '#3F5EFB'], // Pink to blue
-  ['#f953c6', '#b91d73'], // Pink gradient
-  ['#4776E6', '#8E54E9'], // Blue to purple
-  ['#00d2ff', '#3a7bd5'], // Light blue
-  ['#f79d00', '#64f38c'], // Orange to green
-];
 
 // Spinner frames (dots style like Claude CLI)
 const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -361,66 +227,4 @@ export class RalphAnimator {
     }
     return result;
   }
-}
-
-/**
- * Create a progress bar string
- */
-export function createProgressBar(progress: number, width: number = 20): string {
-  const filled = Math.round(progress * width);
-  const empty = Math.max(0, width - filled);
-  return (
-    chalk.cyan('[') +
-    chalk.cyan('━').repeat(filled) +
-    chalk.dim('─').repeat(empty) +
-    chalk.cyan(']') +
-    ` ${Math.round(progress * 100)}%`
-  );
-}
-
-// Keep these for backwards compatibility but they're not really used now
-export const RALPH_WALK_FRAMES = [''];
-export const RALPH_WALK_WITH_HAND = [''];
-export function showWalkingRalph(_message: string, _elapsed?: number): void {}
-
-/**
- * Compact banner - Simple header without large ASCII text
- * Just shows Ralph head + text description
- */
-export function showCompactBanner(): void {
-  console.log();
-  console.log(RALPH_WELCOME_SMALL);
-  console.log(chalk.cyan.bold('  ralph-starter'));
-  console.log(chalk.dim('  AI-powered project generator'));
-  console.log();
-}
-
-/**
- * Mini header - Just text, no art
- */
-export function showMiniHeader(): void {
-  console.log();
-  console.log(chalk.cyan.bold('  ralph-starter'));
-  console.log(chalk.dim('  AI-powered project generator'));
-  console.log();
-}
-
-/**
- * Show success with Ralph
- */
-export function showRalphSuccess(message: string): void {
-  console.log();
-  console.log(RALPH_WELCOME_SMALL);
-  console.log(chalk.green.bold(`  ${message}`));
-  console.log();
-}
-
-/**
- * Show error with Ralph
- */
-export function showRalphError(message: string): void {
-  console.log();
-  console.log(RALPH_ERROR);
-  console.log(chalk.red.bold(`  ${message}`));
-  console.log();
 }
