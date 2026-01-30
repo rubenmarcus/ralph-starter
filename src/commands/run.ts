@@ -69,6 +69,42 @@ function detectRunCommand(
   return null;
 }
 
+/**
+ * Extract tasks from spec content and format as implementation plan
+ * Looks for markdown checkboxes: - [ ] or - [x]
+ */
+function extractTasksFromSpec(specContent: string): string | null {
+  const lines = specContent.split('\n');
+  const tasks: string[] = [];
+
+  for (const line of lines) {
+    // Match checkbox items
+    const taskMatch = line.match(/^[-*]\s*\[([xX ])\]\s*(.+)/);
+    if (taskMatch) {
+      const completed = taskMatch[1].toLowerCase() === 'x';
+      const taskName = taskMatch[2].trim();
+      const checkbox = completed ? '[x]' : '[ ]';
+      tasks.push(`- ${checkbox} ${taskName}`);
+    }
+  }
+
+  if (tasks.length === 0) {
+    return null;
+  }
+
+  // Create implementation plan content
+  const planContent = `# Implementation Plan
+
+*Auto-generated from spec*
+
+## Tasks
+
+${tasks.join('\n')}
+`;
+
+  return planContent;
+}
+
 export interface RunCommandOptions {
   auto?: boolean;
   commit?: boolean;
@@ -299,11 +335,28 @@ export async function runCommand(
 
   // If we fetched from a source, use that as the task
   if (sourceSpec && !finalTask) {
-    finalTask = `Build the following project based on this specification:
+    // Extract tasks from spec and create implementation plan
+    const extractedPlan = extractTasksFromSpec(sourceSpec);
+    if (extractedPlan) {
+      writeFileSync(implementationPlanPath, extractedPlan);
+      console.log(chalk.cyan('Created IMPLEMENTATION_PLAN.md from spec'));
+
+      finalTask = `Build the following project based on this specification:
+
+${sourceSpec}
+
+## Implementation Tracking
+
+An IMPLEMENTATION_PLAN.md file has been created with tasks extracted from this spec.
+As you complete each task, mark it done by changing [ ] to [x] in IMPLEMENTATION_PLAN.md.
+Focus on one task at a time.`;
+    } else {
+      finalTask = `Build the following project based on this specification:
 
 ${sourceSpec}
 
 Analyze the specification and implement all required features. Create a proper project structure with all necessary files.`;
+    }
     console.log(chalk.cyan('Using fetched specification as task'));
   }
 

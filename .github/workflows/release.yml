@@ -145,11 +145,10 @@ jobs:
       - name: Publish to npm
         run: |
           VERSION=${{ needs.release.outputs.version }}
-          if [[ "$VERSION" == *"-"* ]]; then
-            npm publish --tag beta
-          else
-            npm publish --tag latest
-          fi
+          # Publish with latest tag
+          npm publish --tag latest
+          # Also add beta tag (latest and beta point to same version)
+          npm dist-tag add ralph-starter@$VERSION beta
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
