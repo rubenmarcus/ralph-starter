@@ -2,7 +2,7 @@ name: Prepare Release
 
 on:
   pull_request:
-    types: [labeled, closed]
+    types: [opened, synchronize, labeled, closed]
     branches:
       - main
 
