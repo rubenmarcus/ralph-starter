@@ -2,15 +2,64 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+    paths:
+      # Only trigger on actual package changes
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'tsconfig.build.json'
+    # Note: path exclusions don't work with branches, so we filter in the job
 
 permissions:
   contents: write
 
 jobs:
+  check-version:
+    name: Check Version Change
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version: ${{ steps.check.outputs.version }}
+      is_prerelease: ${{ steps.check.outputs.is_prerelease }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if version changed
+        id: check
+        run: |
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+          # Get the version from the previous commit
+          PREV_VERSION=$(git show HEAD^:package.json 2>/dev/null | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).version" 2>/dev/null || echo "")
+
+          echo "Current version: $CURRENT_VERSION"
+          echo "Previous version: $PREV_VERSION"
+
+          if [ "$CURRENT_VERSION" != "$PREV_VERSION" ] && [ -n "$PREV_VERSION" ]; then
+            echo "Version changed from $PREV_VERSION to $CURRENT_VERSION"
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            if [[ "$CURRENT_VERSION" == *"-"* ]]; then
+              echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            else
+              echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "No version change detected, skipping release"
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+
   release:
     name: Create Release
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,7 +72,6 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
@@ -34,50 +82,41 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Extract version info
-        id: version
+      - name: Create and push tag
         run: |
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-          VERSION=${TAG_NAME#v}
+          VERSION=${{ needs.check-version.outputs.version }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Determine if this is a prerelease
-          if [[ "$VERSION" == *"-"* ]]; then
-            echo "prerelease=true" >> $GITHUB_OUTPUT
-            # Extract prerelease type (alpha, beta, rc)
-            PRERELEASE_TYPE=$(echo "$VERSION" | sed 's/.*-\([a-z]*\).*/\1/')
-            echo "prerelease_type=$PRERELEASE_TYPE" >> $GITHUB_OUTPUT
+          # Check if tag already exists
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists, skipping tag creation"
           else
-            echo "prerelease=false" >> $GITHUB_OUTPUT
-            echo "prerelease_type=" >> $GITHUB_OUTPUT
+            git tag -a "v$VERSION" -m "Release v$VERSION"
+            git push origin "v$VERSION"
           fi
 
-          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
       - name: Generate release notes
-        id: notes
         run: |
-          TAG_NAME=${{ steps.version.outputs.tag }}
-          VERSION=${{ steps.version.outputs.version }}
-          PRERELEASE=${{ steps.version.outputs.prerelease }}
-          PRERELEASE_TYPE=${{ steps.version.outputs.prerelease_type }}
+          VERSION=${{ needs.check-version.outputs.version }}
+          IS_PRERELEASE=${{ needs.check-version.outputs.is_prerelease }}
 
           # Get previous tag
-          PREV_TAG=$(git describe --tags --abbrev=0 $TAG_NAME^ 2>/dev/null || echo "")
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
 
           # Build release notes
           NOTES="## What's Changed\n\n"
 
           if [ -n "$PREV_TAG" ]; then
-            # Get commits since last tag
-            COMMITS=$(git log --pretty=format:"- %s (%h)" $PREV_TAG..$TAG_NAME --no-merges 2>/dev/null || echo "")
+            COMMITS=$(git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD --no-merges 2>/dev/null || echo "")
             if [ -n "$COMMITS" ]; then
               NOTES+="$COMMITS\n\n"
             fi
           fi
 
           # Add installation instructions
-          if [ "$PRERELEASE" == "true" ]; then
+          if [ "$IS_PRERELEASE" == "true" ]; then
+            PRERELEASE_TYPE=$(echo "$VERSION" | sed 's/.*-\([a-z]*\).*/\1/')
             NOTES+="## Installation\n\n"
             NOTES+="\`\`\`bash\n"
             NOTES+="npm install -g ralph-starter@$PRERELEASE_TYPE\n"
@@ -93,24 +132,23 @@ jobs:
             NOTES+="\`\`\`\n"
           fi
 
-          # Write to file (multiline handling)
           echo -e "$NOTES" > release_notes.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
+          tag_name: v${{ needs.check-version.outputs.version }}
+          name: v${{ needs.check-version.outputs.version }}
           body_path: release_notes.md
-          prerelease: ${{ steps.version.outputs.prerelease }}
+          prerelease: ${{ needs.check-version.outputs.is_prerelease }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Publish to npm
   publish:
     name: Publish to npm
-    needs: release
+    needs: [check-version, release]
+    if: needs.check-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -129,18 +167,13 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Extract version info
-        id: version
-        run: |
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-          VERSION=${TAG_NAME#v}
-          if [[ "$VERSION" == *"-"* ]]; then
-            echo "npm_tag=beta" >> $GITHUB_OUTPUT
-          else
-            echo "npm_tag=latest" >> $GITHUB_OUTPUT
-          fi
-
       - name: Publish to npm
-        run: npm publish --tag ${{ steps.version.outputs.npm_tag }}
+        run: |
+          VERSION=${{ needs.check-version.outputs.version }}
+          if [[ "$VERSION" == *"-"* ]]; then
+            npm publish --tag beta
+          else
+            npm publish --tag latest
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
