@@ -54,6 +54,9 @@ ralph-starter config set apiKey sk-ant-xxxx
 ralph-starter config set linear.apiKey lin_api_xxxx
 ralph-starter config set notion.token secret_xxxx
 ralph-starter config set github.token ghp_xxxx
+
+# Set defaults
+ralph-starter config set github.defaultIssuesRepo owner/repo
 ```
 
 ### Delete Value
@@ -70,6 +73,7 @@ ralph-starter config delete linear.apiKey
 | `linear.apiKey` | Linear API key |
 | `notion.token` | Notion integration token |
 | `github.token` | GitHub personal access token |
+| `github.defaultIssuesRepo` | Default repo for `--issue` without `--project` |
 
 ## Storage Location
 

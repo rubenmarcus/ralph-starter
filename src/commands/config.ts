@@ -418,6 +418,7 @@ ${chalk.bold('LLM Configuration:')}
 
 ${chalk.bold('Source Configuration:')}
   ralph-starter config set github.token ghp_xxx
+  ralph-starter config set github.defaultIssuesRepo owner/repo
   ralph-starter config set linear.apiKey lin_xxx
   ralph-starter config set notion.token secret_xxx
   ralph-starter config get github

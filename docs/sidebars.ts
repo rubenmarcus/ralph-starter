@@ -64,6 +64,16 @@ const sidebars: SidebarsConfig = {
         'advanced/git-automation',
       ],
     },
+    {
+      type: 'category',
+      label: 'Community',
+      collapsed: false,
+      items: [
+        'community/ideas',
+        'community/changelog',
+        'community/contributing',
+      ],
+    },
   ],
 };
 

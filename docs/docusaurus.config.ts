@@ -204,8 +204,8 @@ const config: Config = {
           title: 'Community',
           items: [
             { label: 'GitHub', href: 'https://github.com/rubenmarcus/ralph-starter' },
-            { label: 'GitHub Discussions', href: 'https://github.com/rubenmarcus/ralph-starter/discussions' },
-            { label: 'Issues', href: 'https://github.com/rubenmarcus/ralph-starter/issues' },
+            { label: 'Ideas & Roadmap', href: 'https://github.com/rubenmarcus/ralph-ideas/issues' },
+            { label: 'Discussions', href: 'https://github.com/rubenmarcus/ralph-starter/discussions' },
           ],
         },
         {

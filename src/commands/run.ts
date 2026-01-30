@@ -16,7 +16,11 @@ import { formatCost, formatTokens } from '../loop/cost-tracker.js';
 import { type LoopOptions, runLoop } from '../loop/executor.js';
 import { calculateOptimalIterations } from '../loop/task-counter.js';
 import { formatPresetsHelp, getPreset, type PresetConfig } from '../presets/index.js';
+import { getSourceDefaults } from '../sources/config.js';
 import { fetchFromSource } from '../sources/index.js';
+
+/** Default fallback repo for GitHub issues when no project is specified */
+const DEFAULT_GITHUB_ISSUES_REPO = 'rubenmarcus/ralph-ideas';
 
 /**
  * Detect how to run the project based on package.json scripts or common patterns
@@ -145,7 +149,15 @@ export async function runCommand(
   if (options.from) {
     spinner.start('Fetching spec from source...');
     try {
-      const result = await fetchFromSource(options.from, options.project || '', {
+      // Default to configured repo when using --issue without --project for GitHub
+      let projectId = options.project || '';
+      if (options.from.toLowerCase() === 'github' && options.issue && !options.project) {
+        const githubDefaults = getSourceDefaults('github');
+        projectId = githubDefaults?.defaultIssuesRepo || DEFAULT_GITHUB_ISSUES_REPO;
+        console.log(chalk.dim(`  Using default repo: ${projectId}`));
+      }
+
+      const result = await fetchFromSource(options.from, projectId, {
         label: options.label,
         status: options.status,
         limit: options.limit,

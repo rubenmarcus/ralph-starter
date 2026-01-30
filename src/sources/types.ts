@@ -36,6 +36,8 @@ export interface SourceOptions {
   headers?: Record<string, string>;
   /** Specific issue/item number to fetch */
   issue?: number;
+  /** Default repository for issues (GitHub) */
+  defaultIssuesRepo?: string;
 }
 
 /**
