@@ -1,0 +1,89 @@
+name: Configuration Issue
+description: Report issues with configuration or setup
+title: "[Config]: "
+labels: ["configuration", "help wanted"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Having trouble with configuration? Let us help!
+
+  - type: dropdown
+    id: integration
+    attributes:
+      label: Which integration?
+      description: Which service or integration is this related to?
+      options:
+        - General Setup
+        - Anthropic (Claude)
+        - OpenAI
+        - OpenRouter
+        - Linear
+        - Notion
+        - GitHub
+        - Todoist
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Issue Description
+      description: Describe the configuration issue you're experiencing
+      placeholder: When I try to configure...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps Taken
+      description: What have you tried so far?
+      placeholder: |
+        1. Ran `ralph config`
+        2. Entered API key
+        3. Got error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Error Message
+      description: Any error messages you're seeing
+      render: shell
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration (sanitized)
+      description: "Relevant config (REMOVE any API keys or secrets!)"
+      render: json
+
+  - type: input
+    id: version
+    attributes:
+      label: ralph-starter Version
+      placeholder: "0.1.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - macOS
+        - Linux
+        - Windows (WSL)
+        - Windows
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
