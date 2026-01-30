@@ -59,7 +59,10 @@ ralph-starter run --from github --project owner/repo --label "sprint-1" --status
 Fetch a specific issue by number:
 
 ```bash
-# By issue number
+# By issue number (uses default repo if configured)
+ralph-starter run --from github --issue 123
+
+# From a specific repo
 ralph-starter run --from github --project owner/repo --issue 123
 
 # By full URL
@@ -73,15 +76,36 @@ This fetches:
 
 Perfect for building features from well-specified issues.
 
+## Default Issues Repository
+
+Configure a default repository for fetching issues, so you don't need to specify `--project` every time:
+
+```bash
+# Set your default issues repo
+ralph-starter config set github.defaultIssuesRepo myorg/my-ideas
+
+# Now you can simply run:
+ralph-starter run --from github --issue 42
+```
+
+This is useful for teams that maintain a central ideas or roadmap repository.
+
 ## Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--project` | Repository in `owner/repo` format | Required |
+| `--project` | Repository in `owner/repo` format | Configured default or required |
 | `--label` | Filter by label name | None |
 | `--status` | Filter by status (`open`, `closed`, `all`) | `open` |
 | `--limit` | Maximum issues to fetch | 20 |
 | `--issue` | Specific issue number to fetch | None |
+
+## Configuration
+
+| Key | Description |
+|-----|-------------|
+| `github.token` | Personal access token (if not using gh CLI) |
+| `github.defaultIssuesRepo` | Default repository for `--issue` without `--project` |
 
 ## Issue Format
 
