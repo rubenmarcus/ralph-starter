@@ -52,12 +52,13 @@ jobs:
               console.log('Added candidate-release label');
             }
 
-  # Create release PR when candidate-release label is added
+  # Create release PR when a PR with candidate-release label is merged
   create-release-pr:
     name: Create Release PR
     if: |
-      github.event.action == 'labeled' &&
-      github.event.label.name == 'candidate-release'
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'candidate-release')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
