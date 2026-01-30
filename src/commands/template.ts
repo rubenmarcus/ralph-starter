@@ -345,7 +345,7 @@ async function browseTemplates(options: RunCommandOptions): Promise<void> {
 
     const { templateId } = await inquirer.prompt([
       {
-        type: 'list',
+        type: 'select',
         name: 'templateId',
         message: 'Select a template:',
         choices,
