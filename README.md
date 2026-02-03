@@ -750,6 +750,9 @@ Full documentation available at: https://ralphstarter.ai
 
 Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
+- **Feature requests & ideas**: [ralph-ideas](https://github.com/rubenmarcus/ralph-ideas)
+- **Project templates**: [ralph-templates](https://github.com/rubenmarcus/ralph-templates)
+
 For creating custom integrations, agents, or using the programmatic API, see the [Developer Extension Guide](https://ralphstarter.ai/docs/guides/extending-ralph-starter).
 
 ## License
