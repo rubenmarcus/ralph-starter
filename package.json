@@ -1,6 +1,6 @@
 {
   "name": "ralph-starter",
-  "version": "0.1.1-beta.6",
+  "version": "0.1.1-beta.7",
   "description": "Ralph Wiggum made easy. One command to run autonomous AI coding loops with auto-commit, PRs, and Docker sandbox.",
   "main": "dist/index.js",
   "bin": {
