@@ -9,6 +9,13 @@ keywords: [notion, pages, integration]
 
 Fetch specifications from Notion pages and databases to build from your documentation.
 
+## Features
+
+- **Full page fetching** - Fetches ALL content with automatic pagination (no 100-block limit)
+- **Nested blocks** - Recursively fetches children of toggles, columns, and other container blocks
+- **Rich content** - Converts Notion blocks to markdown (headings, lists, code, tables, callouts, etc.)
+- **Database support** - Query databases and fetch items with properties
+
 ## Authentication
 
 ### 1. Create an Integration
@@ -168,9 +175,31 @@ Any specific tech requirements or constraints.
 4. Share with ralph-starter integration
 5. Use `--project "Specs"` to fetch
 
+## Supported Block Types
+
+ralph-starter converts the following Notion blocks to markdown:
+
+| Block Type | Markdown Output |
+|------------|-----------------|
+| Paragraph | Normal text |
+| Heading 1/2/3 | `##`, `###`, `####` |
+| Bulleted list | `- item` |
+| Numbered list | `1. item` |
+| To-do | `- [ ]` / `- [x]` |
+| Toggle | `<details>` |
+| Quote | `> quote` |
+| Callout | `> 💡 callout` |
+| Code | ` ```lang ``` ` |
+| Divider | `---` |
+| Image | `![Image](url)` |
+| Table | `| cell | cell |` |
+
+**Nested content** (inside toggles, columns, etc.) is properly indented in the output.
+
 ## Tips
 
 1. **Use templates** - Create a consistent spec template in Notion
 2. **Status tracking** - Use a Status column to mark specs as "Ready"
 3. **Rich content** - Notion's blocks (code, callouts, etc.) are converted to markdown
 4. **Linked databases** - Reference other pages for additional context
+5. **Large pages** - No content limits! Pages with 100+ blocks are fully fetched
