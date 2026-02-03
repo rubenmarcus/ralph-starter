@@ -150,7 +150,7 @@ docs: update installation guide
 
 ## Questions?
 
-- [GitHub Discussions](https://github.com/rubenmarcus/ralph-starter/discussions)
+- [Browse Templates](https://github.com/rubenmarcus/ralph-templates)
 - [Open an Issue](https://github.com/rubenmarcus/ralph-starter/issues)
 
 ---
