@@ -516,4 +516,4 @@ interface PlanOptions {
 
 - [GitHub Issues](https://github.com/rubenmarcus/ralph-starter/issues) - Bug reports and feature requests
 - [Documentation](https://rubenmarcus.github.io/ralph-starter/) - Full docs
-- [Discussions](https://github.com/rubenmarcus/ralph-starter/discussions) - Questions and ideas
+- [Templates](https://github.com/rubenmarcus/ralph-templates) - Project templates
