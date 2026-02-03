@@ -205,7 +205,7 @@ const config: Config = {
           items: [
             { label: 'GitHub', href: 'https://github.com/rubenmarcus/ralph-starter' },
             { label: 'Ideas & Roadmap', href: 'https://github.com/rubenmarcus/ralph-ideas/issues' },
-            { label: 'Discussions', href: 'https://github.com/rubenmarcus/ralph-starter/discussions' },
+            { label: 'Templates', href: 'https://github.com/rubenmarcus/ralph-templates' },
           ],
         },
         {
