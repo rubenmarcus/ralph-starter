@@ -12,6 +12,7 @@ Browse and contribute to the future of ralph-starter. All ideas and feature requ
 
 - [View All Ideas](https://github.com/rubenmarcus/ralph-ideas/issues)
 - [Submit New Idea](https://github.com/rubenmarcus/ralph-ideas/issues/new)
+- [Browse Templates](https://github.com/rubenmarcus/ralph-templates) - Ready-to-use project templates
 - [P1 - Critical Priority](https://github.com/rubenmarcus/ralph-ideas/labels/P1)
 - [P2 - High Priority](https://github.com/rubenmarcus/ralph-ideas/labels/P2)
 - [P3 - Medium Priority](https://github.com/rubenmarcus/ralph-ideas/labels/P3)
@@ -20,10 +21,10 @@ Browse and contribute to the future of ralph-starter. All ideas and feature requ
 
 ### Templates
 
-Pre-built project starters for various use cases:
+Browse available templates at [ralph-templates](https://github.com/rubenmarcus/ralph-templates) or request new ones below:
 
-| Template | Priority | Status |
-|----------|----------|--------|
+| Template Request | Priority | Status |
+|------------------|----------|--------|
 | [Next.js SaaS Starter](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Atemplates+saas) | P1 | Planned |
 | [Marketing Landing Page](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Atemplates+landing) | P1 | Planned |
 | [GitHub Actions CI/CD](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Adevops+actions) | P1 | Planned |
@@ -31,7 +32,7 @@ Pre-built project starters for various use cases:
 | [Chrome Extension](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Atemplates+extension) | P2 | Planned |
 | [CLI Tool](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Atemplates+cli) | P2 | Planned |
 
-[View all templates →](https://github.com/rubenmarcus/ralph-ideas/labels/templates)
+[Request new template →](https://github.com/rubenmarcus/ralph-ideas/issues/new?labels=templates)
 
 ### Automation
 
