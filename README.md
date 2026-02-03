@@ -7,6 +7,8 @@
   <a href="https://www.npmjs.com/package/ralph-starter"><img src="https://img.shields.io/npm/dm/ralph-starter.svg?style=flat-square" alt="npm downloads"></a>
   <a href="https://github.com/rubenmarcus/ralph-starter/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/ralph-starter.svg?style=flat-square" alt="license"></a>
   <a href="https://github.com/rubenmarcus/ralph-starter/actions"><img src="https://img.shields.io/github/actions/workflow/status/rubenmarcus/ralph-starter/ci.yml?branch=main&style=flat-square" alt="build status"></a>
+  <a href="https://github.com/rubenmarcus/ralph-starter/actions/workflows/docs-check.yml"><img src="https://img.shields.io/github/actions/workflow/status/rubenmarcus/ralph-starter/docs-check.yml?branch=main&style=flat-square&label=docs" alt="docs status"></a>
+  <a href="https://codecov.io/gh/rubenmarcus/ralph-starter"><img src="https://img.shields.io/codecov/c/github/rubenmarcus/ralph-starter?style=flat-square" alt="coverage"></a>
   <a href="https://github.com/rubenmarcus/ralph-starter"><img src="https://img.shields.io/github/stars/rubenmarcus/ralph-starter?style=flat-square" alt="GitHub stars"></a>
 </p>
 
