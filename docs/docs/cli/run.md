@@ -117,6 +117,46 @@ ralph-starter run --from github --project owner/repo --issue 42 --output-dir ~/p
 ralph-starter run --from github --project owner/repo --issue 42 --auto
 ```
 
+### From PRD File
+
+Work through tasks from a Product Requirements Document (PRD) file. The standard ralph-wiggum filename is `PRD.md`:
+
+```bash
+# Run tasks from PRD.md (standard filename)
+ralph-starter run --prd PRD.md
+
+# Or specify a custom path
+ralph-starter run --prd ./specs/feature-prd.md
+
+# Combine with automation
+ralph-starter run --prd PRD.md --commit --validate
+```
+
+**PRD.md Format Example:**
+
+```markdown
+# User Authentication
+
+Implement secure authentication for the application.
+
+## Backend
+- [ ] Create user model with email/password
+- [ ] Implement JWT token generation
+- [ ] Add password hashing with bcrypt
+
+## Frontend
+- [ ] Build login form component
+- [ ] Add session management
+- [ ] Handle authentication errors
+```
+
+The agent will:
+1. Parse tasks from checkbox format (`- [ ]` / `- [x]`)
+2. Work through pending tasks one by one
+3. Track progress (completed vs pending)
+4. Group tasks by section headers
+5. Mark tasks complete by changing `[ ]` to `[x]`
+
 ### Advanced
 
 ```bash
@@ -135,6 +175,7 @@ ralph-starter run --auto --commit --validate --max-iterations 30
 1. **Task Resolution**:
    - If `task` provided → use that task
    - If `--from` provided → fetch spec from source
+   - If `--prd` provided → parse tasks from PRD file
    - Otherwise → read from IMPLEMENTATION_PLAN.md
 
 2. **Loop Execution**:

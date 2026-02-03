@@ -14,6 +14,7 @@ import {
 } from '../loop/agents.js';
 import { formatCost, formatTokens } from '../loop/cost-tracker.js';
 import { type LoopOptions, runLoop } from '../loop/executor.js';
+import { formatPrdPrompt, getPrdStats, parsePrdFile } from '../loop/prd-parser.js';
 import { calculateOptimalIterations } from '../loop/task-counter.js';
 import { formatPresetsHelp, getPreset, type PresetConfig } from '../presets/index.js';
 import { getSourceDefaults } from '../sources/config.js';
@@ -478,10 +479,27 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
 
   // Handle PRD file
   if (options.prd) {
-    // TODO: Implement PRD parsing
-    console.log(chalk.yellow('PRD mode coming soon!'));
-    console.log(chalk.dim(`Would read tasks from: ${options.prd}`));
-    return;
+    const prd = parsePrdFile(options.prd);
+    if (!prd) {
+      console.log(chalk.red(`PRD file not found: ${options.prd}`));
+      process.exit(1);
+    }
+
+    const stats = getPrdStats(prd);
+    console.log(chalk.cyan(`PRD: ${prd.title}`));
+    console.log(
+      chalk.dim(
+        `Tasks: ${stats.pending} pending, ${stats.completed} completed (${stats.percentComplete}% done)`
+      )
+    );
+    console.log();
+
+    if (stats.pending === 0) {
+      console.log(chalk.green('All PRD tasks are complete!'));
+      return;
+    }
+
+    finalTask = formatPrdPrompt(prd);
   }
 
   if (!finalTask) {
