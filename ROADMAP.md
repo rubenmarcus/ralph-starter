@@ -62,7 +62,9 @@ cp -r src/integrations/_template src/integrations/your-service
 
 ## Request an Integration
 
-Open an issue with:
+Submit your request to [ralph-ideas](https://github.com/rubenmarcus/ralph-ideas/issues/new?labels=integration):
 - Service name and URL
 - What data you want to fetch (issues, tasks, docs, etc.)
 - Authentication method (API key, OAuth, CLI)
+
+[View all feature requests →](https://github.com/rubenmarcus/ralph-ideas/issues)
