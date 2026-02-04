@@ -12,7 +12,7 @@ const config: Config = {
   },
 
   // Cloudflare Pages URL
-  url: 'https://docs.ralphstarter.ai',
+  url: 'https://ralphstarter.ai',
   baseUrl: '/',
 
   // Project config
@@ -63,7 +63,7 @@ const config: Config = {
         '@type': 'SoftwareApplication',
         name: 'ralph-starter',
         description: 'AI-powered autonomous coding tool. Connect GitHub, Linear, Notion and run AI coding loops from specs to production.',
-        url: 'https://docs.ralphstarter.ai',
+        url: 'https://ralphstarter.ai',
         applicationCategory: 'DeveloperApplication',
         operatingSystem: 'macOS, Linux, Windows',
         offers: {
@@ -93,11 +93,11 @@ const config: Config = {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
         name: 'ralph-starter Documentation',
-        url: 'https://docs.ralphstarter.ai',
+        url: 'https://ralphstarter.ai',
         description: 'Documentation for ralph-starter - AI-powered autonomous coding from specs to production',
         potentialAction: {
           '@type': 'SearchAction',
-          target: 'https://docs.ralphstarter.ai/search?q={search_term_string}',
+          target: 'https://ralphstarter.ai/search?q={search_term_string}',
           'query-input': 'required name=search_term_string',
         },
       }),
@@ -130,7 +130,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/rubenmarcus/ralph-starter/tree/main/docs/',
-          routeBasePath: '/', // Serve docs at root since this is docs.ralphstarter.ai
+          routeBasePath: 'docs',
         },
         blog: false, // Disabled for now
         theme: {
@@ -160,10 +160,10 @@ const config: Config = {
       { name: 'og:type', content: 'website' },
       { property: 'og:title', content: 'ralph-starter - AI-Powered Autonomous Coding' },
       { property: 'og:description', content: 'Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically.' },
-      { property: 'og:image', content: 'https://docs.ralphstarter.ai/img/thumbnail.png' },
+      { property: 'og:image', content: 'https://ralphstarter.ai/img/thumbnail.png' },
       { name: 'twitter:title', content: 'ralph-starter - AI-Powered Autonomous Coding' },
       { name: 'twitter:description', content: 'Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically.' },
-      { name: 'twitter:image', content: 'https://docs.ralphstarter.ai/img/thumbnail.png' },
+      { name: 'twitter:image', content: 'https://ralphstarter.ai/img/thumbnail.png' },
     ],
     navbar: {
       title: '',
@@ -201,9 +201,9 @@ const config: Config = {
         {
           title: 'Docs',
           items: [
-            { label: 'Getting Started', to: '/intro' },
-            { label: 'CLI Reference', to: '/cli/run' },
-            { label: 'Integrations', to: '/sources/overview' },
+            { label: 'Getting Started', to: '/docs/intro' },
+            { label: 'CLI Reference', to: '/docs/cli/run' },
+            { label: 'Integrations', to: '/docs/sources/overview' },
           ],
         },
         {

@@ -1,5 +1,5 @@
 # ralph-starter Documentation - robots.txt
-# https://docs.ralphstarter.ai
+# https://ralphstarter.ai
 
 User-agent: *
 Allow: /
@@ -36,22 +36,22 @@ User-agent: cohere-ai
 Allow: /
 
 # Sitemap location
-Sitemap: https://docs.ralphstarter.ai/sitemap.xml
+Sitemap: https://ralphstarter.ai/sitemap.xml
 
 # LLM-friendly documentation files (Firecrawl-style)
 #
 # JSON manifest with all docs metadata:
-# https://docs.ralphstarter.ai/docs.json
+# https://ralphstarter.ai/docs.json
 #
 # Plain text URL list of all markdown files:
-# https://docs.ralphstarter.ai/docs-urls.txt
+# https://ralphstarter.ai/docs-urls.txt
 #
 # Full concatenated documentation:
-# https://docs.ralphstarter.ai/llms.txt
-# https://docs.ralphstarter.ai/llms-full.txt
+# https://ralphstarter.ai/llms.txt
+# https://ralphstarter.ai/llms-full.txt
 #
 # Raw Markdown Access (Solana-style)
-# Add .md to any URL to get raw markdown:
-# https://docs.ralphstarter.ai/intro.md
-# https://docs.ralphstarter.ai/sources/figma.md
-# https://docs.ralphstarter.ai/cli/run.md
+# Add .md to any docs URL to get raw markdown:
+# https://ralphstarter.ai/docs/intro.md
+# https://ralphstarter.ai/docs/sources/figma.md
+# https://ralphstarter.ai/docs/cli/run.md

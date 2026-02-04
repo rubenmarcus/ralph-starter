@@ -112,4 +112,4 @@ Run validation commands (tests, lint, build).
 
 ## Next Steps
 
-- [Claude Desktop Setup](/mcp/claude-desktop) - Configure Claude Desktop to use ralph-starter
+- [Claude Desktop Setup](/docs/mcp/claude-desktop) - Configure Claude Desktop to use ralph-starter

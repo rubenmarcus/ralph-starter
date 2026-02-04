@@ -171,5 +171,5 @@ ralph-starter run "quick fix" --commit
 
 ## See Also
 
-- [Git Automation](/advanced/git-automation)
-- [Ralph Playbook](/advanced/ralph-playbook)
+- [Git Automation](/docs/advanced/git-automation)
+- [Ralph Playbook](/docs/advanced/ralph-playbook)

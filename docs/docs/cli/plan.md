@@ -136,6 +136,6 @@ ralph-starter run
 
 ## See Also
 
-- [ralph-starter init](/cli/init)
-- [ralph-starter run](/cli/run)
-- [Ralph Playbook](/advanced/ralph-playbook)
+- [ralph-starter init](/docs/cli/init)
+- [ralph-starter run](/docs/cli/run)
+- [Ralph Playbook](/docs/advanced/ralph-playbook)

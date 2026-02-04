@@ -215,6 +215,6 @@ Bad task breakdown:
 
 ## See Also
 
-- [Validation](/advanced/validation)
-- [Git Automation](/advanced/git-automation)
+- [Validation](/docs/advanced/validation)
+- [Git Automation](/docs/advanced/git-automation)
 - [Ralph Playbook (Original)](https://claytonfarr.github.io/ralph-playbook/)

@@ -198,6 +198,6 @@ ralph-starter run --auto --commit --validate --max-iterations 30
 
 ## See Also
 
-- [ralph-starter init](/cli/init)
-- [ralph-starter plan](/cli/plan)
-- [Input Sources](/sources/overview)
+- [ralph-starter init](/docs/cli/init)
+- [ralph-starter plan](/docs/cli/plan)
+- [Input Sources](/docs/sources/overview)

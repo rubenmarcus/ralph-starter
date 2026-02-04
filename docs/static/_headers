@@ -2,11 +2,11 @@
 # https://developers.cloudflare.com/pages/configuration/headers/
 
 # Serve markdown files with correct content type for LLM access
-/*.md
+/docs/*.md
   Content-Type: text/markdown; charset=utf-8
   X-Content-Type-Options: nosniff
 
-/**/*.md
+/docs/**/*.md
   Content-Type: text/markdown; charset=utf-8
   X-Content-Type-Options: nosniff
 
