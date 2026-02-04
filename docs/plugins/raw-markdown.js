@@ -4,6 +4,8 @@
  * Enables Solana-style LLM-ready docs where adding .md to any URL
  * returns the raw markdown content.
  *
+ * Also generates a JSON manifest for LLM crawlers (Firecrawl-style).
+ *
  * Example: /docs/sources/figma.md -> raw markdown for figma page
  */
 
@@ -11,8 +13,9 @@ const fs = require('fs');
 const path = require('path');
 
 module.exports = function rawMarkdownPlugin(context, options) {
-  const { siteDir } = context;
+  const { siteDir, siteConfig } = context;
   const docsDir = options.docsDir || 'docs';
+  const baseUrl = siteConfig.url || '';
 
   return {
     name: 'docusaurus-plugin-raw-markdown',
@@ -21,10 +24,40 @@ module.exports = function rawMarkdownPlugin(context, options) {
       const sourceDocsPath = path.join(siteDir, docsDir);
       const targetBasePath = path.join(outDir, 'docs');
 
-      // Recursively copy markdown files
-      await copyMarkdownFiles(sourceDocsPath, targetBasePath, sourceDocsPath);
+      // Collect all docs for manifest
+      const docs = [];
 
-      console.log('[raw-markdown] Copied markdown files for LLM access');
+      // Recursively copy markdown files and collect metadata
+      await copyMarkdownFiles(sourceDocsPath, targetBasePath, sourceDocsPath, docs, baseUrl);
+
+      // Generate JSON manifest
+      const manifest = {
+        name: siteConfig.title || 'Documentation',
+        description: siteConfig.tagline || '',
+        baseUrl: baseUrl,
+        generatedAt: new Date().toISOString(),
+        totalDocs: docs.length,
+        access: {
+          llmsTxt: `${baseUrl}/llms.txt`,
+          llmsFullTxt: `${baseUrl}/llms-full.txt`,
+          rawMarkdown: 'Add .md to any docs URL',
+        },
+        docs: docs.sort((a, b) => a.path.localeCompare(b.path)),
+      };
+
+      // Write manifest
+      fs.writeFileSync(
+        path.join(outDir, 'docs.json'),
+        JSON.stringify(manifest, null, 2)
+      );
+
+      // Also create a simple URL list for easy crawling
+      const urlList = docs.map(d => d.markdownUrl).join('\n');
+      fs.writeFileSync(path.join(outDir, 'docs-urls.txt'), urlList);
+
+      console.log(`[raw-markdown] Copied ${docs.length} markdown files for LLM access`);
+      console.log('[raw-markdown] Generated docs.json manifest');
+      console.log('[raw-markdown] Generated docs-urls.txt URL list');
     },
   };
 };
@@ -32,7 +65,7 @@ module.exports = function rawMarkdownPlugin(context, options) {
 /**
  * Recursively copy markdown files preserving directory structure
  */
-async function copyMarkdownFiles(sourceDir, targetBaseDir, rootSourceDir) {
+async function copyMarkdownFiles(sourceDir, targetBaseDir, rootSourceDir, docs, baseUrl) {
   const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
 
   for (const entry of entries) {
@@ -40,7 +73,7 @@ async function copyMarkdownFiles(sourceDir, targetBaseDir, rootSourceDir) {
 
     if (entry.isDirectory()) {
       // Recurse into subdirectories
-      await copyMarkdownFiles(sourcePath, targetBaseDir, rootSourceDir);
+      await copyMarkdownFiles(sourcePath, targetBaseDir, rootSourceDir, docs, baseUrl);
     } else if (entry.name.endsWith('.md') || entry.name.endsWith('.mdx')) {
       // Calculate relative path from docs root
       const relativePath = path.relative(rootSourceDir, sourcePath);
@@ -56,13 +89,77 @@ async function copyMarkdownFiles(sourceDir, targetBaseDir, rootSourceDir) {
       }
 
       // Read source file
-      let content = fs.readFileSync(sourcePath, 'utf8');
+      const content = fs.readFileSync(sourcePath, 'utf8');
 
-      // Remove frontmatter for cleaner output (optional - keep it for context)
-      // content = content.replace(/^---[\s\S]*?---\n*/m, '');
+      // Extract frontmatter metadata
+      const metadata = extractFrontmatter(content);
+
+      // Calculate URLs
+      const docPath = '/docs/' + targetRelativePath.replace(/\.md$/, '').replace(/\/index$/, '');
+      const markdownPath = '/docs/' + targetRelativePath;
+
+      // Add to docs list
+      docs.push({
+        title: metadata.title || formatTitle(entry.name),
+        description: metadata.description || '',
+        path: docPath,
+        markdownUrl: baseUrl + markdownPath,
+        htmlUrl: baseUrl + docPath,
+        category: getCategory(relativePath),
+        keywords: metadata.keywords || [],
+      });
 
       // Write to target
       fs.writeFileSync(targetPath, content);
     }
   }
+}
+
+/**
+ * Extract frontmatter from markdown content
+ */
+function extractFrontmatter(content) {
+  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return {};
+
+  const frontmatter = {};
+  const lines = match[1].split('\n');
+
+  for (const line of lines) {
+    const colonIndex = line.indexOf(':');
+    if (colonIndex > 0) {
+      const key = line.slice(0, colonIndex).trim();
+      let value = line.slice(colonIndex + 1).trim();
+
+      // Handle arrays like [item1, item2]
+      if (value.startsWith('[') && value.endsWith(']')) {
+        value = value.slice(1, -1).split(',').map(s => s.trim());
+      }
+
+      frontmatter[key] = value;
+    }
+  }
+
+  return frontmatter;
+}
+
+/**
+ * Format filename to title
+ */
+function formatTitle(filename) {
+  return filename
+    .replace(/\.(md|mdx)$/, '')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/**
+ * Get category from path
+ */
+function getCategory(relativePath) {
+  const parts = relativePath.split(path.sep);
+  if (parts.length > 1) {
+    return parts[0].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+  return 'General';
 }

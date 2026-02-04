@@ -38,7 +38,15 @@ Allow: /
 # Sitemap location
 Sitemap: https://ralph-starter.pages.dev/sitemap.xml
 
-# LLM-friendly documentation files
+# LLM-friendly documentation files (Firecrawl-style)
+#
+# JSON manifest with all docs metadata:
+# https://ralph-starter.pages.dev/docs.json
+#
+# Plain text URL list of all markdown files:
+# https://ralph-starter.pages.dev/docs-urls.txt
+#
+# Full concatenated documentation:
 # https://ralph-starter.pages.dev/llms.txt
 # https://ralph-starter.pages.dev/llms-full.txt
 #

@@ -23,6 +23,16 @@
   Content-Type: text/plain; charset=utf-8
   X-Content-Type-Options: nosniff
 
+/docs-urls.txt
+  Content-Type: text/plain; charset=utf-8
+  X-Content-Type-Options: nosniff
+
+# JSON manifest for LLM crawlers (Firecrawl-style)
+/docs.json
+  Content-Type: application/json; charset=utf-8
+  X-Content-Type-Options: nosniff
+  Access-Control-Allow-Origin: *
+
 # Allow AI crawlers to access documentation
 /*
   X-Robots-Tag: index, follow
