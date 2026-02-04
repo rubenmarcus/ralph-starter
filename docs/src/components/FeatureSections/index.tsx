@@ -29,7 +29,7 @@ const features: Feature[] = [
       'Notion pages',
       'Local files & URLs',
     ],
-    link: '/docs/sources/overview',
+    link: '/sources/overview',
     linkText: 'View integrations →',
     terminal: {
       command: 'ralph-starter run --github "owner/repo#123"',
@@ -52,7 +52,7 @@ const features: Feature[] = [
       'Progress tracking',
       'Cost monitoring',
     ],
-    link: '/docs/cli/run',
+    link: '/cli/run',
     linkText: 'Learn about agents →',
     terminal: {
       command: 'ralph-starter run "build a REST API" --loops 5',
@@ -75,7 +75,7 @@ const features: Feature[] = [
       'Build validation',
       'Error recovery',
     ],
-    link: '/docs/advanced/validation',
+    link: '/advanced/validation',
     linkText: 'Configure validation →',
     terminal: {
       command: 'ralph-starter run "fix the login bug" --test --lint',
@@ -98,7 +98,7 @@ const features: Feature[] = [
       'Create pull requests',
       'Clean commit messages',
     ],
-    link: '/docs/advanced/git-automation',
+    link: '/advanced/git-automation',
     linkText: 'Git workflow docs →',
     terminal: {
       command: 'ralph-starter run "add dark mode" --commit --pr',

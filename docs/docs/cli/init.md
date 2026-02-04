@@ -106,6 +106,6 @@ After initialization:
 
 ## See Also
 
-- [ralph-starter plan](/docs/cli/plan)
-- [ralph-starter run](/docs/cli/run)
-- [Ralph Playbook](/docs/advanced/ralph-playbook)
+- [ralph-starter plan](/cli/plan)
+- [ralph-starter run](/cli/run)
+- [Ralph Playbook](/advanced/ralph-playbook)

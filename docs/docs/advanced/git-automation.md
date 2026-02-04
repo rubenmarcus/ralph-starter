@@ -222,5 +222,5 @@ If validation fails repeatedly, no commits are made. Check validation output.
 
 ## See Also
 
-- [Validation](/docs/advanced/validation)
-- [Ralph Playbook](/docs/advanced/ralph-playbook)
+- [Validation](/advanced/validation)
+- [Ralph Playbook](/advanced/ralph-playbook)

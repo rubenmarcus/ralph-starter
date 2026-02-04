@@ -120,5 +120,5 @@ These environment variables override config file values:
 
 ## See Also
 
-- [ralph-starter source](/docs/cli/source)
-- [Input Sources](/docs/sources/overview)
+- [ralph-starter source](/cli/source)
+- [Input Sources](/sources/overview)

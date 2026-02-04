@@ -77,8 +77,8 @@ ralph-starter run --from github --project myorg/myrepo --label "ready"
 
 ## Next Steps
 
-- [Installation](/docs/installation) - Get ralph-starter installed
-- [Interactive Wizard](/docs/wizard/overview) - Learn about the guided experience
-- [Project Templates](/docs/cli/template) - Use pre-built project templates
-- [Input Sources](/docs/sources/overview) - Connect to GitHub, Linear, and more
-- [MCP Integration](/docs/mcp/setup) - Use from Claude Desktop
+- [Installation](/installation) - Get ralph-starter installed
+- [Interactive Wizard](/wizard/overview) - Learn about the guided experience
+- [Project Templates](/cli/template) - Use pre-built project templates
+- [Input Sources](/sources/overview) - Connect to GitHub, Linear, and more
+- [MCP Integration](/mcp/setup) - Use from Claude Desktop

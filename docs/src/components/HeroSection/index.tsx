@@ -95,7 +95,7 @@ export default function HeroSection(): React.ReactElement {
         <div className={`${styles.buttons} ${styles.animateIn} ${styles.delay4}`}>
           <Link
             className={`${styles.button} ${styles.buttonPrimary}`}
-            to="/docs/intro">
+            to="/intro">
             Get Started →
           </Link>
           <Link

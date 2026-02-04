@@ -112,7 +112,7 @@ ralph-starter source preview github --project owner/repo
 
 ## Next Steps
 
-- [Figma](/docs/sources/figma) - Fetch design specs, tokens, and components
-- [GitHub](/docs/sources/github) - Fetch from GitHub Issues
-- [Linear](/docs/sources/linear) - Fetch from Linear issues
-- [Notion](/docs/sources/notion) - Fetch from Notion pages
+- [Figma](/sources/figma) - Fetch design specs, tokens, and components
+- [GitHub](/sources/github) - Fetch from GitHub Issues
+- [Linear](/sources/linear) - Fetch from Linear issues
+- [Notion](/sources/notion) - Fetch from Notion pages

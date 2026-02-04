@@ -171,4 +171,4 @@ Summary:
 
 ---
 
-Ready to let your tests guide the AI? [Configure validation](/docs/advanced/validation).
+Ready to let your tests guide the AI? [Configure validation](/advanced/validation).

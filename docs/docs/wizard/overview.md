@@ -28,7 +28,7 @@ ralph-starter wizard
 The wizard first asks if you have a project idea:
 
 - **"Yes, I know what I want to build"** - Proceed to describe your idea
-- **"No, help me brainstorm ideas"** - Launch [Idea Mode](/docs/wizard/idea-mode)
+- **"No, help me brainstorm ideas"** - Launch [Idea Mode](/wizard/idea-mode)
 
 ### Step 2: Idea Refinement
 
@@ -168,5 +168,5 @@ The wizard uses plain language instead of technical jargon:
 
 ## Next Steps
 
-- [Idea Mode](/docs/wizard/idea-mode) - For when you don't know what to build
-- [Input Sources](/docs/sources/overview) - Fetch specs from external services
+- [Idea Mode](/wizard/idea-mode) - For when you don't know what to build
+- [Input Sources](/sources/overview) - Fetch specs from external services

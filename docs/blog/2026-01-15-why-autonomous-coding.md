@@ -81,4 +81,4 @@ The question isn't whether AI will write most code—it's how we'll orchestrate 
 
 ---
 
-Ready to try autonomous coding? [Get started with ralph-starter](/docs/intro).
+Ready to try autonomous coding? [Get started with ralph-starter](/intro).

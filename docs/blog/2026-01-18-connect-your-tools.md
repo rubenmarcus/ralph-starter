@@ -137,4 +137,4 @@ Your workflow, your tools, your way.
 
 ---
 
-Ready to connect? Check out the [integrations guide](/docs/sources/overview).
+Ready to connect? Check out the [integrations guide](/sources/overview).

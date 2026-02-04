@@ -51,7 +51,7 @@ Sitemap: https://docs.ralphstarter.ai/sitemap.xml
 # https://docs.ralphstarter.ai/llms-full.txt
 #
 # Raw Markdown Access (Solana-style)
-# Add .md to any docs URL to get raw markdown:
-# https://docs.ralphstarter.ai/docs/intro.md
-# https://docs.ralphstarter.ai/docs/sources/figma.md
-# https://docs.ralphstarter.ai/docs/cli/run.md
+# Add .md to any URL to get raw markdown:
+# https://docs.ralphstarter.ai/intro.md
+# https://docs.ralphstarter.ai/sources/figma.md
+# https://docs.ralphstarter.ai/cli/run.md

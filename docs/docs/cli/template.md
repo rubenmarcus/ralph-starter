@@ -151,6 +151,6 @@ To contribute templates, see the [ralph-templates repository](https://github.com
 
 ## See Also
 
-- [ralph-starter run](/docs/cli/run)
-- [ralph-starter wizard](/docs/wizard/overview)
-- [Input Sources](/docs/sources/overview)
+- [ralph-starter run](/cli/run)
+- [ralph-starter wizard](/wizard/overview)
+- [Input Sources](/sources/overview)

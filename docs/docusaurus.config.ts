@@ -130,7 +130,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/rubenmarcus/ralph-starter/tree/main/docs/',
-          routeBasePath: 'docs',
+          routeBasePath: '/', // Serve docs at root since this is docs.ralphstarter.ai
         },
         blog: false, // Disabled for now
         theme: {
@@ -201,9 +201,9 @@ const config: Config = {
         {
           title: 'Docs',
           items: [
-            { label: 'Getting Started', to: '/docs/intro' },
-            { label: 'CLI Reference', to: '/docs/cli/run' },
-            { label: 'Integrations', to: '/docs/sources/overview' },
+            { label: 'Getting Started', to: '/intro' },
+            { label: 'CLI Reference', to: '/cli/run' },
+            { label: 'Integrations', to: '/sources/overview' },
           ],
         },
         {

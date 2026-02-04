@@ -6,7 +6,7 @@
  *
  * Also generates a JSON manifest for LLM crawlers (Firecrawl-style).
  *
- * Example: /docs/sources/figma.md -> raw markdown for figma page
+ * Example: /sources/figma.md -> raw markdown for figma page
  */
 
 const fs = require('fs');
@@ -22,7 +22,8 @@ module.exports = function rawMarkdownPlugin(context, options) {
 
     async postBuild({ outDir }) {
       const sourceDocsPath = path.join(siteDir, docsDir);
-      const targetBasePath = path.join(outDir, 'docs');
+      // Output to root since docs are served at root (docs.ralphstarter.ai/sources/figma)
+      const targetBasePath = outDir;
 
       // Collect all docs for manifest
       const docs = [];
@@ -40,7 +41,7 @@ module.exports = function rawMarkdownPlugin(context, options) {
         access: {
           llmsTxt: `${baseUrl}/llms.txt`,
           llmsFullTxt: `${baseUrl}/llms-full.txt`,
-          rawMarkdown: 'Add .md to any docs URL',
+          rawMarkdown: 'Add .md to any URL',
         },
         docs: docs.sort((a, b) => a.path.localeCompare(b.path)),
       };
@@ -94,9 +95,9 @@ async function copyMarkdownFiles(sourceDir, targetBaseDir, rootSourceDir, docs, 
       // Extract frontmatter metadata
       const metadata = extractFrontmatter(content);
 
-      // Calculate URLs
-      const docPath = '/docs/' + targetRelativePath.replace(/\.md$/, '').replace(/\/index$/, '');
-      const markdownPath = '/docs/' + targetRelativePath;
+      // Calculate URLs (docs served at root, so no /docs prefix)
+      const docPath = '/' + targetRelativePath.replace(/\.md$/, '').replace(/\/index$/, '');
+      const markdownPath = '/' + targetRelativePath;
 
       // Add to docs list
       docs.push({

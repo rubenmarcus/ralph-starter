@@ -103,4 +103,4 @@ After installation:
 
 1. Run `ralph-starter` to launch the interactive wizard
 2. Or run `ralph-starter ideas` if you need help brainstorming
-3. Check out the [Interactive Wizard](/docs/wizard/overview) guide
+3. Check out the [Interactive Wizard](/wizard/overview) guide

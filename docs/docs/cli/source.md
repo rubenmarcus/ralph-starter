@@ -160,7 +160,7 @@ ralph-starter run --from linear --label "in-progress"
 
 ## See Also
 
-- [ralph-starter config](/docs/cli/config)
-- [Input Sources Overview](/docs/sources/overview)
-- [GitHub Source](/docs/sources/github)
-- [Linear Source](/docs/sources/linear)
+- [ralph-starter config](/cli/config)
+- [Input Sources Overview](/sources/overview)
+- [GitHub Source](/sources/github)
+- [Linear Source](/sources/linear)

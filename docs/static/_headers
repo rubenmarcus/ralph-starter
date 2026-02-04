@@ -6,11 +6,7 @@
   Content-Type: text/markdown; charset=utf-8
   X-Content-Type-Options: nosniff
 
-/docs/*.md
-  Content-Type: text/markdown; charset=utf-8
-  X-Content-Type-Options: nosniff
-
-/docs/**/*.md
+/**/*.md
   Content-Type: text/markdown; charset=utf-8
   X-Content-Type-Options: nosniff
 
