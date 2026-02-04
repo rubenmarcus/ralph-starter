@@ -41,3 +41,9 @@ Sitemap: https://ralph-starter.pages.dev/sitemap.xml
 # LLM-friendly documentation files
 # https://ralph-starter.pages.dev/llms.txt
 # https://ralph-starter.pages.dev/llms-full.txt
+#
+# Raw Markdown Access (Solana-style)
+# Add .md to any docs URL to get raw markdown:
+# https://ralph-starter.pages.dev/docs/intro.md
+# https://ralph-starter.pages.dev/docs/sources/figma.md
+# https://ralph-starter.pages.dev/docs/cli/run.md

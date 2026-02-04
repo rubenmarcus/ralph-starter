@@ -115,6 +115,12 @@ const config: Config = {
         description: 'AI-powered autonomous coding tool. Connect GitHub, Linear, Notion and run AI coding loops from specs to production.',
       },
     ],
+    [
+      './plugins/raw-markdown.js',
+      {
+        docsDir: 'docs',
+      },
+    ],
   ],
 
   presets: [
