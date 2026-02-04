@@ -215,6 +215,12 @@ export interface RunCommandOptions {
   trackCost?: boolean;
   circuitBreakerFailures?: number;
   circuitBreakerErrors?: number;
+  // Figma options
+  figmaMode?: 'spec' | 'tokens' | 'components' | 'assets';
+  figmaFramework?: 'react' | 'vue' | 'svelte' | 'astro' | 'nextjs' | 'nuxt' | 'html';
+  figmaFormat?: 'css' | 'scss' | 'json' | 'tailwind';
+  figmaNodes?: string;
+  figmaScale?: number;
 }
 
 export async function runCommand(

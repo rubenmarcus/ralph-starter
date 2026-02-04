@@ -274,7 +274,7 @@ export interface FigmaIntegrationOptions {
   /** Output format for tokens */
   tokenFormat?: 'css' | 'scss' | 'json' | 'tailwind';
   /** Framework for component generation */
-  framework?: 'react' | 'vue' | 'svelte' | 'html';
+  framework?: 'react' | 'vue' | 'svelte' | 'astro' | 'nextjs' | 'nuxt' | 'html';
   /** Node IDs to fetch (comma-separated) */
   nodeIds?: string;
   /** Export format for assets */

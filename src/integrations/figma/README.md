@@ -100,6 +100,15 @@ ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-
 # Svelte
 ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework svelte
 
+# Astro
+ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework astro
+
+# Next.js (with 'use client')
+ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework nextjs
+
+# Nuxt (Vue 3 with CSS modules)
+ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework nuxt
+
 # HTML + CSS
 ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework html
 ```
@@ -139,7 +148,7 @@ Output includes:
 |--------|-------------|--------|
 | `--figma-mode` | Operation mode | `spec`, `tokens`, `components`, `assets` |
 | `--figma-format` | Token output format | `css`, `scss`, `json`, `tailwind` |
-| `--figma-framework` | Component framework | `react`, `vue`, `svelte`, `html` |
+| `--figma-framework` | Component framework | `react`, `vue`, `svelte`, `astro`, `nextjs`, `nuxt`, `html` |
 | `--figma-nodes` | Specific node IDs | Comma-separated (e.g., `1:23,1:45`) |
 | `--figma-scale` | Image export scale | Number (default: `1`) |
 

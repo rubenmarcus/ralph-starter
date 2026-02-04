@@ -80,6 +80,15 @@ program
   .option('--no-track-cost', 'Disable cost tracking')
   .option('--circuit-breaker-failures <n>', 'Max consecutive failures before stopping (default: 3)')
   .option('--circuit-breaker-errors <n>', 'Max same error occurrences before stopping (default: 5)')
+  // Figma integration options
+  .option('--figma-mode <mode>', 'Figma mode: spec, tokens, components, assets')
+  .option(
+    '--figma-framework <framework>',
+    'Component framework: react, vue, svelte, astro, nextjs, nuxt, html'
+  )
+  .option('--figma-format <format>', 'Token format: css, scss, json, tailwind')
+  .option('--figma-nodes <ids>', 'Specific Figma node IDs (comma-separated)')
+  .option('--figma-scale <n>', 'Image export scale (default: 1)')
   .action(runCommand);
 
 // ralph-starter init - Initialize Ralph in a project

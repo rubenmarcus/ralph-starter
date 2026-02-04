@@ -409,7 +409,7 @@ Options:
   --project       Figma file URL or key
   --figma-mode    Mode: spec (default), tokens, components, assets
   --figma-format  Token format: css, scss, json, tailwind
-  --figma-framework  Component framework: react, vue, svelte, html
+  --figma-framework  Component framework: react, vue, svelte, astro, nextjs, nuxt, html
   --figma-nodes   Specific node IDs (comma-separated)
   --figma-scale   Image export scale (default: 1)
 
@@ -440,7 +440,7 @@ Examples:
 Modes:
   spec        Convert Figma frames to markdown design specifications
   tokens      Extract colors, typography, shadows as CSS/SCSS/JSON/Tailwind
-  components  Generate React/Vue/Svelte/HTML component code
+  components  Generate component code (React, Vue, Svelte, Astro, Next.js, Nuxt, HTML)
   assets      Export icons and images with download scripts
 
 Notes:
