@@ -102,6 +102,47 @@ const config: Config = {
         },
       }),
     },
+    // JSON-LD: TechArticle schema for documentation
+    {
+      tagName: 'script',
+      attributes: {
+        type: 'application/ld+json',
+      },
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'TechArticle',
+        headline: 'ralph-starter Documentation',
+        description: 'Complete documentation for ralph-starter - AI-powered autonomous coding tool. Learn how to connect Figma, GitHub, Linear, and Notion to run AI coding loops from specs to production.',
+        url: 'https://ralphstarter.ai/docs/intro',
+        author: {
+          '@type': 'Person',
+          name: 'rubenmarcus',
+          url: 'https://github.com/rubenmarcus',
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: 'ralph-starter',
+          url: 'https://ralphstarter.ai',
+        },
+        mainEntityOfPage: 'https://ralphstarter.ai/docs/intro',
+        articleSection: 'Documentation',
+        proficiencyLevel: 'Beginner',
+        dependencies: 'Node.js 18+',
+        keywords: ['AI coding', 'autonomous coding', 'claude code', 'MCP server', 'Figma integration', 'GitHub integration', 'Linear integration', 'Notion integration'],
+        about: [
+          {
+            '@type': 'Thing',
+            name: 'AI Code Generation',
+            description: 'Using AI to automatically generate production-ready code',
+          },
+          {
+            '@type': 'Thing',
+            name: 'Developer Tools',
+            description: 'CLI tools for software development automation',
+          },
+        ],
+      }),
+    },
   ],
 
   plugins: [

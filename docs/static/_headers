@@ -29,6 +29,18 @@
   X-Content-Type-Options: nosniff
   Access-Control-Allow-Origin: *
 
+# AI index for RAG systems
+/ai-index.json
+  Content-Type: application/json; charset=utf-8
+  X-Content-Type-Options: nosniff
+  Access-Control-Allow-Origin: *
+
+# Sidebar hierarchy as JSON
+/sidebar.json
+  Content-Type: application/json; charset=utf-8
+  X-Content-Type-Options: nosniff
+  Access-Control-Allow-Origin: *
+
 # Allow AI crawlers to access documentation
 /*
   X-Robots-Tag: index, follow

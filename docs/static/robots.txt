@@ -1,14 +1,38 @@
 # ralph-starter Documentation - robots.txt
 # https://ralphstarter.ai
+#
+# AI-First Documentation: This site is optimized for AI crawlers and RAG systems.
+# See /ai-index.json for structured documentation index.
 
+# Default - allow all
 User-agent: *
 Allow: /
 
-# Explicitly allow AI crawlers for Answer Engine Optimization (AEO)
+# Sitemap
+Sitemap: https://ralphstarter.ai/sitemap.xml
+
+# =============================================================================
+# OPENAI
+# =============================================================================
 User-agent: GPTBot
 Allow: /
 
+User-agent: OAI-SearchBot
+Allow: /
+
 User-agent: ChatGPT-User
+Allow: /
+
+# =============================================================================
+# ANTHROPIC (Claude)
+# =============================================================================
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
 Allow: /
 
 User-agent: Claude-Web
@@ -17,41 +41,179 @@ Allow: /
 User-agent: anthropic-ai
 Allow: /
 
+# =============================================================================
+# GOOGLE (Gemini)
+# =============================================================================
+User-agent: Googlebot
+Allow: /
+
 User-agent: Google-Extended
 Allow: /
 
+User-agent: GoogleOther
+Allow: /
+
+User-agent: Google-CloudVertexBot
+Allow: /
+
+User-agent: Gemini-Deep-Research
+Allow: /
+
+User-agent: GoogleAgent-Mariner
+Allow: /
+
+User-agent: Google-NotebookLM
+Allow: /
+
+# =============================================================================
+# PERPLEXITY
+# =============================================================================
 User-agent: PerplexityBot
 Allow: /
 
-User-agent: Bytespider
+User-agent: Perplexity-User
 Allow: /
 
-User-agent: CCBot
+# =============================================================================
+# MICROSOFT (Bing/Copilot)
+# =============================================================================
+User-agent: Bingbot
 Allow: /
 
+# =============================================================================
+# META
+# =============================================================================
+User-agent: FacebookBot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# =============================================================================
+# AMAZON
+# =============================================================================
 User-agent: Amazonbot
 Allow: /
 
+# =============================================================================
+# APPLE
+# =============================================================================
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# =============================================================================
+# DEEPSEEK
+# =============================================================================
+User-agent: DeepSeekBot
+Allow: /
+
+# =============================================================================
+# BYTEDANCE
+# =============================================================================
+User-agent: Bytespider
+Allow: /
+
+# =============================================================================
+# COHERE
+# =============================================================================
 User-agent: cohere-ai
 Allow: /
 
-# Sitemap location
-Sitemap: https://ralphstarter.ai/sitemap.xml
+User-agent: cohere-training-data-crawler
+Allow: /
 
-# LLM-friendly documentation files (Firecrawl-style)
+# =============================================================================
+# OTHER AI CRAWLERS
+# =============================================================================
+User-agent: CCBot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: DuckAssistBot
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: AI2Bot
+Allow: /
+
+User-agent: Devin
+Allow: /
+
+User-agent: FirecrawlAgent
+Allow: /
+
+User-agent: Crawl4AI
+Allow: /
+
+User-agent: iaskspider
+Allow: /
+
+User-agent: Cloudflare-AutoRAG
+Allow: /
+
+User-agent: BraveBot
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: NeevaBot
+Allow: /
+
+User-agent: PhindBot
+Allow: /
+
+# =============================================================================
+# AI-FRIENDLY RESOURCES
+# =============================================================================
 #
-# JSON manifest with all docs metadata:
+# AI Index (structured JSON for RAG systems):
+# https://ralphstarter.ai/ai-index.json
+#
+# Documentation manifest with metadata:
 # https://ralphstarter.ai/docs.json
+#
+# Sidebar hierarchy as JSON:
+# https://ralphstarter.ai/sidebar.json
 #
 # Plain text URL list of all markdown files:
 # https://ralphstarter.ai/docs-urls.txt
 #
-# Full concatenated documentation:
+# Full concatenated documentation (llms.txt standard):
 # https://ralphstarter.ai/llms.txt
 # https://ralphstarter.ai/llms-full.txt
 #
-# Raw Markdown Access (Solana-style)
 # Add .md to any docs URL to get raw markdown:
 # https://ralphstarter.ai/docs/intro.md
 # https://ralphstarter.ai/docs/sources/figma.md
 # https://ralphstarter.ai/docs/cli/run.md
+
+# =============================================================================
+# CRAWL OPTIMIZATION
+# =============================================================================
+
+# Request reasonable crawl delay for all bots
+Crawl-delay: 1
+
+# Allow access to all static assets
+Allow: /img/
+Allow: /assets/
+Allow: /*.js
+Allow: /*.css
+Allow: /*.json
+Allow: /*.txt
+Allow: /*.md
+Allow: /*.xml
