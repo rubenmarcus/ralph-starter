@@ -61,7 +61,7 @@
   font-size: 1.1rem;
   color: #808088;
   margin: 0;
-  max-width: 500px;
+  white-space: nowrap;
 }
 
 /* Steps Grid */
@@ -256,6 +256,7 @@
 
   .subtitle {
     font-size: 1rem;
+    white-space: normal;
   }
 
   .step {
