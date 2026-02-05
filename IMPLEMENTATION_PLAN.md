@@ -59,7 +59,7 @@
 ### Session Management
 - [x] Create `src/loop/session.ts` for pause/resume support
 - [x] Add `ralph-starter pause` command
-- [ ] Add `ralph-starter resume` command
+- [x] Add `ralph-starter resume` command
 - [ ] Store session state in `.ralph-session.json`
 
 ---

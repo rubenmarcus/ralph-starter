@@ -13,6 +13,7 @@ import { initCommand } from './commands/init.js';
 import { integrationsCommand } from './commands/integrations.js';
 import { pauseCommand } from './commands/pause.js';
 import { planCommand } from './commands/plan.js';
+import { resumeCommand } from './commands/resume.js';
 import { runCommand } from './commands/run.js';
 import { setupCommand } from './commands/setup.js';
 import { skillCommand } from './commands/skill.js';
@@ -255,6 +256,17 @@ program
   .action(async (options) => {
     await pauseCommand({
       reason: options.reason,
+    });
+  });
+
+// ralph-starter resume - Resume a paused session
+program
+  .command('resume')
+  .description('Resume a paused session from where it left off')
+  .option('--force', 'Force resume even if session is not paused')
+  .action(async (options) => {
+    await resumeCommand({
+      force: options.force,
     });
   });
 
