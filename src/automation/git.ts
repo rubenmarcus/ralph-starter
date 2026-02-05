@@ -109,3 +109,69 @@ export async function getRecentCommits(cwd: string, count: number = 5): Promise<
     return [];
   }
 }
+
+export type SemanticPrType =
+  | 'feat'
+  | 'fix'
+  | 'docs'
+  | 'chore'
+  | 'refactor'
+  | 'test'
+  | 'build'
+  | 'perf'
+  | 'ci';
+
+export interface SemanticTitleOptions {
+  type?: SemanticPrType;
+  scope?: string;
+  isBuildMode?: boolean;
+}
+
+/**
+ * Generate a semantic PR title from a task description
+ * Follows conventional commit format: type(scope): description
+ */
+export function generateSemanticPrTitle(task: string, options: SemanticTitleOptions = {}): string {
+  const { scope = 'auto', isBuildMode = false } = options;
+
+  // Determine type from task content if not explicitly provided
+  let inferredType: SemanticPrType = options.type || 'feat';
+  const lowerTask = task.toLowerCase();
+
+  if (!options.type) {
+    if (lowerTask.includes('fix') || lowerTask.includes('bug') || lowerTask.includes('error')) {
+      inferredType = 'fix';
+    } else if (lowerTask.includes('test') || lowerTask.includes('spec')) {
+      inferredType = 'test';
+    } else if (lowerTask.includes('doc') || lowerTask.includes('readme')) {
+      inferredType = 'docs';
+    } else if (lowerTask.includes('refactor') || lowerTask.includes('cleanup')) {
+      inferredType = 'refactor';
+    } else if (lowerTask.includes('perf') || lowerTask.includes('optimi')) {
+      inferredType = 'perf';
+    }
+  }
+
+  // Extract a clean description
+  let description: string;
+  if (isBuildMode) {
+    description = 'implement planned changes';
+  } else {
+    // Take first meaningful part of task, lowercase, remove special chars
+    description = task
+      .split('\n')[0] // First line only
+      .replace(/^(build|create|implement|add|fix|update)\s+/i, '') // Remove action verbs
+      .replace(/[^\w\s-]/g, '') // Remove special chars
+      .trim()
+      .toLowerCase()
+      .slice(0, 50); // Limit length
+
+    // Ensure it starts with lowercase letter
+    if (description && !/^[a-z]/.test(description)) {
+      description = description.charAt(0).toLowerCase() + description.slice(1);
+    }
+  }
+
+  // Build the title: type(scope): description
+  return `${inferredType}(${scope}): ${description || 'automated changes'}`;
+}
