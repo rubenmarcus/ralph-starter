@@ -57,7 +57,7 @@ ralph-starter integrates with your favorite tools out of the box:
 | **GitHub** | `gh` CLI (recommended) or API token | Issues, PRs, files |
 | **Linear** | `linear` CLI or API key | Issues by team/project |
 | **Notion** | None (public) or API token (private) | Pages, databases |
-| **Figma** | API token | Design specs, tokens & assets |
+| **Figma** | API token | Design specs, tokens, assets & content extraction |
 | **URLs** | None | Any public markdown/HTML |
 | **Files** | None | Local markdown, PDF |
 
