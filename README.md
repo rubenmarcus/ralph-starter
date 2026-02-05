@@ -417,6 +417,33 @@ Control API call frequency to manage costs:
 ralph-starter run --rate-limit 50 "build X"
 ```
 
+**When rate limits are reached**, ralph-starter displays detailed stats:
+
+```
+⚠ Claude rate limit reached
+
+Rate Limit Stats:
+  • Session usage: 100% (50K / 50K tokens)
+  • Requests made: 127 this hour
+  • Time until reset: ~47 minutes (resets at 04:30 UTC)
+
+Session Progress:
+  • Tasks completed: 3/5
+  • Current task: "Add swarm mode CLI flags"
+  • Branch: auto/github-54
+  • Iterations completed: 12
+
+To resume when limit resets:
+  ralph-starter run
+
+Tip: Check your limits at https://claude.ai/settings
+```
+
+This helps you:
+- Know exactly when you can resume
+- Track progress on your current session
+- Understand your usage patterns
+
 ### Cost Tracking
 
 Track estimated token usage and costs during loops:

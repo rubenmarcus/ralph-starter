@@ -63,6 +63,7 @@ const sidebars: SidebarsConfig = {
         'advanced/ralph-playbook',
         'advanced/validation',
         'advanced/git-automation',
+        'advanced/rate-limits',
       ],
     },
     {

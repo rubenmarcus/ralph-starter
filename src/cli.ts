@@ -11,6 +11,7 @@ import { checkCommand } from './commands/check.js';
 import { configCommand } from './commands/config.js';
 import { initCommand } from './commands/init.js';
 import { integrationsCommand } from './commands/integrations.js';
+import { pauseCommand } from './commands/pause.js';
 import { planCommand } from './commands/plan.js';
 import { runCommand } from './commands/run.js';
 import { setupCommand } from './commands/setup.js';
@@ -243,6 +244,17 @@ program
       agent: options.agent,
       validate: options.validate,
       maxIterations: options.maxIterations ? parseInt(options.maxIterations, 10) : undefined,
+    });
+  });
+
+// ralph-starter pause - Pause a running session
+program
+  .command('pause')
+  .description('Pause a running session for later resumption')
+  .option('--reason <text>', 'Reason for pausing the session')
+  .action(async (options) => {
+    await pauseCommand({
+      reason: options.reason,
     });
   });
 

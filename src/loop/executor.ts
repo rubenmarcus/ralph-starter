@@ -2,8 +2,20 @@ import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import chalk from 'chalk';
 import ora from 'ora';
-import { createPullRequest, gitCommit, gitPush, hasUncommittedChanges } from '../automation/git.js';
+import {
+  createPullRequest,
+  getCurrentBranch,
+  gitCommit,
+  gitPush,
+  hasUncommittedChanges,
+} from '../automation/git.js';
 import { ProgressRenderer } from '../ui/progress-renderer.js';
+import {
+  displayRateLimitStats,
+  parseRateLimitFromOutput,
+  type RateLimitInfo,
+  type SessionContext,
+} from '../utils/rate-limit-display.js';
 import { type Agent, type AgentRunOptions, runAgent } from './agents.js';
 import { CircuitBreaker, type CircuitBreakerConfig } from './circuit-breaker.js';
 import { CostTracker, type CostTrackerStats, formatCost } from './cost-tracker.js';
@@ -643,13 +655,29 @@ Complete these subtasks, then mark them done in IMPLEMENTATION_PLAN.md by changi
 
       console.log();
       if (isRateLimit) {
-        console.log(chalk.red.bold('  ⚠ Claude rate limit reached'));
-        console.log();
-        console.log(chalk.yellow('  Your Claude session usage is at 100%.'));
-        console.log(chalk.yellow('  Wait for your rate limit to reset, then run again:'));
-        console.log(chalk.dim('    ralph-starter run'));
-        console.log();
-        console.log(chalk.dim('  Tip: Check your limits at https://claude.ai/settings'));
+        // Parse rate limit info from output
+        const rateLimitInfo = parseRateLimitFromOutput(result.output);
+
+        // Build session context for display
+        const taskCount = parsePlanTasks(options.cwd);
+        let currentBranch: string | undefined;
+        try {
+          currentBranch = await getCurrentBranch(options.cwd);
+        } catch {
+          // Ignore branch detection errors
+        }
+        const currentTask = getCurrentTask(options.cwd);
+
+        const sessionContext: SessionContext = {
+          tasksCompleted: taskCount.completed,
+          totalTasks: taskCount.total,
+          currentTask: currentTask?.name,
+          branch: currentBranch,
+          iterations: i,
+        };
+
+        // Display detailed rate limit stats
+        displayRateLimitStats(rateLimitInfo, taskCount.total > 0 ? sessionContext : undefined);
       } else if (isPermission) {
         console.log(chalk.red.bold('  ⚠ Permission denied'));
         console.log();
