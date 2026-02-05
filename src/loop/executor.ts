@@ -2,7 +2,16 @@ import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import chalk from 'chalk';
 import ora from 'ora';
-import { createPullRequest, gitCommit, gitPush, hasUncommittedChanges } from '../automation/git.js';
+import {
+  createPullRequest,
+  formatPrBody,
+  generateSemanticPrTitle,
+  gitCommit,
+  gitPush,
+  hasUncommittedChanges,
+  type IssueRef,
+  type SemanticPrType,
+} from '../automation/git.js';
 import { ProgressRenderer } from '../ui/progress-renderer.js';
 import { type Agent, type AgentRunOptions, runAgent } from './agents.js';
 import { CircuitBreaker, type CircuitBreakerConfig } from './circuit-breaker.js';
@@ -112,6 +121,9 @@ export interface LoopOptions {
   push?: boolean;
   pr?: boolean;
   prTitle?: string;
+  prLabels?: string[]; // Labels to apply to PR
+  prIssueRef?: IssueRef; // Issue to link in PR body
+  prType?: SemanticPrType; // Type for semantic PR title
   validate?: boolean; // Run tests/lint/build as backpressure
   // New options
   completionPromise?: string; // Custom completion promise string
@@ -867,9 +879,33 @@ Complete these subtasks, then mark them done in IMPLEMENTATION_PLAN.md by changi
   if (options.pr && commits.length > 0) {
     spinner.start('Creating pull request...');
     try {
+      // Generate semantic title if not provided
+      const prTitle =
+        options.prTitle ||
+        generateSemanticPrTitle(options.task, {
+          type: options.prType,
+          scope: 'auto',
+          isBuildMode: options.task.includes('IMPLEMENTATION_PLAN.md'),
+        });
+
+      // Format PR body with issue linking
+      const prBody = formatPrBody({
+        task: options.task,
+        commits,
+        issueRef: options.prIssueRef,
+        iterations: finalIteration,
+      });
+
+      // Determine labels - always include AUTO for auto mode
+      const labels = [...(options.prLabels || [])];
+      if (options.auto && !labels.includes('AUTO')) {
+        labels.push('AUTO');
+      }
+
       const prUrl = await createPullRequest(options.cwd, {
-        title: options.prTitle || `Ralph: ${options.task.slice(0, 50)}`,
-        body: `Automated PR created by ralph-starter\n\n## Task\n${options.task}\n\n## Commits\n${commits.map((c) => `- ${c}`).join('\n')}`,
+        title: prTitle,
+        body: prBody,
+        labels: labels.length > 0 ? labels : undefined,
       });
       spinner.succeed(`Created PR: ${prUrl}`);
     } catch (_error) {
