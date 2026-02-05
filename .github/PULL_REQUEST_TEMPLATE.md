@@ -33,11 +33,11 @@ Keywords: closes, fixes, resolves (auto-closes issue on merge)
 
 - [ ] I have tested this locally
 - [ ] I have added/updated tests as needed
-- [ ] All existing tests pass (`npm test`)
+- [ ] All existing tests pass (`pnpm test`)
 
 ## Checklist
 
-- [ ] My code follows the project's coding style (`npm run lint`)
+- [ ] My code follows the project's coding style (`pnpm lint`)
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code where necessary
 - [ ] I have updated documentation as needed
