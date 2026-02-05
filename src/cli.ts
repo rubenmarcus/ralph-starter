@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { authCommand } from './commands/auth.js';
+import { autoCommand } from './commands/auto.js';
 import { checkCommand } from './commands/check.js';
 import { configCommand } from './commands/config.js';
 import { initCommand } from './commands/init.js';
@@ -215,6 +216,34 @@ program
   .description('Start as an MCP (Model Context Protocol) server for Claude Desktop/Code')
   .action(async () => {
     await startMcpServer();
+  });
+
+// ralph-starter auto - Autonomous batch task processing
+program
+  .command('auto')
+  .description('Run in autonomous mode, processing multiple tasks from GitHub/Linear')
+  .requiredOption('--source <source>', 'Source to fetch tasks from (github, linear)')
+  .option('--project <name>', 'Project identifier (owner/repo for GitHub)')
+  .option('--label <name>', 'Filter tasks by label (e.g., "auto-ready")')
+  .option('--limit <n>', 'Maximum tasks to process (default: 10)', '10')
+  .option('--dry-run', 'Preview mode - show tasks without executing')
+  .option('--skip-pr', 'Skip PR creation (commit only)')
+  .option('--agent <name>', 'Specify agent to use')
+  .option('--validate', 'Run validation after each task', true)
+  .option('--no-validate', 'Skip validation')
+  .option('--max-iterations <n>', 'Max iterations per task (default: 15)')
+  .action(async (options) => {
+    await autoCommand({
+      source: options.source,
+      project: options.project,
+      label: options.label,
+      limit: parseInt(options.limit, 10),
+      dryRun: options.dryRun,
+      skipPr: options.skipPr,
+      agent: options.agent,
+      validate: options.validate,
+      maxIterations: options.maxIterations ? parseInt(options.maxIterations, 10) : undefined,
+    });
   });
 
 // ralph-starter presets - List available workflow presets

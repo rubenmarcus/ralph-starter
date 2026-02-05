@@ -35,7 +35,9 @@ jobs:
           subjectPatternError: |
             PR title must start with lowercase letter.
             Example: "feat(cli): add new feature" or "fix: resolve bug"
-          # Don't validate WIP PRs
+          # Don't validate WIP PRs or auto-generated PRs
           ignoreLabels: |
             wip
             work in progress
+            auto-generated
+            bot
