@@ -22,8 +22,7 @@
   <a href="#integrations">Integrations</a> •
   <a href="#quick-start">Quick Start</a> •
   <a href="#features">Features</a> •
-  <a href="https://ralphstarter.ai">Docs</a> •
-  <a href="ROADMAP.md">Roadmap</a>
+  <a href="https://ralphstarter.ai">Docs</a>
 </p>
 
 ---
@@ -74,7 +73,7 @@ ralph-starter integrations test linear
 ralph-starter integrations fetch github owner/repo
 ```
 
-> **Want more integrations?** Check the [Roadmap](ROADMAP.md) for upcoming integrations like Jira, GitLab, and more. PRs welcome!
+> **Want more integrations?** PRs welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
 ---
 
