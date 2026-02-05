@@ -10,14 +10,14 @@ Execute tasks from `IMPLEMENTATION_PLAN.md` one at a time.
 
 1. **Read the plan** - Find next unchecked task in `IMPLEMENTATION_PLAN.md`
 2. **Implement** - Make the changes following patterns in `AGENTS.md`
-3. **Validate** - Run `npm run build` to ensure no errors
+3. **Validate** - Run `pnpm build` to ensure no errors
 4. **Mark complete** - Check off the task `[x]`
 5. **Repeat** - Move to next task
 
 ## Validation After Each Change
 
 ```bash
-npm run build
+pnpm build
 ```
 
 If build fails:
@@ -67,7 +67,7 @@ import { NewModule } from './new-module.js';
 ## Rules
 
 - One task at a time
-- Run `npm run build` after each change
+- Run `pnpm build` after each change
 - Update README.md for user-facing changes
 - Commit working code only
 - Mark tasks complete immediately after finishing
