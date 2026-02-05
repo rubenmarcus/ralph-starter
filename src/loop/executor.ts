@@ -8,6 +8,13 @@ import { type Agent, type AgentRunOptions, runAgent } from './agents.js';
 import { CircuitBreaker, type CircuitBreakerConfig } from './circuit-breaker.js';
 import { CostTracker, type CostTrackerStats, formatCost } from './cost-tracker.js';
 import { estimateLoop, formatEstimateDetailed } from './estimator.js';
+import {
+  formatJudgeFeedback,
+  type LLMJudgeConfig,
+  loadJudgeConfig,
+  printJudgeStatus,
+  runLLMJudge,
+} from './llm-judge.js';
 import { checkFileBasedCompletion, createProgressTracker, type ProgressEntry } from './progress.js';
 import { RateLimiter } from './rate-limiter.js';
 import { analyzeResponse, hasExitSignal } from './semantic-analyzer.js';
@@ -20,6 +27,13 @@ import {
   runAllValidations,
   type ValidationResult,
 } from './validation.js';
+import {
+  formatVisualFeedback,
+  loadVisualConfig,
+  printVisualStatus,
+  runVisualVerification,
+  type VisualVerificationConfig,
+} from './visual-verification.js';
 
 /**
  * Sleep for a given number of milliseconds
@@ -123,6 +137,8 @@ export interface LoopOptions {
   checkFileCompletion?: boolean; // Check for RALPH_COMPLETE file
   trackCost?: boolean; // Track token usage and cost
   model?: string; // Model name for cost estimation
+  visualVerification?: boolean | VisualVerificationConfig; // Enable visual verification
+  llmJudge?: boolean | LLMJudgeConfig; // Enable LLM-as-judge quality verification
 }
 
 export interface LoopResult {
@@ -355,6 +371,28 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
   // Detect validation commands if validation is enabled
   const validationCommands = options.validate ? detectValidationCommands(options.cwd) : [];
 
+  // Initialize visual verification config
+  let visualConfig: VisualVerificationConfig | null = null;
+  if (options.visualVerification) {
+    if (typeof options.visualVerification === 'object') {
+      visualConfig = options.visualVerification;
+    } else {
+      // Load from AGENTS.md or config file
+      visualConfig = loadVisualConfig(options.cwd);
+    }
+  }
+
+  // Initialize LLM judge config
+  let llmJudgeConfig: LLMJudgeConfig | null = null;
+  if (options.llmJudge) {
+    if (typeof options.llmJudge === 'object') {
+      llmJudgeConfig = options.llmJudge;
+    } else {
+      // Load from AGENTS.md or config file
+      llmJudgeConfig = loadJudgeConfig(options.cwd);
+    }
+  }
+
   // Detect Claude Code skills
   const detectedSkills = detectClaudeSkills(options.cwd);
   let taskWithSkills = options.task;
@@ -410,6 +448,14 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
   }
   if (rateLimiter) {
     console.log(chalk.dim(`Rate limit: ${options.rateLimit}/hour`));
+  }
+  if (visualConfig && visualConfig.enabled) {
+    console.log(chalk.dim(`Visual verification: ${visualConfig.url || 'enabled'}`));
+  }
+  if (llmJudgeConfig && llmJudgeConfig.enabled) {
+    const criteriaNames =
+      llmJudgeConfig.criteria?.map((c) => c.type).join(', ') || 'code-quality, readability';
+    console.log(chalk.dim(`LLM Judge: ${criteriaNames}`));
   }
   console.log();
 
@@ -768,6 +814,107 @@ Complete these subtasks, then mark them done in IMPLEMENTATION_PLAN.md by changi
       } else {
         // Validation passed - record success
         spinner.succeed(chalk.green(`Loop ${i}: Validation passed`));
+        circuitBreaker.recordSuccess();
+      }
+    }
+
+    // Run visual verification if configured
+    if (visualConfig && visualConfig.enabled && (await hasUncommittedChanges(options.cwd))) {
+      spinner.start(chalk.yellow(`Loop ${i}: Running visual verification...`));
+
+      const visualFeedback = await runVisualVerification(options.cwd, visualConfig);
+      spinner.stop();
+      printVisualStatus(visualFeedback);
+
+      if (!visualFeedback.success) {
+        _validationPassed = false;
+        validationFailures++;
+
+        // Format visual feedback for agent
+        const feedback = formatVisualFeedback(visualFeedback);
+
+        // Record failure
+        const tripped = circuitBreaker.recordFailure(visualFeedback.message);
+
+        if (tripped) {
+          const reason = circuitBreaker.getTripReason();
+          console.log(chalk.red(`Circuit breaker tripped: ${reason}`));
+
+          if (progressTracker && progressEntry) {
+            progressEntry.status = 'failed';
+            progressEntry.summary = `Visual verification failed: ${visualFeedback.message}`;
+            progressEntry.duration = Date.now() - iterationStart;
+            await progressTracker.appendEntry(progressEntry);
+          }
+
+          finalIteration = i;
+          exitReason = 'circuit_breaker';
+          break;
+        }
+
+        if (progressTracker && progressEntry) {
+          progressEntry.status = 'validation_failed';
+          progressEntry.summary = 'Visual verification failed';
+          progressEntry.duration = Date.now() - iterationStart;
+          await progressTracker.appendEntry(progressEntry);
+        }
+
+        // Continue loop with visual feedback
+        taskWithSkills = `${taskWithSkills}\n\n${feedback}`;
+        continue;
+      } else {
+        circuitBreaker.recordSuccess();
+      }
+    }
+
+    // Run LLM judge verification if configured
+    if (llmJudgeConfig && llmJudgeConfig.enabled && (await hasUncommittedChanges(options.cwd))) {
+      spinner.start(chalk.yellow(`Loop ${i}: Running LLM quality judge...`));
+
+      // Get list of changed files for targeted evaluation
+      const changedFiles = llmJudgeConfig.files; // Use configured files or detect changes
+
+      const judgeResult = await runLLMJudge(options.cwd, llmJudgeConfig, changedFiles);
+      spinner.stop();
+      printJudgeStatus(judgeResult);
+
+      if (!judgeResult.passed) {
+        _validationPassed = false;
+        validationFailures++;
+
+        // Format judge feedback for agent
+        const feedback = formatJudgeFeedback(judgeResult);
+
+        // Record failure
+        const tripped = circuitBreaker.recordFailure(`LLM Judge: ${judgeResult.overallScore}/10`);
+
+        if (tripped) {
+          const reason = circuitBreaker.getTripReason();
+          console.log(chalk.red(`Circuit breaker tripped: ${reason}`));
+
+          if (progressTracker && progressEntry) {
+            progressEntry.status = 'failed';
+            progressEntry.summary = `LLM Judge failed: ${judgeResult.overallScore}/10`;
+            progressEntry.duration = Date.now() - iterationStart;
+            await progressTracker.appendEntry(progressEntry);
+          }
+
+          finalIteration = i;
+          exitReason = 'circuit_breaker';
+          break;
+        }
+
+        if (progressTracker && progressEntry) {
+          progressEntry.status = 'validation_failed';
+          progressEntry.summary = `LLM Judge score: ${judgeResult.overallScore}/10`;
+          progressEntry.duration = Date.now() - iterationStart;
+          await progressTracker.appendEntry(progressEntry);
+        }
+
+        // Continue loop with judge feedback
+        taskWithSkills = `${taskWithSkills}\n\n${feedback}`;
+        continue;
+      } else {
         circuitBreaker.recordSuccess();
       }
     }

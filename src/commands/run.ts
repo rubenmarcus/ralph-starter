@@ -215,6 +215,7 @@ export interface RunCommandOptions {
   trackCost?: boolean;
   circuitBreakerFailures?: number;
   circuitBreakerErrors?: number;
+  visualVerify?: boolean | string;
 }
 
 export async function runCommand(
@@ -579,6 +580,12 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
             maxSameErrorCount: options.circuitBreakerErrors ?? 5,
           }
         : undefined,
+    // Visual verification: true/false or URL string
+    visualVerification: options.visualVerify
+      ? typeof options.visualVerify === 'string'
+        ? { enabled: true, url: options.visualVerify }
+        : true
+      : undefined,
   };
 
   const result = await runLoop(loopOptions);

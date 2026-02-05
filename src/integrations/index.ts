@@ -11,6 +11,7 @@ import type { Integration, IntegrationInfo } from './base.js';
 import { GitHubIntegration } from './github/index.js';
 import { LinearIntegration } from './linear/index.js';
 import { NotionIntegration } from './notion/index.js';
+import { PlaywrightIntegration } from './playwright/index.js';
 
 // Re-export types
 export type {
@@ -29,6 +30,7 @@ const integrations: Integration[] = [
   new GitHubIntegration(),
   new LinearIntegration(),
   new NotionIntegration(),
+  new PlaywrightIntegration(),
 ];
 
 /**
@@ -95,3 +97,4 @@ export async function fetchFromIntegration(
 export { GitHubIntegration } from './github/index.js';
 export { LinearIntegration } from './linear/index.js';
 export { NotionIntegration } from './notion/index.js';
+export { PlaywrightIntegration } from './playwright/index.js';

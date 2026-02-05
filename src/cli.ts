@@ -9,6 +9,7 @@ import { authCommand } from './commands/auth.js';
 import { autoCommand } from './commands/auto.js';
 import { checkCommand } from './commands/check.js';
 import { configCommand } from './commands/config.js';
+import { harvestCommand } from './commands/harvest.js';
 import { initCommand } from './commands/init.js';
 import { integrationsCommand } from './commands/integrations.js';
 import { planCommand } from './commands/plan.js';
@@ -83,6 +84,10 @@ program
   .option('--no-track-cost', 'Disable cost tracking')
   .option('--circuit-breaker-failures <n>', 'Max consecutive failures before stopping (default: 3)')
   .option('--circuit-breaker-errors <n>', 'Max same error occurrences before stopping (default: 5)')
+  .option(
+    '--visual-verify [url]',
+    'Enable visual verification via Playwright (optionally specify URL)'
+  )
   .action(runCommand);
 
 // ralph-starter init - Initialize Ralph in a project
@@ -129,6 +134,30 @@ program
       skipDesign: options.skipDesign,
       skipTasks: options.skipTasks,
       outputDir: options.outputDir,
+      verbose: options.verbose,
+    });
+  });
+
+// ralph-starter harvest - Extract learnings and archive completed tasks
+program
+  .command('harvest')
+  .description('Extract learnings from activity.md and archive completed tasks')
+  .option('--auto', 'Run in automated mode (skip permissions)', true)
+  .option('--no-auto', 'Require manual permission approval')
+  .option('--activity-file <path>', 'Path to activity file (default: .ralph/activity.md)')
+  .option('--agents-file <path>', 'Path to AGENTS.md file (default: AGENTS.md)')
+  .option('--archive-dir <path>', 'Archive directory (default: .ralph/archive)')
+  .option('--skip-patterns', 'Skip pattern extraction')
+  .option('--skip-archive', 'Skip archival')
+  .option('--verbose', 'Show detailed output')
+  .action(async (options) => {
+    await harvestCommand({
+      auto: options.auto,
+      activityFile: options.activityFile,
+      agentsFile: options.agentsFile,
+      archiveDir: options.archiveDir,
+      skipPatterns: options.skipPatterns,
+      skipArchive: options.skipArchive,
       verbose: options.verbose,
     });
   });
