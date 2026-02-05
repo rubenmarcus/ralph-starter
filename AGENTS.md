@@ -1,80 +1,121 @@
 # AGENTS.md
 
-This file defines how Ralph operates when developing ralph-starter itself.
+Configuration for AI coding agents working on ralph-starter.
 
 ## Project Overview
 
-ralph-starter is a CLI tool for running autonomous AI coding loops using the Ralph Wiggum technique. It's built with TypeScript and runs on Node.js.
+ralph-starter is a CLI tool for running autonomous AI coding loops. It connects to external sources (GitHub, Linear, Notion, Figma) and orchestrates AI coding agents to build software autonomously.
+
+**Tech Stack:** TypeScript, Node.js 20+, pnpm
 
 ## Validation Commands
 
-Run these after each change to ensure quality:
+Run after each change:
 
 ```bash
-npm run build      # TypeScript compilation
-npm run lint       # ESLint checks (if configured)
-npm test           # Run tests (if configured)
+pnpm build        # TypeScript compilation
+pnpm lint         # ESLint checks
+pnpm test         # Run tests
+pnpm typecheck    # Type checking only
 ```
 
-## Build Instructions
-
-1. Install dependencies: `npm install`
-2. Build: `npm run build`
-3. Test locally: `npm link` then `ralph-starter --help`
-
-## Code Patterns
-
-### File Structure
+## Project Structure
 
 ```
 src/
-├── cli.ts              # CLI entry point and command definitions
-├── commands/           # Command implementations (run, init, plan, etc.)
-├── loop/               # Core loop execution logic
-│   ├── executor.ts     # Main loop runner
-│   ├── agents.ts       # Agent detection and execution
+├── cli.ts              # CLI entry point
+├── commands/           # Command implementations
+│   ├── run.ts          # Main run command
+│   ├── init.ts         # Project initialization
+│   ├── plan.ts         # Implementation planning
+│   └── ...
+├── integrations/       # Source integrations
+│   ├── base.ts         # Base integration interface
+│   ├── github/         # GitHub issues, PRs
+│   ├── linear/         # Linear tickets
+│   ├── notion/         # Notion pages
+│   └── figma/          # Figma designs
+├── loop/               # Core loop execution
+│   ├── executor.ts     # Main loop runner (900+ lines)
+│   ├── agents.ts       # Agent detection/invocation
 │   ├── validation.ts   # Backpressure validation
 │   ├── circuit-breaker.ts
-│   ├── semantic-analyzer.ts
-│   ├── progress.ts
-│   ├── rate-limiter.ts
-│   └── cost-tracker.ts
-├── presets/            # Workflow presets
-├── sources/            # Input source integrations (GitHub, Todoist, etc.)
-├── auth/               # OAuth and authentication
-├── automation/         # Git automation
-├── wizard/             # Interactive wizard
-└── mcp/                # MCP server implementation
+│   ├── cost-tracker.ts
+│   └── ...
+├── llm/                # LLM provider abstraction
+│   ├── providers.ts    # Anthropic, OpenAI, OpenRouter
+│   └── api.ts          # Unified LLM API
+├── automation/         # Git operations
+│   └── git.ts          # Branch, commit, PR
+├── config/             # Configuration
+│   └── manager.ts      # Config file handling
+└── mcp/                # MCP server
 ```
 
-### Conventions
+## Supported Agents
 
-- Use ESM imports with `.js` extensions (TypeScript compiles to ESM)
-- Export interfaces and types from module files
+ralph-starter works with these coding agents:
+- Claude Code (recommended)
+- Cursor
+- OpenCode
+- OpenAI Codex
+- GitHub Copilot
+- Gemini CLI
+- Amp
+- Openclaw
+
+## Supported Integrations
+
+- GitHub (gh CLI or API token)
+- Linear (API key)
+- Notion (API token)
+- Figma (API token)
+- URLs (public)
+- Local files
+
+## LLM Providers
+
+For internal features (task analysis, completion detection):
+- Anthropic (ANTHROPIC_API_KEY)
+- OpenAI (OPENAI_API_KEY)
+- OpenRouter (OPENROUTER_API_KEY)
+
+## Code Conventions
+
+- ESM imports with `.js` extensions
 - Use `chalk` for colored output
 - Use `ora` for spinners
 - Use `inquirer` for interactive prompts
-- Use `commander` for CLI argument parsing
+- Use `commander` for CLI parsing
+- Prefer async/await over callbacks
 
-### Adding New Features
+## Adding Features
 
 1. Add types/interfaces first
-2. Implement core logic in appropriate module
-3. Wire up to CLI in `src/cli.ts`
-4. Update `src/commands/run.ts` if it affects the loop
-5. Document in README.md
+2. Implement in appropriate module
+3. Wire to CLI in `src/cli.ts`
+4. Update README.md if user-facing
+5. Add tests if applicable
 
-## Task Completion
+## Task Completion Criteria
 
 A task is complete when:
-1. `npm run build` passes with no errors
-2. Code follows existing patterns
-3. README.md is updated (if user-facing)
-4. No TODO comments left unaddressed
+1. `pnpm build` passes
+2. `pnpm lint` passes (or only pre-existing errors)
+3. Code follows existing patterns
+4. README.md updated (if user-facing)
+5. No unresolved TODOs
 
 ## Key Files
 
-- [src/loop/executor.ts](src/loop/executor.ts) - Main loop logic
-- [src/commands/run.ts](src/commands/run.ts) - Run command implementation
-- [src/cli.ts](src/cli.ts) - CLI definitions
-- [README.md](README.md) - User documentation
+- `src/loop/executor.ts` - Main loop logic
+- `src/loop/agents.ts` - Agent detection and invocation
+- `src/commands/run.ts` - Run command
+- `src/integrations/base.ts` - Integration interface
+- `src/llm/providers.ts` - LLM provider definitions
+
+## Documentation
+
+- Website: https://ralphstarter.ai
+- Docs source: `docs/` (Docusaurus)
+- Build docs: `cd docs && pnpm build`

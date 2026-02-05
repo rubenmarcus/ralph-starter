@@ -15,7 +15,7 @@
 </h3>
 
 <p align="center">
-  <em>Pull specs from GitHub, Linear, Notion, and more — then let AI build it autonomously.</em>
+  <em>Pull specs from GitHub, Linear, Notion, Figma, and more — then let AI build it autonomously.</em>
 </p>
 
 <p align="center">
@@ -58,6 +58,7 @@ ralph-starter integrates with your favorite tools out of the box:
 | **GitHub** | `gh` CLI (recommended) or API token | Issues, PRs, files |
 | **Linear** | `linear` CLI or API key | Issues by team/project |
 | **Notion** | None (public) or API token (private) | Pages, databases |
+| **Figma** | API token | Design specs, tokens & assets |
 | **URLs** | None | Any public markdown/HTML |
 | **Files** | None | Local markdown, PDF |
 
@@ -73,7 +74,7 @@ ralph-starter integrations test linear
 ralph-starter integrations fetch github owner/repo
 ```
 
-> **Want more integrations?** Check the [Roadmap](ROADMAP.md) for upcoming integrations like Figma, Jira, GitLab, and more. PRs welcome!
+> **Want more integrations?** Check the [Roadmap](ROADMAP.md) for upcoming integrations like Jira, GitLab, and more. PRs welcome!
 
 ---
 
@@ -99,15 +100,15 @@ ralph-starter integrations fetch github owner/repo
 
 | Feature | Description |
 |---------|-------------|
-| 🔗 **Integrations** | Pull specs from GitHub, Linear, Notion, URLs, files |
-| 🔄 **Multi-Agent Support** | Works with Claude Code, Cursor, Codex, OpenCode |
-| 🧙 **Interactive Wizard** | Guided project creation with AI-refined specifications |
-| 🎯 **16+ Workflow Presets** | Pre-configured modes: feature, tdd, debug, review, and more |
-| 🔌 **Circuit Breaker** | Auto-stops stuck loops after repeated failures |
-| 💰 **Cost Tracking** | Estimates token usage and cost per iteration |
-| 🔧 **Git Automation** | Auto-commit, push, and PR creation |
-| ✅ **Backpressure Validation** | Run tests/lint/build after each iteration |
-| 🖥️ **MCP Server** | Use from Claude Desktop or any MCP client |
+| **Integrations** | Pull specs from GitHub, Linear, Notion, Figma, URLs, files |
+| **Multi-Agent Support** | Works with Claude Code, Cursor, Copilot, Gemini CLI, and more |
+| **Interactive Wizard** | Guided project creation with AI-refined specifications |
+| **16+ Workflow Presets** | Pre-configured modes: feature, tdd, debug, review, and more |
+| **Circuit Breaker** | Auto-stops stuck loops after repeated failures |
+| **Cost Tracking** | Estimates token usage and cost per iteration |
+| **Git Automation** | Auto-commit, push, and PR creation |
+| **Backpressure Validation** | Run tests/lint/build after each iteration |
+| **MCP Server** | Use from Claude Desktop or any MCP client |
 
 ### Quick Example
 
@@ -259,6 +260,7 @@ ralph-starter run --from ./specs/feature.md
 | **GitHub** | `gh auth login` | Uses GitHub CLI (no API key needed) |
 | **Linear** | `linear auth login` or `ralph-starter config set linear.apiKey <key>` | CLI or API key |
 | **Notion** | None for public pages | Private pages need token |
+| **Figma** | `ralph-starter config set figma.token <key>` | Get token from figma.com/developers |
 
 #### Managing Integrations
 
@@ -309,8 +311,23 @@ Add to Claude Desktop config:
 Works with your favorite coding agents:
 - **Claude Code** (recommended)
 - **Cursor**
-- **Codex**
 - **OpenCode**
+- **OpenAI Codex**
+- **GitHub Copilot**
+- **Gemini CLI**
+- **Amp**
+- **Openclaw**
+
+### LLM Providers
+ralph-starter supports multiple LLM providers for internal features:
+
+| Provider | Environment Variable | Description |
+|----------|---------------------|-------------|
+| **Anthropic** | `ANTHROPIC_API_KEY` | Claude models (default) |
+| **OpenAI** | `OPENAI_API_KEY` | GPT-4 and GPT-4o |
+| **OpenRouter** | `OPENROUTER_API_KEY` | 100+ models with one API |
+
+These keys are for ralph-starter's internal LLM calls. Coding agents handle their own authentication.
 
 ### Git Automation
 ```bash
@@ -630,10 +647,10 @@ ralph-starter run "Create a SaaS dashboard with:
 - Dark mode support" --commit --pr --validate
 
 # Watch the magic happen...
-# 🔄 Loop 1: Setting up Next.js project...
-# ✓ Validation passed
-# ✓ Committed: chore: initialize Next.js with TypeScript
-# 🔄 Loop 2: Adding authentication...
+# Loop 1: Setting up Next.js project...
+# Validation passed
+# Committed: chore: initialize Next.js with TypeScript
+# Loop 2: Adding authentication...
 # ✓ Validation passed
 # ✓ Committed: feat(auth): add NextAuth with email provider
 # ...
@@ -726,6 +743,7 @@ Credentials are stored in `~/.ralph-starter/sources.json`.
 | Linear | `LINEAR_API_KEY` | `linear.apiKey` |
 | Notion | `NOTION_API_KEY` | `notion.token` |
 | GitHub | `GITHUB_TOKEN` | `github.token` |
+| Figma | `FIGMA_TOKEN` | `figma.token` |
 
 ### Managing Config
 
