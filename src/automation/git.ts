@@ -47,14 +47,33 @@ export interface PROptions {
   title: string;
   body: string;
   base?: string;
+  labels?: string[];
 }
 
 export async function createPullRequest(cwd: string, options: PROptions): Promise<string> {
+  // Create labels if they don't exist (silently ignore errors)
+  if (options.labels && options.labels.length > 0) {
+    for (const label of options.labels) {
+      try {
+        await execa('gh', ['label', 'create', label, '--force'], { cwd });
+      } catch {
+        // Label may already exist or other error, continue anyway
+      }
+    }
+  }
+
   // Use GitHub CLI (gh) to create PR
   const args = ['pr', 'create', '--title', options.title, '--body', options.body];
 
   if (options.base) {
     args.push('--base', options.base);
+  }
+
+  // Add labels
+  if (options.labels && options.labels.length > 0) {
+    for (const label of options.labels) {
+      args.push('--label', label);
+    }
   }
 
   const result = await execa('gh', args, { cwd });
