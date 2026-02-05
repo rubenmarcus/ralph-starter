@@ -5,7 +5,7 @@ import chalk from 'chalk';
 import { execa } from 'execa';
 import inquirer from 'inquirer';
 import ora from 'ora';
-import { initGitRepo, isGitRepo } from '../automation/git.js';
+import { type IssueRef, initGitRepo, isGitRepo } from '../automation/git.js';
 import {
   type Agent,
   detectAvailableAgents,
@@ -271,6 +271,7 @@ export async function runCommand(
 
   // Handle --from source
   let sourceSpec: string | null = null;
+  let sourceIssueRef: IssueRef | undefined;
   if (options.from) {
     spinner.start('Fetching spec from source...');
     try {
@@ -291,6 +292,20 @@ export async function runCommand(
 
       spinner.succeed(`Fetched spec from ${result.source}`);
       sourceSpec = result.content;
+
+      // Extract issue reference from metadata for PR linking
+      if (
+        result.metadata?.type === 'github' &&
+        result.metadata.owner &&
+        result.metadata.repo &&
+        result.metadata.issue
+      ) {
+        sourceIssueRef = {
+          owner: result.metadata.owner as string,
+          repo: result.metadata.repo as string,
+          number: result.metadata.issue as number,
+        };
+      }
 
       // Write to specs directory
       const specsDir = join(cwd, 'specs');
@@ -420,7 +435,6 @@ export async function runCommand(
 
   // Get task if not provided
   let finalTask = task;
-  let isBuildMode = false;
 
   // If we fetched from a source, use that as the task
   if (sourceSpec && !finalTask) {
@@ -468,8 +482,6 @@ ${implementationPlan}
 
 Work through the tasks in the implementation plan. Mark tasks as complete as you finish them.
 Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN.md.`;
-
-      isBuildMode = true;
     } else {
       const { inputTask } = await inquirer.prompt([
         {
@@ -536,11 +548,6 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     console.log(chalk.dim(preset.description));
   }
 
-  // Run the loop
-  const prTitle = isBuildMode
-    ? 'Ralph: Implementation from plan'
-    : `Ralph: ${finalTask.slice(0, 50)}`;
-
   // Calculate smart iterations based on tasks (always, unless explicitly overridden)
   const { iterations: smartIterations, taskCount, reason } = calculateOptimalIterations(cwd);
   if (!options.maxIterations && !preset?.maxIterations) {
@@ -562,7 +569,9 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     commit: options.commit ?? preset?.commit,
     push: options.push,
     pr: options.pr,
-    prTitle,
+    prTitle: undefined, // Let executor generate semantic title
+    prIssueRef: sourceIssueRef,
+    prLabels: options.auto ? ['AUTO'] : undefined,
     validate: options.validate ?? preset?.validate,
     // New options
     completionPromise: options.completionPromise ?? preset?.completionPromise,
