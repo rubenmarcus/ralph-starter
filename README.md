@@ -80,21 +80,14 @@ ralph-starter integrations fetch github owner/repo
 
 ## Table of Contents
 
-- [Why ralph-starter?](#why-ralph-starter)
 - [Integrations](#integrations)
 - [Quick Start](#quick-start)
 - [Features](#features)
-- [Ralph Playbook Workflow](#ralph-playbook-workflow)
 - [Commands](#commands)
-- [Options](#options-for-run)
 - [Configuration](#api-key-configuration)
 - [Contributing](#contributing)
 
 ---
-
-## Summary
-
-**ralph-starter** is a production-ready CLI for running autonomous AI coding loops using the [Ralph Wiggum technique](https://ghuntley.com/ralph/). It makes autonomous coding accessible to everyone.
 
 ### Key Features
 
