@@ -130,9 +130,7 @@ ralph-starter
 
 ## What is Ralph Wiggum?
 
-Ralph Wiggum is a technique for running AI coding agents in autonomous loops until tasks are completed. Instead of prompting back and forth, you give the AI a task and let it iterate until done.
-
-**ralph-starter** makes this dead simple - for developers and non-developers alike.
+Learn about the Ralph Wiggum technique at [ghuntley.com/ralph](https://ghuntley.com/ralph/).
 
 ## Installation
 
