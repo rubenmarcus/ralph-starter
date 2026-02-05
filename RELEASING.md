@@ -70,7 +70,7 @@ git checkout main
 git pull origin main
 
 # 2. Update version
-npm version patch  # or minor/major
+pnpm version patch  # or minor/major
 
 # 3. Push with tags
 git push origin main --tags
