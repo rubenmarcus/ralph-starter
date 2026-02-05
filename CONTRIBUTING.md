@@ -4,8 +4,8 @@ Thanks for your interest in contributing to ralph-starter! This document covers 
 
 ## Quick Links
 
-- [Documentation](https://rubenmarcus.github.io/ralph-starter/)
-- [Developer Extension Guide](https://rubenmarcus.github.io/ralph-starter/docs/guides/extending-ralph-starter) - For creating custom sources, agents, and more
+- [Documentation](https://ralphstarter.ai)
+- [Developer Extension Guide](https://ralphstarter.ai/docs/guides/extending-ralph-starter) - For creating custom sources, agents, and more
 - [Issues](https://github.com/rubenmarcus/ralph-starter/issues)
 - [Discussions](https://github.com/rubenmarcus/ralph-starter/discussions)
 
@@ -17,13 +17,13 @@ git clone https://github.com/rubenmarcus/ralph-starter.git
 cd ralph-starter
 
 # Install dependencies
-npm install
+pnpm install
 
 # Build
-npm run build
+pnpm build
 
 # Link for local testing
-npm link
+pnpm link --global
 ralph-starter --version
 ```
 
@@ -50,13 +50,13 @@ ralph-starter/
 
 ```bash
 # Type check
-npm run typecheck
+pnpm typecheck
 
 # Lint
-npm run lint
+pnpm lint
 
 # Build (includes type checking)
-npm run build
+pnpm build
 ```
 
 ## Making Changes
@@ -109,7 +109,7 @@ Before submitting a PR, ensure:
 ### 4. Test Locally
 
 ```bash
-npm run build
+pnpm build
 ralph-starter --help
 ```
 
@@ -140,7 +140,7 @@ Prefixes:
 
 ### Adding a New Input Source
 
-See the [extension guide](https://rubenmarcus.github.io/ralph-starter/docs/guides/extending-ralph-starter#creating-custom-input-sources) for a complete walkthrough.
+See the [extension guide](https://ralphstarter.ai/docs/guides/extending-ralph-starter#creating-custom-input-sources) for a complete walkthrough.
 
 Quick overview:
 1. Create `src/sources/integrations/mysource.ts`
@@ -161,8 +161,8 @@ Docs live in `docs/` and use [Docusaurus](https://docusaurus.io/).
 
 ```bash
 cd docs
-npm install
-npm start  # Development server at localhost:3000
+pnpm install
+pnpm start  # Development server at localhost:3000
 ```
 
 ## Code Style
