@@ -45,21 +45,78 @@ export function getPrompts(): Prompt[] {
     },
     {
       name: 'fetch_and_build',
-      description: 'Fetch a spec from a source and start building',
+      description:
+        'Fetch a spec from an external source (GitHub, Linear, Notion, Figma) and start building',
       arguments: [
         {
           name: 'source',
-          description: 'Source to fetch from (url, github, todoist, linear, notion)',
+          description: 'Source to fetch from (url, github, linear, notion, figma)',
           required: true,
         },
         {
           name: 'identifier',
-          description: 'Source identifier (URL, project name, etc.)',
+          description: 'Source identifier (URL, project name, issue number, Figma file URL, etc.)',
           required: true,
         },
         {
           name: 'path',
           description: 'Directory to build in',
+          required: false,
+        },
+      ],
+    },
+    {
+      name: 'figma_to_code',
+      description:
+        'Extract a Figma design and build it as code. Supports design specs, tokens, components, and content extraction.',
+      arguments: [
+        {
+          name: 'figma_url',
+          description: 'Figma file or frame URL',
+          required: true,
+        },
+        {
+          name: 'framework',
+          description:
+            'Target framework: react, vue, svelte, astro, nextjs, nuxt, html (default: react)',
+          required: false,
+        },
+        {
+          name: 'mode',
+          description:
+            'Extraction mode: spec (full design spec), tokens (design tokens as CSS/Tailwind), components (component code), content (text/IA extraction)',
+          required: false,
+        },
+        {
+          name: 'path',
+          description: 'Project directory to build in',
+          required: false,
+        },
+      ],
+    },
+    {
+      name: 'batch_issues',
+      description:
+        'Process multiple GitHub or Linear issues automatically in sequence. Each issue becomes a task with its own branch, commits, and PR.',
+      arguments: [
+        {
+          name: 'source',
+          description: 'Issue source: github or linear',
+          required: true,
+        },
+        {
+          name: 'project',
+          description: 'GitHub repo (owner/repo) or Linear project name',
+          required: true,
+        },
+        {
+          name: 'label',
+          description: 'Filter issues by label (e.g., "good first issue", "bug", "enhancement")',
+          required: false,
+        },
+        {
+          name: 'path',
+          description: 'Project directory path',
           required: false,
         },
       ],
@@ -150,15 +207,74 @@ Show me where we are!`,
               type: 'text',
               text: `Please fetch a spec and build a project from it.
 
-Source: ${args?.source || '(specify source)'}
+Source: ${args?.source || '(specify source: github, linear, notion, or figma)'}
 Identifier: ${args?.identifier || '(specify identifier)'}
 Path: ${cwd}
 
-1. First, initialize Ralph Playbook at the path if needed
-2. Use ralph_run with the --from option to fetch the spec and start building
-3. Monitor progress and help resolve any issues
+1. First, use ralph_fetch_spec to preview the spec content
+2. Initialize Ralph Playbook at the path if needed
+3. Use ralph_run with the --from option to fetch the spec and start building
+4. Monitor progress and help resolve any issues
 
 Let's build it!`,
+            },
+          },
+        ],
+      };
+
+    case 'figma_to_code':
+      return {
+        description: 'Convert Figma design to code',
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `Please extract a Figma design and build it as code.
+
+Figma URL: ${args?.figma_url || '(specify Figma file URL)'}
+Framework: ${args?.framework || 'react'}
+Mode: ${args?.mode || 'spec'}
+Path: ${cwd}
+
+1. First, use ralph_fetch_spec with source "figma" to extract the design:
+   - Use mode "${args?.mode || 'spec'}" to get ${args?.mode === 'tokens' ? 'design tokens' : args?.mode === 'components' ? 'component structure' : args?.mode === 'content' ? 'text content and IA' : 'the full design specification'}
+2. Review the extracted spec — check colors, typography, spacing, and component structure
+3. Initialize Ralph Playbook if needed, then use ralph_run to build the ${args?.framework || 'React'} implementation
+4. The agent will iterate until the UI matches the design spec, running validation between iterations
+
+Let's bring this design to life!`,
+            },
+          },
+        ],
+      };
+
+    case 'batch_issues':
+      return {
+        description: 'Process multiple issues automatically',
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `Please process multiple issues from ${args?.source || '(github or linear)'} automatically.
+
+Source: ${args?.source || '(specify: github or linear)'}
+Project: ${args?.project || '(specify repo or project name)'}
+${args?.label ? `Label filter: ${args.label}` : 'Label: (all issues)'}
+Path: ${cwd}
+
+1. First, use ralph_fetch_spec to preview the available issues from ${args?.source || 'the source'}
+   - Project: ${args?.project || '(specify)'}
+   ${args?.label ? `- Filter by label: "${args.label}"` : ''}
+2. Review the issues and confirm which ones to process
+3. Use ralph_run with auto mode enabled to process each issue:
+   - Each issue gets its own branch
+   - Code changes are validated and auto-committed
+   - A PR is created for each completed issue
+4. Monitor progress across all issues
+
+Let's batch process these issues!`,
             },
           },
         ],
