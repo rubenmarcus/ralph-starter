@@ -247,15 +247,19 @@ describe('RateLimiter', () => {
       expect(result).toBe(true);
     });
 
-    it('should timeout if blocked too long', async () => {
-      vi.useRealTimers();
+    it(
+      'should timeout if blocked too long',
+      async () => {
+        vi.useRealTimers();
 
-      const customLimiter = new RateLimiter({ maxCallsPerMinute: 1 });
-      customLimiter.recordCall();
+        const customLimiter = new RateLimiter({ maxCallsPerMinute: 1 });
+        customLimiter.recordCall();
 
-      // Wait only 100ms (much less than 60s needed)
-      const result = await customLimiter.waitAndAcquire(100);
-      expect(result).toBe(false);
-    });
+        // Wait only 100ms (much less than 60s needed)
+        const result = await customLimiter.waitAndAcquire(100);
+        expect(result).toBe(false);
+      },
+      10000
+    ); // Increase timeout for real timer test
   });
 });

@@ -22,11 +22,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Get version from tag
@@ -46,13 +49,13 @@ jobs:
           echo "Version: $VERSION"
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: npm run build
+        run: pnpm build
 
       - name: Run tests
-        run: npm run test:run
+        run: pnpm test:run
 
       - name: Generate release notes
         id: release_notes
@@ -109,7 +112,7 @@ jobs:
       - name: Publish to npm
         run: |
           NPM_TAG=${{ steps.version.outputs.npm_tag }}
-          npm publish --tag $NPM_TAG --provenance --access public
+          pnpm publish --tag $NPM_TAG --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
