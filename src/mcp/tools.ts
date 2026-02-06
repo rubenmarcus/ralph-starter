@@ -482,6 +482,7 @@ async function handleFetchSpec(
   const { fetchFromIntegration } = await import('../integrations/index.js');
 
   const options: Record<string, unknown> = {};
+  if (parsed.path) options.path = parsed.path;
   if (parsed.mode) options.mode = parsed.mode;
   if (parsed.project) options.project = parsed.project;
   if (parsed.label) options.label = parsed.label;
