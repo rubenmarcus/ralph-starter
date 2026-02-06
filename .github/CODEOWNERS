@@ -2,7 +2,7 @@
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 # Default owner for everything
-* @rubenmarcus
+* @rubenmarcus @coderabbitai
 
 # Core CLI source code
 /src/ @rubenmarcus
