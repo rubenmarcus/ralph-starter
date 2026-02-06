@@ -53,8 +53,15 @@ jobs:
         run: |
           set -euo pipefail
           cd base
-          pnpm install --frozen-lockfile
-          if ! pnpm build; then
+          # Base might not have pnpm-lock.yaml yet, use npm fallback
+          if [ -f "pnpm-lock.yaml" ]; then
+            pnpm install --frozen-lockfile
+          elif [ -f "package-lock.json" ]; then
+            npm ci
+          else
+            pnpm install
+          fi
+          if ! pnpm build 2>/dev/null && ! npm run build 2>/dev/null; then
             echo "::error::Base build failed"
             exit 1
           fi
