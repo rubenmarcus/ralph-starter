@@ -53,9 +53,9 @@ jobs:
         run: |
           set -euo pipefail
           cd base
-          # Base might not have pnpm-lock.yaml yet, use npm fallback
+          # For base comparison, don't use frozen-lockfile as it may be out of sync
           if [ -f "pnpm-lock.yaml" ]; then
-            pnpm install --frozen-lockfile
+            pnpm install --no-frozen-lockfile
           elif [ -f "package-lock.json" ]; then
             npm ci
           else
