@@ -452,7 +452,7 @@ async function handleListPresets(
   > = {};
 
   for (const [category, presets] of Object.entries(allCategories)) {
-    if (filterCategory && !category.toLowerCase().includes(filterCategory)) {
+    if (filterCategory && category.toLowerCase() !== filterCategory) {
       continue;
     }
     result[category] = presets.map((p) => ({

@@ -264,15 +264,15 @@ Project: ${args?.project || '(specify repo or project name)'}
 ${args?.label ? `Label filter: ${args.label}` : 'Label: (all issues)'}
 Path: ${cwd}
 
-1. First, use ralph_fetch_spec to preview the available issues from ${args?.source || 'the source'}
-   - Project: ${args?.project || '(specify)'}
+1. Use ralph_run with auto mode to batch-process issues from ${args?.source || 'the source'}:
+   - Set from="${args?.source || '(github or linear)'}" and project="${args?.project || '(specify)'}"
    ${args?.label ? `- Filter by label: "${args.label}"` : ''}
-2. Review the issues and confirm which ones to process
-3. Use ralph_run with auto mode enabled to process each issue:
+   - Enable auto=true, commit=true, and validate=true
    - Each issue gets its own branch
    - Code changes are validated and auto-committed
    - A PR is created for each completed issue
-4. Monitor progress across all issues
+2. Monitor progress across all issues
+3. If an individual issue fails, note the failure and continue to the next one
 
 Let's batch process these issues!`,
             },
