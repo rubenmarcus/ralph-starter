@@ -12,6 +12,7 @@ import {
   type IssueRef,
   type SemanticPrType,
 } from '../automation/git.js';
+import { drawBox, drawSeparator, getTerminalWidth } from '../ui/box.js';
 import { ProgressRenderer } from '../ui/progress-renderer.js';
 import { type Agent, type AgentRunOptions, runAgent } from './agents.js';
 import { CircuitBreaker, type CircuitBreakerConfig } from './circuit-breaker.js';
@@ -385,43 +386,47 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
   // Get initial task count for estimates
   const initialTaskCount = parsePlanTasks(options.cwd);
 
+  // Show startup summary box
+  const startupLines: string[] = [];
+  startupLines.push(chalk.cyan.bold('  Ralph-Starter'));
+  startupLines.push(`  Agent:       ${chalk.white(options.agent.name)}`);
+  startupLines.push(`  Max loops:   ${chalk.white(String(maxIterations))}`);
+  if (validationCommands.length > 0) {
+    startupLines.push(
+      `  Validation:  ${chalk.white(validationCommands.map((c) => c.name).join(', '))}`
+    );
+  }
+  if (options.commit) {
+    startupLines.push(`  Auto-commit: ${chalk.green('enabled')}`);
+  }
+  if (detectedSkills.length > 0) {
+    startupLines.push(`  Skills:      ${chalk.white(`${detectedSkills.length} detected`)}`);
+  }
+  if (rateLimiter) {
+    startupLines.push(`  Rate limit:  ${chalk.white(`${options.rateLimit}/hour`)}`);
+  }
+
   console.log();
-  console.log(chalk.cyan.bold('Starting Ralph Wiggum Loop'));
-  console.log(chalk.dim(`Agent: ${options.agent.name}`));
+  console.log(drawBox(startupLines, { color: chalk.cyan }));
 
   // Show task count and estimates if we have tasks
   if (initialTaskCount.total > 0) {
     console.log(
       chalk.dim(
-        `Tasks: ${initialTaskCount.pending} pending, ${initialTaskCount.completed} completed`
+        `  Tasks: ${initialTaskCount.pending} pending, ${initialTaskCount.completed} completed`
       )
     );
 
     // Show estimate
     const estimate = estimateLoop(initialTaskCount);
     console.log();
-    console.log(chalk.yellow.bold('📋 Estimate:'));
     for (const line of formatEstimateDetailed(estimate)) {
-      console.log(chalk.yellow(`   ${line}`));
+      console.log(chalk.dim(`  ${line}`));
     }
   } else {
     console.log(
-      chalk.dim(`Task: ${options.task.slice(0, 60)}${options.task.length > 60 ? '...' : ''}`)
+      chalk.dim(`  Task: ${options.task.slice(0, 60)}${options.task.length > 60 ? '...' : ''}`)
     );
-  }
-
-  console.log();
-  if (validationCommands.length > 0) {
-    console.log(chalk.dim(`Validation: ${validationCommands.map((c) => c.name).join(', ')}`));
-  }
-  if (detectedSkills.length > 0) {
-    console.log(chalk.dim(`Skills: ${detectedSkills.map((s) => s.name).join(', ')}`));
-  }
-  if (options.completionPromise) {
-    console.log(chalk.dim(`Completion promise: ${options.completionPromise}`));
-  }
-  if (rateLimiter) {
-    console.log(chalk.dim(`Rate limit: ${options.rateLimit}/hour`));
   }
   console.log();
 
@@ -527,20 +532,29 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     previousCompletedTasks = completedTasks;
 
     // Show loop header with task info
-    console.log(chalk.cyan(`\n═══════════════════════════════════════════════════════════════`));
+    const headerLines: string[] = [];
     if (currentTask && totalTasks > 0) {
       const taskNum = completedTasks + 1;
       const cleanName = cleanTaskName(currentTask.name);
-      const taskName = cleanName.length > 40 ? `${cleanName.slice(0, 37)}...` : cleanName;
-      console.log(chalk.cyan.bold(`  Task ${taskNum}/${totalTasks} │ ${taskName}`));
+      const tw = getTerminalWidth();
+      const maxNameLen = Math.max(20, tw - 30);
+      const taskName =
+        cleanName.length > maxNameLen ? `${cleanName.slice(0, maxNameLen - 3)}...` : cleanName;
+      headerLines.push(`  Task ${taskNum}/${totalTasks} │ ${chalk.white.bold(taskName)}`);
+      headerLines.push(chalk.dim(`  ${options.agent.name} │ Iter ${i}/${maxIterations}`));
     } else {
-      console.log(chalk.cyan.bold(`  Loop ${i}/${maxIterations} │ Running ${options.agent.name}`));
+      headerLines.push(
+        `  Loop ${i}/${maxIterations} │ ${chalk.white.bold(`Running ${options.agent.name}`)}`
+      );
     }
-    console.log(chalk.cyan(`═══════════════════════════════════════════════════════════════\n`));
+    console.log();
+    console.log(drawBox(headerLines, { color: chalk.cyan }));
+    console.log();
 
     // Create progress renderer for this iteration
     const iterProgress = new ProgressRenderer();
     iterProgress.start('Working...');
+    iterProgress.updateProgress(i, maxIterations, costTracker?.getStats()?.totalCost?.totalCost);
 
     // Build iteration-specific task with current task context
     let iterationTask: string;
@@ -833,27 +847,23 @@ Complete these subtasks, then mark them done in IMPLEMENTATION_PLAN.md by changi
     }
 
     if (status === 'done') {
-      console.log();
-      console.log(
-        chalk.green.bold('═══════════════════════════════════════════════════════════════')
-      );
-      console.log(chalk.green.bold('  ✓ Task completed successfully!'));
-      console.log(
-        chalk.green.bold('═══════════════════════════════════════════════════════════════')
-      );
-
-      // Show completion reason (UX 3: clear completion signals)
       const completionReason = getCompletionReason(result.output, completionOptions);
-      console.log(chalk.dim(`  Reason: ${completionReason}`));
-      console.log(chalk.dim(`  Iterations: ${i}`));
-      if (costTracker) {
-        const stats = costTracker.getStats();
-        console.log(chalk.dim(`  Total cost: ${formatCost(stats.totalCost.totalCost)}`));
-      }
       const duration = Date.now() - startTime;
       const minutes = Math.floor(duration / 60000);
       const seconds = Math.floor((duration % 60000) / 1000);
-      console.log(chalk.dim(`  Time: ${minutes}m ${seconds}s`));
+
+      const completionLines: string[] = [];
+      completionLines.push(chalk.green.bold('  ✓ Task completed successfully'));
+      const details: string[] = [`Iterations: ${i}`, `Time: ${minutes}m ${seconds}s`];
+      if (costTracker) {
+        const stats = costTracker.getStats();
+        details.push(`Cost: ${formatCost(stats.totalCost.totalCost)}`);
+      }
+      completionLines.push(chalk.dim(`  ${details.join(' │ ')}`));
+      completionLines.push(chalk.dim(`  Reason: ${completionReason}`));
+
+      console.log();
+      console.log(drawBox(completionLines, { color: chalk.green }));
       console.log();
 
       finalIteration = i;
