@@ -148,6 +148,7 @@ jobs:
           CURRENT_VERSION="${{ steps.bump.outputs.current }}"
           SOURCE_PR="${{ github.event.pull_request.number }}"
           SOURCE_TITLE="${{ github.event.pull_request.title }}"
+          TODAY=$(date +%Y-%m-%d)
 
           # Configure git
           git config user.name "github-actions[bot]"
@@ -161,8 +162,45 @@ jobs:
           # Update package.json version
           npm version "$NEW_VERSION" --no-git-tag-version
 
+          # Update CHANGELOG.md
+          # Determine change category from PR title
+          if [[ "$SOURCE_TITLE" == feat* ]] || [[ "$SOURCE_TITLE" == *"feat("* ]]; then
+            CHANGE_TYPE="Added"
+          elif [[ "$SOURCE_TITLE" == fix* ]] || [[ "$SOURCE_TITLE" == *"fix("* ]]; then
+            CHANGE_TYPE="Fixed"
+          elif [[ "$SOURCE_TITLE" == docs* ]] || [[ "$SOURCE_TITLE" == *"docs("* ]]; then
+            CHANGE_TYPE="Changed"
+          else
+            CHANGE_TYPE="Changed"
+          fi
+
+          # Clean up PR title (remove conventional commit prefix)
+          CLEAN_TITLE=$(echo "$SOURCE_TITLE" | sed 's/^[a-z]*(\?[a-z]*)\?:\s*//')
+
+          # Create new changelog entry using node to avoid YAML parsing issues
+          node -e "
+            const fs = require('fs');
+            const version = '${NEW_VERSION}';
+            const date = '${TODAY}';
+            const changeType = '${CHANGE_TYPE}';
+            const title = process.argv[1];
+            const pr = '${SOURCE_PR}';
+
+            const entry = \`## [\${version}] - \${date}\n\n### \${changeType}\n- \${title} (#\${pr})\n\n\`;
+
+            let changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+            const lines = changelog.split('\n');
+
+            // Insert after line 6 (after header block)
+            const header = lines.slice(0, 6).join('\n');
+            const rest = lines.slice(6).join('\n');
+
+            changelog = header + '\n\n' + entry + rest;
+            fs.writeFileSync('CHANGELOG.md', changelog);
+          " "${CLEAN_TITLE}"
+
           # Commit changes
-          git add package.json package-lock.json
+          git add package.json package-lock.json CHANGELOG.md
           git commit -m "chore(release): bump version to ${NEW_VERSION}"
 
           # Push branch
