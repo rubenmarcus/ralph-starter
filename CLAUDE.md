@@ -2,6 +2,13 @@
 
 Context for Claude Code when working on ralph-starter.
 
+## IMPORTANT: Package Manager
+
+**ALWAYS use `pnpm`, NEVER use `npm` or `yarn`.**
+
+This project enforces pnpm via `packageManager` field and preinstall script.
+Using npm or yarn will fail.
+
 ## What is ralph-starter?
 
 A CLI tool that runs autonomous AI coding loops. It fetches specs from GitHub, Linear, Notion, Figma, then orchestrates coding agents (like you!) to build software automatically.

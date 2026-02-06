@@ -8,6 +8,7 @@
   },
   "type": "module",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "commit": "cz",
     "build": "tsc",
     "dev": "tsc --watch",
@@ -23,11 +24,11 @@
     "check:fix": "biome check --write src",
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
-    "prepublishOnly": "npm run build && npm run test:run",
-    "release": "npm version patch && git push origin main --tags && npm publish",
-    "release:minor": "npm version minor && git push origin main --tags && npm publish",
-    "release:major": "npm version major && git push origin main --tags && npm publish",
-    "release:beta": "npm version prerelease --preid=beta && git push origin main --tags && npm publish --tag beta",
+    "prepublishOnly": "pnpm build && pnpm test:run",
+    "release": "pnpm version patch && git push origin main --tags && pnpm publish",
+    "release:minor": "pnpm version minor && git push origin main --tags && pnpm publish",
+    "release:major": "pnpm version major && git push origin main --tags && pnpm publish",
+    "release:beta": "pnpm version prerelease --preid=beta && git push origin main --tags && pnpm publish --tag beta",
     "docs:dev": "pnpm --dir docs run start",
     "docs:build": "pnpm --dir docs run build",
     "docs:serve": "pnpm --dir docs run serve"
@@ -55,6 +56,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "packageManager": "pnpm@10.15.1",
   "files": [
     "dist",
     "templates",
@@ -83,13 +85,14 @@
     "@commitlint/config-conventional": "^20.3.1",
     "@types/inquirer": "^9.0.7",
     "@types/node": "^25.1.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
+    "esbuild": "^0.27.3",
     "husky": "^9.1.0",
     "lint-staged": "^16.2.7",
     "typescript": "^5.7.3",
-    "vitest": "^2.1.8",
-    "@vitest/coverage-v8": "^2.1.8"
+    "vitest": "^4.0.18"
   },
   "lint-staged": {
     "src/**/*.ts": [
