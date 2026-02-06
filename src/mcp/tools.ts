@@ -50,7 +50,7 @@ const toolSchemas = {
   }),
 
   ralph_fetch_spec: z.object({
-    path: z.string().describe('Project directory path'),
+    path: z.string().min(1).describe('Project directory path'),
     source: z
       .enum(['github', 'linear', 'notion', 'figma'])
       .describe('Integration source to fetch from'),
@@ -433,7 +433,7 @@ async function handleValidate(
 async function handleListPresets(
   args: Record<string, unknown> | undefined
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
-  const parsed = toolSchemas.ralph_list_presets.parse(args);
+  const parsed = toolSchemas.ralph_list_presets.parse(args ?? {});
 
   const { getPresetsByCategory } = await import('../presets/index.js');
 
@@ -481,7 +481,7 @@ async function handleFetchSpec(
 
   const { fetchFromIntegration } = await import('../integrations/index.js');
 
-  const options: Record<string, unknown> = {};
+  const options: Record<string, unknown> = { path: parsed.path };
   if (parsed.mode) options.mode = parsed.mode;
   if (parsed.project) options.project = parsed.project;
   if (parsed.label) options.label = parsed.label;

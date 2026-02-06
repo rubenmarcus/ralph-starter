@@ -222,7 +222,9 @@ Let's build it!`,
         ],
       };
 
-    case 'figma_to_code':
+    case 'figma_to_code': {
+      const framework = args?.framework || 'react';
+      const displayFramework = framework.charAt(0).toUpperCase() + framework.slice(1);
       return {
         description: 'Convert Figma design to code',
         messages: [
@@ -233,14 +235,14 @@ Let's build it!`,
               text: `Please extract a Figma design and build it as code.
 
 Figma URL: ${args?.figma_url || '(specify Figma file URL)'}
-Framework: ${args?.framework || 'react'}
+Framework: ${framework}
 Mode: ${args?.mode || 'spec'}
 Path: ${cwd}
 
 1. First, use ralph_fetch_spec with source "figma" to extract the design:
    - Use mode "${args?.mode || 'spec'}" to get ${args?.mode === 'tokens' ? 'design tokens' : args?.mode === 'components' ? 'component structure' : args?.mode === 'content' ? 'text content and IA' : 'the full design specification'}
 2. Review the extracted spec — check colors, typography, spacing, and component structure
-3. Initialize Ralph Playbook if needed, then use ralph_run to build the ${args?.framework || 'React'} implementation
+3. Initialize Ralph Playbook if needed, then use ralph_run to build the ${displayFramework} implementation
 4. The agent will iterate until the UI matches the design spec, running validation between iterations
 
 Let's bring this design to life!`,
@@ -248,6 +250,7 @@ Let's bring this design to life!`,
           },
         ],
       };
+    }
 
     case 'batch_issues':
       return {
