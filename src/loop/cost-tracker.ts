@@ -7,6 +7,8 @@ export interface ModelPricing {
   name: string;
   inputPricePerMillion: number; // USD per 1M input tokens
   outputPricePerMillion: number; // USD per 1M output tokens
+  cacheWritePricePerMillion?: number; // USD per 1M cache write tokens (1.25x input)
+  cacheReadPricePerMillion?: number; // USD per 1M cache read tokens (0.1x input)
 }
 
 // Pricing as of January 2026 (approximate)
@@ -15,16 +17,22 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
     name: 'Claude 3 Opus',
     inputPricePerMillion: 15,
     outputPricePerMillion: 75,
+    cacheWritePricePerMillion: 18.75, // 1.25x input
+    cacheReadPricePerMillion: 1.5, // 0.1x input
   },
   'claude-3-sonnet': {
     name: 'Claude 3.5 Sonnet',
     inputPricePerMillion: 3,
     outputPricePerMillion: 15,
+    cacheWritePricePerMillion: 3.75, // 1.25x input
+    cacheReadPricePerMillion: 0.3, // 0.1x input
   },
   'claude-3-haiku': {
     name: 'Claude 3.5 Haiku',
     inputPricePerMillion: 0.25,
     outputPricePerMillion: 1.25,
+    cacheWritePricePerMillion: 0.3125, // 1.25x input
+    cacheReadPricePerMillion: 0.025, // 0.1x input
   },
   'gpt-4': {
     name: 'GPT-4',
@@ -56,10 +64,17 @@ export interface CostEstimate {
   totalCost: number;
 }
 
+export interface CacheMetrics {
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  cacheSavings: number; // USD saved by cache reads vs full-price input
+}
+
 export interface IterationCost {
   iteration: number;
   tokens: TokenEstimate;
   cost: CostEstimate;
+  cache?: CacheMetrics;
   timestamp: Date;
 }
 
@@ -70,6 +85,7 @@ export interface CostTrackerStats {
   avgTokensPerIteration: TokenEstimate;
   avgCostPerIteration: CostEstimate;
   projectedCost?: CostEstimate; // Projected cost for remaining iterations
+  totalCacheSavings: number; // USD saved by prompt caching
   iterations: IterationCost[];
 }
 
@@ -146,7 +162,7 @@ export class CostTracker {
   }
 
   /**
-   * Record an iteration's token usage
+   * Record an iteration's token usage (estimated from text)
    */
   recordIteration(input: string, output: string): IterationCost {
     const inputTokens = estimateTokens(input);
@@ -172,6 +188,54 @@ export class CostTracker {
   }
 
   /**
+   * Record an iteration with actual API usage data (includes cache metrics)
+   */
+  recordIterationWithUsage(usage: {
+    inputTokens: number;
+    outputTokens: number;
+    cacheCreationInputTokens?: number;
+    cacheReadInputTokens?: number;
+  }): IterationCost {
+    const tokens: TokenEstimate = {
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      totalTokens: usage.inputTokens + usage.outputTokens,
+    };
+
+    const cost = calculateCost(tokens, this.pricing);
+
+    // Calculate cache metrics if available
+    let cache: CacheMetrics | undefined;
+    if (usage.cacheCreationInputTokens || usage.cacheReadInputTokens) {
+      const cacheCreationTokens = usage.cacheCreationInputTokens || 0;
+      const cacheReadTokens = usage.cacheReadInputTokens || 0;
+
+      // Cache savings = what those cache-read tokens would have cost at full price minus cache price
+      const fullPriceCost = (cacheReadTokens / 1_000_000) * this.pricing.inputPricePerMillion;
+      const cachedCost = this.pricing.cacheReadPricePerMillion
+        ? (cacheReadTokens / 1_000_000) * this.pricing.cacheReadPricePerMillion
+        : fullPriceCost;
+
+      cache = {
+        cacheCreationTokens,
+        cacheReadTokens,
+        cacheSavings: fullPriceCost - cachedCost,
+      };
+    }
+
+    const iterationCost: IterationCost = {
+      iteration: this.iterations.length + 1,
+      tokens,
+      cost,
+      cache,
+      timestamp: new Date(),
+    };
+
+    this.iterations.push(iterationCost);
+    return iterationCost;
+  }
+
+  /**
    * Get current statistics
    */
   getStats(): CostTrackerStats {
@@ -184,6 +248,7 @@ export class CostTracker {
         totalCost: { inputCost: 0, outputCost: 0, totalCost: 0 },
         avgTokensPerIteration: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
         avgCostPerIteration: { inputCost: 0, outputCost: 0, totalCost: 0 },
+        totalCacheSavings: 0,
         iterations: [],
       };
     }
@@ -225,6 +290,12 @@ export class CostTracker {
       }
     }
 
+    // Sum cache savings across all iterations
+    const totalCacheSavings = this.iterations.reduce(
+      (sum, i) => sum + (i.cache?.cacheSavings || 0),
+      0
+    );
+
     return {
       totalIterations,
       totalTokens,
@@ -232,6 +303,7 @@ export class CostTracker {
       avgTokensPerIteration,
       avgCostPerIteration,
       projectedCost,
+      totalCacheSavings,
       iterations: this.iterations,
     };
   }
@@ -250,6 +322,10 @@ export class CostTracker {
       `Tokens: ${formatTokens(stats.totalTokens.totalTokens)} (${formatTokens(stats.totalTokens.inputTokens)} in / ${formatTokens(stats.totalTokens.outputTokens)} out)`,
       `Cost: ${formatCost(stats.totalCost.totalCost)} (${formatCost(stats.avgCostPerIteration.totalCost)}/iteration avg)`,
     ];
+
+    if (stats.totalCacheSavings > 0) {
+      lines.push(`Cache savings: ${formatCost(stats.totalCacheSavings)}`);
+    }
 
     if (stats.projectedCost) {
       lines.push(`Projected max cost: ${formatCost(stats.projectedCost.totalCost)}`);
@@ -279,7 +355,7 @@ export class CostTracker {
 | Output Tokens | ${formatTokens(stats.totalTokens.outputTokens)} |
 | Total Cost | ${formatCost(stats.totalCost.totalCost)} |
 | Avg Cost/Iteration | ${formatCost(stats.avgCostPerIteration.totalCost)} |
-${stats.projectedCost ? `| Projected Max Cost | ${formatCost(stats.projectedCost.totalCost)} |` : ''}
+${stats.totalCacheSavings > 0 ? `| Cache Savings | ${formatCost(stats.totalCacheSavings)} |\n` : ''}${stats.projectedCost ? `| Projected Max Cost | ${formatCost(stats.projectedCost.totalCost)} |` : ''}
 `;
   }
 
