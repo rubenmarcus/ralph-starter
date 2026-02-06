@@ -1,24 +1,16 @@
 import chalk from 'chalk';
 
 /**
- * Colors for shimmer effect - creates a flowing gradient
- */
-const SHIMMER_COLORS = [chalk.white, chalk.gray, chalk.dim, chalk.gray, chalk.white];
-
-/**
- * Apply shimmer effect to text
- * @param text The text to apply shimmer to
+ * Apply a subtle pulse effect to text - alternates between white and cyan
+ * Much more readable than the old per-character shimmer
+ * @param text The text to display
  * @param offset Frame offset for animation
- * @returns Colorized text with shimmer effect
+ * @returns Colorized text
  */
 export function applyShimmer(text: string, offset: number): string {
-  return text
-    .split('')
-    .map((char, i) => {
-      const colorIndex = (i + offset) % SHIMMER_COLORS.length;
-      return SHIMMER_COLORS[colorIndex](char);
-    })
-    .join('');
+  // Slow pulse: switch color every ~20 frames (~2 seconds at 100ms interval)
+  const phase = Math.floor(offset / 20) % 2;
+  return phase === 0 ? chalk.white(text) : chalk.cyan(text);
 }
 
 /**
