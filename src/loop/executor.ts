@@ -520,7 +520,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
         .filter((t) => t.completed && t.index >= previousCompletedTasks && t.index < completedTasks)
         .map((t) => {
           const clean = cleanTaskName(t.name);
-          return clean.length > 25 ? `${clean.slice(0, 22)}...` : clean;
+          return clean.length > 50 ? `${clean.slice(0, 47)}...` : clean;
         });
 
       if (completedNames.length > 0) {
@@ -536,7 +536,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     if (currentTask && totalTasks > 0) {
       const taskNum = completedTasks + 1;
       const cleanName = cleanTaskName(currentTask.name);
-      const taskName = cleanName.length > 40 ? `${cleanName.slice(0, 37)}...` : cleanName;
+      const taskName = cleanName.length > 60 ? `${cleanName.slice(0, 57)}...` : cleanName;
       console.log(chalk.cyan.bold(`  Task ${taskNum}/${totalTasks} │ ${taskName}`));
     } else {
       console.log(chalk.cyan.bold(`  Loop ${i}/${maxIterations} │ Running ${options.agent.name}`));
