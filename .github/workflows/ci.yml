@@ -12,19 +12,22 @@ on:
       - 'docs/**'
       - '*.md'
 
+permissions:
+  contents: read
+
 jobs:
   main-cli:
     name: Main CLI
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@c5ba7f7862a0f64c1b1a05fbac13e0b8e86ba08c # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -45,6 +48,6 @@ jobs:
         run: pnpm test:coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@0561704f0f02c16a585d4c7555e57fa2f44cf909 # v5
         with:
           fail_ci_if_error: false
