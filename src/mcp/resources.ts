@@ -67,6 +67,18 @@ export async function getResources(): Promise<Resource[]> {
     }
   }
 
+  // Activity log
+  const activityPath = join(cwd, '.ralph', 'activity.md');
+  if (existsSync(activityPath)) {
+    resources.push({
+      uri: 'ralph://project/activity',
+      name: 'Activity Log',
+      description:
+        'Loop execution history with timing, cost data, and task outcomes (.ralph/activity.md)',
+      mimeType: 'text/markdown',
+    });
+  }
+
   return resources;
 }
 
@@ -103,6 +115,10 @@ export async function handleResourceRead(uri: string): Promise<{
 
     case 'prompt_plan':
       filePath = join(cwd, 'PROMPT_plan.md');
+      break;
+
+    case 'activity':
+      filePath = join(cwd, '.ralph', 'activity.md');
       break;
 
     default:
