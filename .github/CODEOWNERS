@@ -5,16 +5,16 @@
 * @rubenmarcus @coderabbitai
 
 # Core CLI source code
-/src/ @rubenmarcus
+/src/ @rubenmarcus @coderabbitai
 
 # Documentation
-/docs/ @rubenmarcus
-*.md @rubenmarcus
+/docs/ @rubenmarcus @coderabbitai
+*.md @rubenmarcus @coderabbitai
 
 # CI/CD and GitHub configuration
-/.github/ @rubenmarcus
+/.github/ @rubenmarcus @coderabbitai
 
 # Package configuration
-package.json @rubenmarcus
-package-lock.json @rubenmarcus
-tsconfig.json @rubenmarcus
+package.json @rubenmarcus @coderabbitai
+pnpm-lock.yaml @rubenmarcus
+tsconfig.json @rubenmarcus @coderabbitai
