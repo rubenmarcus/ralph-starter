@@ -12,6 +12,9 @@ permissions:
 jobs:
   release:
     name: Build and Release
+    # `release.yml` already creates tags during automated release PR merges.
+    # Skip this workflow for bot-pushed tags to avoid duplicate publish races.
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}

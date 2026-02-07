@@ -9,6 +9,8 @@ node_modules/
 .ralph/
 config.json
 specs/
+# Local release planning (kept local only)
+specs/RELEASE_PLAN.md
 coverage/
 .nyc_output/
 dist/

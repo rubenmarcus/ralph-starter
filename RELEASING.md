@@ -60,6 +60,22 @@ npm install -g ralph-starter@beta
 npm install -g ralph-starter@0.2.0-beta.1
 ```
 
+## Official Stable Release (from betas)
+
+Use the `Stable Release` GitHub Actions workflow when you want to promote from beta to an official stable release.
+
+1. Go to **Actions → Stable Release → Run workflow**
+2. Set `version` to a stable semver (no prerelease suffix), for example `0.2.0`
+3. Optionally provide curated `release_notes` markdown (or leave empty to auto-consolidate beta changelog entries)
+4. Merge the generated `release/vX.Y.Z` PR into `main`
+5. `Release` workflow creates tag `vX.Y.Z`, publishes GitHub release, and publishes npm with `latest`
+
+### Why this path
+
+- Keeps stable release notes curated from beta iterations
+- Uses the same CI build/test gates as normal releases
+- Avoids manual tagging mistakes
+
 ## Manual Release (Emergency)
 
 If you need to release manually:
