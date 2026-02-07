@@ -7,9 +7,30 @@ const staticDir = path.join(rootDir, 'static');
 const siteUrl = process.env.SITE_URL || 'https://ralphstarter.ai';
 const expectedOrigin = new URL(siteUrl).origin;
 // Keep a minimum URL floor so we catch truncated/partial sitemap generation.
-const parsedMinSitemapUrls = Number.parseInt(process.env.MIN_SITEMAP_URLS || '10', 10);
-const minSitemapUrls =
-  Number.isFinite(parsedMinSitemapUrls) && parsedMinSitemapUrls > 0 ? parsedMinSitemapUrls : 10;
+const defaultMinSitemapUrls = 10;
+
+function resolveMinSitemapUrls() {
+  const rawValue = process.env.MIN_SITEMAP_URLS;
+  if (rawValue === undefined || rawValue.trim() === '') {
+    return defaultMinSitemapUrls;
+  }
+
+  const normalized = rawValue.trim();
+  if (!/^\d+$/.test(normalized)) {
+    throw new Error(
+      `Invalid MIN_SITEMAP_URLS value "${rawValue}". Expected a positive integer.`
+    );
+  }
+
+  const parsedValue = Number(normalized);
+  if (!Number.isSafeInteger(parsedValue) || parsedValue <= 0) {
+    throw new Error(
+      `Invalid MIN_SITEMAP_URLS value "${rawValue}". Expected a positive integer.`
+    );
+  }
+
+  return parsedValue;
+}
 
 const requiredBuildFiles = [
   'sitemap.xml',
@@ -28,6 +49,8 @@ function assertFileExists(fullPath, label) {
 }
 
 function main() {
+  const minSitemapUrls = resolveMinSitemapUrls();
+
   assertFileExists(buildDir, 'Build directory');
 
   for (const file of requiredBuildFiles) {
