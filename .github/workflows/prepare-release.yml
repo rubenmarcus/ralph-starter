@@ -12,9 +12,9 @@ permissions:
 
 jobs:
   # NOTE: Auto-labeling (including candidate-release) is handled by auto-label.yml
-  # This workflow only handles creating release PRs when candidate-release PRs are merged
+  # This workflow aggregates ALL merged candidate-release PRs since the last release
 
-  # Create release PR when a PR with candidate-release label is merged
+  # Create/update release PR when a PR with candidate-release label is merged
   create-release-pr:
     name: Create Release PR
     if: |
@@ -38,27 +38,92 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Determine version bump
-        id: bump
+      - name: Collect merged PRs since last release
+        id: collect
         env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get commits in this PR to determine bump type
-          # feat: = minor, fix: = patch, BREAKING CHANGE = major
-          # Note: PR_TITLE comes from env to prevent script injection
+          # Wait briefly for GitHub API consistency
+          sleep 5
 
-          if [[ "$PR_TITLE" == *"BREAKING"* ]] || [[ "$PR_TITLE" == *"!"* ]]; then
-            echo "bump=major" >> $GITHUB_OUTPUT
-          elif [[ "$PR_TITLE" == feat* ]] || [[ "$PR_TITLE" == *"feat("* ]]; then
-            echo "bump=minor" >> $GITHUB_OUTPUT
+          # Find latest release tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo "")
+
+          if [ -n "$LATEST_TAG" ]; then
+            TAG_DATE=$(git log -1 --format=%aI "$LATEST_TAG")
+            echo "Latest release tag: $LATEST_TAG (date: $TAG_DATE)"
           else
-            echo "bump=patch" >> $GITHUB_OUTPUT
+            TAG_DATE="1970-01-01T00:00:00Z"
+            echo "No release tags found, collecting all candidate-release PRs"
           fi
+
+          # Query all merged PRs with candidate-release label since the tag date
+          # Exclude release branch PRs
+          PR_JSON=$(gh pr list \
+            --state merged \
+            --label "candidate-release" \
+            --base main \
+            --json number,title,mergedAt,headRefName \
+            --limit 100 \
+            --jq "[.[] | select(.mergedAt > \"$TAG_DATE\" and (.headRefName | startswith(\"release/\") | not))]"
+          )
+
+          PR_COUNT=$(echo "$PR_JSON" | jq length)
+          echo "Found $PR_COUNT merged PRs since $LATEST_TAG"
+
+          if [ "$PR_COUNT" -eq 0 ]; then
+            echo "No unreleased candidate PRs found, exiting"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Base64-encode to safely pass through GitHub Actions outputs
+          echo "prs=$(echo "$PR_JSON" | base64 -w0)" >> $GITHUB_OUTPUT
+          echo "pr_count=$PR_COUNT" >> $GITHUB_OUTPUT
+          echo "skip=false" >> $GITHUB_OUTPUT
+
+      - name: Determine version bump and build changes
+        if: steps.collect.outputs.skip != 'true'
+        id: bump
+        run: |
+          PR_JSON=$(echo '${{ steps.collect.outputs.prs }}' | base64 -d)
+
+          # Determine the highest bump type across all PRs
+          BUMP="patch"
+          while IFS= read -r TITLE; do
+            if [[ "$TITLE" == *"BREAKING"* ]] || [[ "$TITLE" == *"!"* ]]; then
+              BUMP="major"
+              break
+            elif [[ "$TITLE" == feat* ]] || [[ "$TITLE" == *"feat("* ]]; then
+              BUMP="minor"
+            fi
+          done < <(echo "$PR_JSON" | jq -r '.[].title')
+
+          echo "bump=$BUMP" >> $GITHUB_OUTPUT
 
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
 
+          # Build changes JSON with type classification and cleaned titles
+          CHANGES=$(echo "$PR_JSON" | jq '[.[] | {
+            pr: .number,
+            rawTitle: .title,
+            type: (
+              if (.title | test("^feat"; "i")) then "Added"
+              elif (.title | test("^fix"; "i")) then "Fixed"
+              elif (.title | test("^docs"; "i")) then "Changed"
+              else "Changed"
+              end
+            ),
+            title: (.title | sub("^[a-z]+\\(?[a-z-]*\\)?!?:\\s*"; ""))
+          }]')
+
+          echo "changes=$(echo "$CHANGES" | base64 -w0)" >> $GITHUB_OUTPUT
+          echo "Version bump: $BUMP (current: $CURRENT_VERSION)"
+          echo "Changes: $(echo "$CHANGES" | jq -r '.[] | "  - #\(.pr): \(.rawTitle)"')"
+
       - name: Calculate new version
+        if: steps.collect.outputs.skip != 'true'
         id: version
         run: |
           CURRENT="${{ steps.bump.outputs.current }}"
@@ -93,83 +158,105 @@ jobs:
           echo "New version will be: $NEW_VERSION (bump: $BUMP)"
 
       - name: Check for existing release PR
+        if: steps.collect.outputs.skip != 'true'
         id: check
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const prs = await github.rest.pulls.list({
-              owner, repo,
-              state: 'open',
-              head: `${owner}:release/v${{ steps.version.outputs.new }}`
-            });
-            return prs.data.length > 0;
-          result-encoding: string
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Search for any open PR with a release/v branch prefix
+          EXISTING=$(gh pr list \
+            --state open \
+            --label release \
+            --json number,headRefName \
+            --jq '[.[] | select(.headRefName | startswith("release/v"))] | first // empty'
+          )
 
-      - name: Create release branch and PR
-        if: steps.check.outputs.result != 'true'
+          if [ -n "$EXISTING" ] && [ "$EXISTING" != "null" ]; then
+            EXISTING_NUMBER=$(echo "$EXISTING" | jq -r '.number')
+            EXISTING_BRANCH=$(echo "$EXISTING" | jq -r '.headRefName')
+            EXISTING_VERSION=$(echo "$EXISTING_BRANCH" | sed 's|release/v||')
+
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "number=$EXISTING_NUMBER" >> $GITHUB_OUTPUT
+            echo "branch=$EXISTING_BRANCH" >> $GITHUB_OUTPUT
+            echo "version=$EXISTING_VERSION" >> $GITHUB_OUTPUT
+            echo "Found existing release PR #$EXISTING_NUMBER for v$EXISTING_VERSION"
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            echo "No existing release PR found"
+          fi
+
+      - name: Create or update release branch and PR
+        if: steps.collect.outputs.skip != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEW_VERSION: ${{ steps.version.outputs.new }}
           CURRENT_VERSION: ${{ steps.bump.outputs.current }}
-          SOURCE_PR: ${{ github.event.pull_request.number }}
-          SOURCE_TITLE: ${{ github.event.pull_request.title }}
           BUMP_TYPE: ${{ steps.bump.outputs.bump }}
+          CHANGES_B64: ${{ steps.bump.outputs.changes }}
+          EXISTING_FOUND: ${{ steps.check.outputs.found }}
+          EXISTING_NUMBER: ${{ steps.check.outputs.number }}
+          EXISTING_BRANCH: ${{ steps.check.outputs.branch }}
+          EXISTING_VERSION: ${{ steps.check.outputs.version }}
         run: |
-          # Note: Variables come from env to prevent script injection
           TODAY=$(date +%Y-%m-%d)
+          RELEASE_BRANCH="release/v${NEW_VERSION}"
+          CHANGES_JSON=$(echo "$CHANGES_B64" | base64 -d)
 
           # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Create release branch from main
-          git checkout main
-          git pull origin main
-          git checkout -b "release/v${NEW_VERSION}"
+          # Handle the three cases for release branch
+          if [ "$EXISTING_FOUND" = "true" ]; then
+            if [ "$EXISTING_VERSION" = "$NEW_VERSION" ]; then
+              # Same version — update existing branch by resetting to main
+              echo "Updating existing release branch $RELEASE_BRANCH"
+              git checkout "$RELEASE_BRANCH"
+              git reset --hard origin/main
+            else
+              # Version changed — close old PR, delete old branch, start fresh
+              echo "Version changed from v$EXISTING_VERSION to v$NEW_VERSION"
+              gh pr close "$EXISTING_NUMBER" \
+                --comment "Superseded by new release PR for v${NEW_VERSION} (bump type changed to $BUMP_TYPE)"
+              git push origin --delete "$EXISTING_BRANCH" 2>/dev/null || true
+              git checkout main
+              git pull origin main
+              git checkout -b "$RELEASE_BRANCH"
+            fi
+          else
+            # No existing release PR — create new branch
+            git checkout main
+            git pull origin main
+            git checkout -b "$RELEASE_BRANCH"
+          fi
 
           # Update package.json version
           npm version "$NEW_VERSION" --no-git-tag-version
 
-          # Update CHANGELOG.md
-          # Determine change category from PR title
-          if [[ "$SOURCE_TITLE" == feat* ]] || [[ "$SOURCE_TITLE" == *"feat("* ]]; then
-            CHANGE_TYPE="Added"
-          elif [[ "$SOURCE_TITLE" == fix* ]] || [[ "$SOURCE_TITLE" == *"fix("* ]]; then
-            CHANGE_TYPE="Fixed"
-          elif [[ "$SOURCE_TITLE" == docs* ]] || [[ "$SOURCE_TITLE" == *"docs("* ]]; then
-            CHANGE_TYPE="Changed"
-          else
-            CHANGE_TYPE="Changed"
-          fi
-
-          # Clean up PR title (remove conventional commit prefix)
-          CLEAN_TITLE=$(echo "$SOURCE_TITLE" | sed 's/^[a-z]*(\?[a-z]*)\?:\s*//')
-
-          # Update changelog using external script
+          # Update CHANGELOG.md with all changes
           NEW_VERSION="$NEW_VERSION" \
           TODAY="$TODAY" \
-          CHANGE_TYPE="$CHANGE_TYPE" \
-          SOURCE_PR="$SOURCE_PR" \
-          node .github/scripts/update-changelog.cjs "$CLEAN_TITLE"
+          CHANGES_JSON="$CHANGES_JSON" \
+          node .github/scripts/update-changelog.cjs
 
           # Commit changes
           git add package.json pnpm-lock.yaml CHANGELOG.md
           git commit -m "chore(release): bump version to ${NEW_VERSION}"
 
-          # Push branch
-          git push origin "release/v${NEW_VERSION}"
+          # Push (force in case we reset an existing branch)
+          git push origin "$RELEASE_BRANCH" --force
 
-          # Create PR
-          gh pr create \
-            --title "chore(release): v${NEW_VERSION}" \
-            --body "$(cat <<EOF
+          # Build PR body with all included changes
+          PR_CHANGES_LIST=$(echo "$CHANGES_JSON" | jq -r '.[] | "- #\(.pr): \(.rawTitle)"')
+
+          PR_BODY=$(cat <<EOF
           ## Release v${NEW_VERSION}
 
           This PR was automatically created to prepare release v${NEW_VERSION}.
 
           ### Changes included
-          - From PR #${SOURCE_PR}: ${SOURCE_TITLE}
+          ${PR_CHANGES_LIST}
 
           ### Version bump
           - Previous: ${CURRENT_VERSION}
@@ -184,19 +271,36 @@ jobs:
           ---
           This PR was auto-generated by the release workflow.
           EOF
-          )" \
-            --label "release" \
-            --base main
+          )
+
+          if [ "$EXISTING_FOUND" = "true" ] && [ "$EXISTING_VERSION" = "$NEW_VERSION" ]; then
+            # Update existing PR body
+            gh pr edit "$EXISTING_NUMBER" --body "$PR_BODY"
+            echo "Updated existing release PR #${EXISTING_NUMBER}"
+          else
+            # Create new PR
+            gh pr create \
+              --title "chore(release): v${NEW_VERSION}" \
+              --body "$PR_BODY" \
+              --label "release" \
+              --base main
+          fi
 
       - name: Comment on source PR
+        if: steps.collect.outputs.skip != 'true'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const { owner, repo } = context.repo;
             const issue_number = context.payload.pull_request.number;
             const newVersion = '${{ steps.version.outputs.new }}';
+            const existingFound = '${{ steps.check.outputs.found }}';
+
+            const body = existingFound === 'true'
+              ? `Your changes have been added to the existing release PR for **v${newVersion}**.`
+              : `A release PR has been created for **v${newVersion}** including your changes!`;
 
             await github.rest.issues.createComment({
               owner, repo, issue_number,
-              body: `Release PR created for **v${newVersion}**!\n\nOnce this PR is merged, a release PR will be ready. Merge the release PR to publish.`
+              body
             });
