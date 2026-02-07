@@ -4,7 +4,7 @@ const path = require('node:path');
 const rootDir = path.resolve(__dirname, '..');
 const buildDir = path.join(rootDir, 'build');
 const staticDir = path.join(rootDir, 'static');
-const siteUrl = 'https://ralphstarter.ai';
+const siteUrl = process.env.SITE_URL || 'https://ralphstarter.ai';
 const expectedOrigin = new URL(siteUrl).origin;
 
 const requiredBuildFiles = [
@@ -51,7 +51,7 @@ function main() {
   });
 
   if (hasInvalidSitemapOrigin) {
-    throw new Error('Sitemap contains URLs outside https://ralphstarter.ai.');
+    throw new Error(`Sitemap contains URLs outside ${expectedOrigin}.`);
   }
 
   const llmsTxt = fs.readFileSync(path.join(buildDir, 'llms.txt'), 'utf8');

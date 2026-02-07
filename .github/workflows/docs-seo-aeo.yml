@@ -9,6 +9,7 @@ on:
       - 'docs/docusaurus.config.ts'
       - 'docs/sidebars.ts'
       - 'docs/plugins/**'
+      - 'docs/scripts/**'
       - 'docs/static/robots.txt'
       - 'docs/package.json'
       - 'docs/pnpm-lock.yaml'
