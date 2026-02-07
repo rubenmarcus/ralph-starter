@@ -15,8 +15,12 @@ on:
       - 'docs/pnpm-lock.yaml'
   workflow_dispatch:
 
+env:
+  SITE_URL: https://ralphstarter.ai
+
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   sync-seo-assets:
@@ -48,28 +52,47 @@ jobs:
       - name: Validate SEO/AEO outputs
         working-directory: docs
         run: pnpm seo:check
+        env:
+          SITE_URL: ${{ env.SITE_URL }}
 
       - name: Sync generated assets into docs/static
         working-directory: docs
         run: pnpm seo:sync
 
-      - name: Commit synced assets
+      - name: Commit synced assets and open PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if git diff --quiet -- docs/static/sitemap.xml docs/static/llms.txt docs/static/llms-full.txt docs/static/docs.json docs/static/docs-urls.txt docs/static/ai-index.json docs/static/sidebar.json; then
             echo "No SEO/AEO asset changes to commit."
             exit 0
           fi
 
+          BRANCH_NAME="automation/docs-seo-aeo-sync"
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "${BRANCH_NAME}"
           git add docs/static/sitemap.xml docs/static/llms.txt docs/static/llms-full.txt docs/static/docs.json docs/static/docs-urls.txt docs/static/ai-index.json docs/static/sidebar.json
           git commit -m "chore(docs): sync generated SEO/AEO assets [skip ci]"
-          git push
+          git push origin "${BRANCH_NAME}" --force-with-lease
+
+          EXISTING_PR=$(gh pr list --head "${BRANCH_NAME}" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "${EXISTING_PR}" ]; then
+            echo "Updated existing PR #${EXISTING_PR}"
+            exit 0
+          fi
+
+          gh pr create \
+            --base main \
+            --head "${BRANCH_NAME}" \
+            --title "chore(docs): sync generated SEO/AEO assets" \
+            --body "Automated sync of generated docs SEO/AEO artifacts from docs build."
 
       - name: Notify search engines
         run: |
           set +e
-          SITEMAP_URL="https://ralphstarter.ai/sitemap.xml"
+          SITEMAP_URL="${SITE_URL}/sitemap.xml"
 
           echo "Pinging Bing sitemap endpoint..."
           curl --connect-timeout 5 --max-time 15 -fsS "https://www.bing.com/ping?sitemap=${SITEMAP_URL}" >/dev/null && echo "Bing ping sent." || echo "Bing ping failed (non-fatal)."
@@ -79,7 +102,7 @@ jobs:
 
           if [ -n "${INDEXNOW_KEY}" ]; then
             echo "Submitting IndexNow URL update..."
-            curl --connect-timeout 5 --max-time 15 -fsS "https://api.indexnow.org/indexnow?url=https://ralphstarter.ai/docs/intro&key=${INDEXNOW_KEY}" >/dev/null && echo "IndexNow submitted." || echo "IndexNow submission failed (non-fatal)."
+            curl --connect-timeout 5 --max-time 15 -fsS "https://api.indexnow.org/indexnow?url=${SITE_URL}/docs/intro&key=${INDEXNOW_KEY}" >/dev/null && echo "IndexNow submitted." || echo "IndexNow submission failed (non-fatal)."
           else
             echo "INDEXNOW_KEY not configured; skipping IndexNow submission."
           fi
