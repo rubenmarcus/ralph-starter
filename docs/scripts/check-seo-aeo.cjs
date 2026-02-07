@@ -6,6 +6,10 @@ const buildDir = path.join(rootDir, 'build');
 const staticDir = path.join(rootDir, 'static');
 const siteUrl = process.env.SITE_URL || 'https://ralphstarter.ai';
 const expectedOrigin = new URL(siteUrl).origin;
+// Keep a minimum URL floor so we catch truncated/partial sitemap generation.
+const parsedMinSitemapUrls = Number.parseInt(process.env.MIN_SITEMAP_URLS || '10', 10);
+const minSitemapUrls =
+  Number.isFinite(parsedMinSitemapUrls) && parsedMinSitemapUrls > 0 ? parsedMinSitemapUrls : 10;
 
 const requiredBuildFiles = [
   'sitemap.xml',
@@ -34,8 +38,10 @@ function main() {
   const sitemap = fs.readFileSync(sitemapPath, 'utf8');
   const locMatches = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
 
-  if (locMatches.length < 10) {
-    throw new Error(`Sitemap has too few URLs (${locMatches.length}).`);
+  if (locMatches.length < minSitemapUrls) {
+    throw new Error(
+      `Sitemap has too few URLs (${locMatches.length}). Expected at least ${minSitemapUrls}.`
+    );
   }
 
   if (!locMatches.some((url) => url.includes('/docs/intro'))) {
@@ -60,7 +66,13 @@ function main() {
   }
 
   const docsManifestRaw = fs.readFileSync(path.join(buildDir, 'docs.json'), 'utf8');
-  const docsManifest = JSON.parse(docsManifestRaw);
+  let docsManifest;
+  try {
+    docsManifest = JSON.parse(docsManifestRaw);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`Malformed docs.json manifest: ${reason}. Please regenerate docs artifacts.`);
+  }
   if (!Array.isArray(docsManifest.docs) || docsManifest.docs.length === 0) {
     throw new Error('docs.json manifest has no docs entries.');
   }
@@ -77,4 +89,10 @@ function main() {
   console.log(`- docs manifest entries: ${docsManifest.docs.length}`);
 }
 
-main();
+try {
+  main();
+  process.exitCode = 0;
+} catch (error) {
+  console.error('Validation failed:', error);
+  process.exit(1);
+}
