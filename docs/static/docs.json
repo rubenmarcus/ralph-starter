@@ -1,0 +1,370 @@
+{
+  "name": "ralph-starter - AI-Powered Autonomous Coding from Specs to Production",
+  "description": "Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically with autonomous loops.",
+  "baseUrl": "https://ralphstarter.ai",
+  "generatedAt": "2026-02-07T15:34:03.717Z",
+  "totalDocs": 26,
+  "access": {
+    "llmsTxt": "https://ralphstarter.ai/llms.txt",
+    "llmsFullTxt": "https://ralphstarter.ai/llms-full.txt",
+    "rawMarkdown": "Add .md to any docs URL"
+  },
+  "docs": [
+    {
+      "title": "Git Automation",
+      "description": "Auto-commit, push, and create pull requests",
+      "path": "/docs/advanced/git-automation",
+      "markdownUrl": "https://ralphstarter.ai/docs/advanced/git-automation.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/advanced/git-automation",
+      "category": "Advanced",
+      "keywords": [
+        "git",
+        "commit",
+        "push",
+        "pull request",
+        "automation"
+      ]
+    },
+    {
+      "title": "Ralph Playbook",
+      "description": "Understanding the Ralph Playbook methodology",
+      "path": "/docs/advanced/ralph-playbook",
+      "markdownUrl": "https://ralphstarter.ai/docs/advanced/ralph-playbook.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/advanced/ralph-playbook",
+      "category": "Advanced",
+      "keywords": [
+        "ralph playbook",
+        "methodology",
+        "workflow",
+        "agents"
+      ]
+    },
+    {
+      "title": "Validation",
+      "description": "Running tests, lint, and build validation",
+      "path": "/docs/advanced/validation",
+      "markdownUrl": "https://ralphstarter.ai/docs/advanced/validation.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/advanced/validation",
+      "category": "Advanced",
+      "keywords": [
+        "validation",
+        "tests",
+        "lint",
+        "build",
+        "backpressure"
+      ]
+    },
+    {
+      "title": "config",
+      "description": "Manage source configuration and credentials",
+      "path": "/docs/cli/config",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/config.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/config",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "config",
+        "command",
+        "credentials"
+      ]
+    },
+    {
+      "title": "init",
+      "description": "Initialize Ralph Playbook in a project",
+      "path": "/docs/cli/init",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/init.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/init",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "init",
+        "command",
+        "setup"
+      ]
+    },
+    {
+      "title": "plan",
+      "description": "Create implementation plan from specs",
+      "path": "/docs/cli/plan",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/plan.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/plan",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "plan",
+        "command",
+        "implementation"
+      ]
+    },
+    {
+      "title": "run",
+      "description": "Run an autonomous AI coding loop",
+      "path": "/docs/cli/run",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/run.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/run",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "run",
+        "command",
+        "coding loop"
+      ]
+    },
+    {
+      "title": "source",
+      "description": "Manage input sources",
+      "path": "/docs/cli/source",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/source.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/source",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "source",
+        "command",
+        "integrations"
+      ]
+    },
+    {
+      "title": "template",
+      "description": "Browse and use project templates",
+      "path": "/docs/cli/template",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/template.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/template",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "template",
+        "command",
+        "project templates",
+        "scaffolding"
+      ]
+    },
+    {
+      "title": "Changelog",
+      "description": "Release notes and version history for ralph-starter",
+      "path": "/docs/community/changelog",
+      "markdownUrl": "https://ralphstarter.ai/docs/community/changelog.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/community/changelog",
+      "category": "Community",
+      "keywords": []
+    },
+    {
+      "title": "Contributing",
+      "description": "How to contribute to ralph-starter",
+      "path": "/docs/community/contributing",
+      "markdownUrl": "https://ralphstarter.ai/docs/community/contributing.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/community/contributing",
+      "category": "Community",
+      "keywords": []
+    },
+    {
+      "title": "Ideas & Roadmap",
+      "description": "Feature ideas and development roadmap for ralph-starter",
+      "path": "/docs/community/ideas",
+      "markdownUrl": "https://ralphstarter.ai/docs/community/ideas.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/community/ideas",
+      "category": "Community",
+      "keywords": []
+    },
+    {
+      "title": "FAQ",
+      "description": "Frequently asked questions about ralph-starter - AI-powered autonomous coding",
+      "path": "/docs/faq",
+      "markdownUrl": "https://ralphstarter.ai/docs/faq.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/faq",
+      "category": "General",
+      "keywords": [
+        "faq",
+        "questions",
+        "help",
+        "troubleshooting",
+        "support"
+      ]
+    },
+    {
+      "title": "Extending ralph-starter",
+      "description": "Developer guide for extending ralph-starter with custom sources, agents, and integrations",
+      "path": "/docs/guides/extending-ralph-starter",
+      "markdownUrl": "https://ralphstarter.ai/docs/guides/extending-ralph-starter.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/guides/extending-ralph-starter",
+      "category": "Guides",
+      "keywords": [
+        "developer",
+        "extension",
+        "custom sources",
+        "api",
+        "contributing",
+        "plugins"
+      ]
+    },
+    {
+      "title": "Testing Integrations",
+      "description": "How to test ralph-starter integrations and verify everything works",
+      "path": "/docs/guides/testing-integrations",
+      "markdownUrl": "https://ralphstarter.ai/docs/guides/testing-integrations.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/guides/testing-integrations",
+      "category": "Guides",
+      "keywords": [
+        "testing",
+        "integrations",
+        "api keys",
+        "setup",
+        "verification",
+        "environment variables"
+      ]
+    },
+    {
+      "title": "Installation",
+      "description": "How to install ralph-starter and get started",
+      "path": "/docs/installation",
+      "markdownUrl": "https://ralphstarter.ai/docs/installation.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/installation",
+      "category": "General",
+      "keywords": [
+        "installation",
+        "npm",
+        "setup",
+        "requirements"
+      ]
+    },
+    {
+      "title": "Introduction",
+      "description": "ralph-starter - Ralph Wiggum made easy. One command to run autonomous AI coding loops.",
+      "path": "/docs/intro",
+      "markdownUrl": "https://ralphstarter.ai/docs/intro.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/intro",
+      "category": "General",
+      "keywords": [
+        "ralph wiggum",
+        "autonomous coding",
+        "AI coding loops",
+        "claude code"
+      ]
+    },
+    {
+      "title": "Claude Desktop",
+      "description": "Configure Claude Desktop to use ralph-starter",
+      "path": "/docs/mcp/claude-desktop",
+      "markdownUrl": "https://ralphstarter.ai/docs/mcp/claude-desktop.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/mcp/claude-desktop",
+      "category": "Mcp",
+      "keywords": [
+        "claude desktop",
+        "mcp",
+        "configuration"
+      ]
+    },
+    {
+      "title": "MCP Setup",
+      "description": "Use ralph-starter as an MCP server",
+      "path": "/docs/mcp/setup",
+      "markdownUrl": "https://ralphstarter.ai/docs/mcp/setup.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/mcp/setup",
+      "category": "Mcp",
+      "keywords": [
+        "mcp",
+        "model context protocol",
+        "claude desktop",
+        "ai tools"
+      ]
+    },
+    {
+      "title": "Figma",
+      "description": "Fetch design specs, tokens, components, and assets from Figma",
+      "path": "/docs/sources/figma",
+      "markdownUrl": "https://ralphstarter.ai/docs/sources/figma.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/sources/figma",
+      "category": "Sources",
+      "keywords": [
+        "figma",
+        "design",
+        "tokens",
+        "components",
+        "assets",
+        "integration"
+      ]
+    },
+    {
+      "title": "GitHub",
+      "description": "Fetch specs from GitHub Issues",
+      "path": "/docs/sources/github",
+      "markdownUrl": "https://ralphstarter.ai/docs/sources/github.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/sources/github",
+      "category": "Sources",
+      "keywords": [
+        "github",
+        "issues",
+        "integration"
+      ]
+    },
+    {
+      "title": "Linear",
+      "description": "Fetch specs from Linear issues",
+      "path": "/docs/sources/linear",
+      "markdownUrl": "https://ralphstarter.ai/docs/sources/linear.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/sources/linear",
+      "category": "Sources",
+      "keywords": [
+        "linear",
+        "issues",
+        "integration"
+      ]
+    },
+    {
+      "title": "Notion",
+      "description": "Fetch specs from Notion pages",
+      "path": "/docs/sources/notion",
+      "markdownUrl": "https://ralphstarter.ai/docs/sources/notion.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/sources/notion",
+      "category": "Sources",
+      "keywords": [
+        "notion",
+        "pages",
+        "integration"
+      ]
+    },
+    {
+      "title": "Overview",
+      "description": "Fetch specs from anywhere - GitHub, Linear, Notion, URLs, PDFs",
+      "path": "/docs/sources/overview",
+      "markdownUrl": "https://ralphstarter.ai/docs/sources/overview.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/sources/overview",
+      "category": "Sources",
+      "keywords": [
+        "sources",
+        "integrations",
+        "github",
+        "linear",
+        "notion"
+      ]
+    },
+    {
+      "title": "Idea Mode",
+      "description": "Brainstorm project ideas when you don't know what to build",
+      "path": "/docs/wizard/idea-mode",
+      "markdownUrl": "https://ralphstarter.ai/docs/wizard/idea-mode.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/wizard/idea-mode",
+      "category": "Wizard",
+      "keywords": [
+        "brainstorm",
+        "ideas",
+        "creativity",
+        "project discovery"
+      ]
+    },
+    {
+      "title": "Overview",
+      "description": "The interactive wizard for guided project creation",
+      "path": "/docs/wizard/overview",
+      "markdownUrl": "https://ralphstarter.ai/docs/wizard/overview.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/wizard/overview",
+      "category": "Wizard",
+      "keywords": [
+        "wizard",
+        "interactive",
+        "guided",
+        "project creation"
+      ]
+    }
+  ]
+}

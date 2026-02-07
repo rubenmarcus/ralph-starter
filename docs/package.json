@@ -6,6 +6,8 @@
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
     "build": "docusaurus build",
+    "seo:check": "node scripts/check-seo-aeo.cjs",
+    "seo:sync": "node scripts/sync-seo-aeo-assets.cjs",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",

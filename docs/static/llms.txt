@@ -1,0 +1,34 @@
+# ralph-starter Documentation
+
+> AI-powered autonomous coding tool. Connect GitHub, Linear, Notion and run AI coding loops from specs to production.
+
+This file contains links to documentation sections following the llmstxt.org standard.
+
+## Table of Contents
+
+- [Git Automation](https://ralphstarter.ai/docs/advanced/git-automation): Auto-commit, push, and create pull requests
+- [Ralph Playbook](https://ralphstarter.ai/docs/advanced/ralph-playbook): Understanding the Ralph Playbook methodology
+- [Validation](https://ralphstarter.ai/docs/advanced/validation): Running tests, lint, and build validation
+- [config](https://ralphstarter.ai/docs/cli/config): Manage source configuration and credentials
+- [init](https://ralphstarter.ai/docs/cli/init): Initialize Ralph Playbook in a project
+- [plan](https://ralphstarter.ai/docs/cli/plan): Create implementation plan from specs
+- [run](https://ralphstarter.ai/docs/cli/run): Run an autonomous AI coding loop
+- [source](https://ralphstarter.ai/docs/cli/source): Manage input sources
+- [template](https://ralphstarter.ai/docs/cli/template): Browse and use project templates
+- [Changelog](https://ralphstarter.ai/docs/community/changelog): Release notes and version history for ralph-starter
+- [Contributing](https://ralphstarter.ai/docs/community/contributing): How to contribute to ralph-starter
+- [Ideas & Roadmap](https://ralphstarter.ai/docs/community/ideas): Feature ideas and development roadmap for ralph-starter
+- [FAQ](https://ralphstarter.ai/docs/faq): Frequently asked questions about ralph-starter - AI-powered autonomous coding
+- [Extending ralph-starter](https://ralphstarter.ai/docs/guides/extending-ralph-starter): Developer guide for extending ralph-starter with custom sources, agents, and integrations
+- [Testing Integrations](https://ralphstarter.ai/docs/guides/testing-integrations): How to test ralph-starter integrations and verify everything works
+- [Installation](https://ralphstarter.ai/docs/installation): How to install ralph-starter and get started
+- [Introduction](https://ralphstarter.ai/docs/intro): ralph-starter - Ralph Wiggum made easy. One command to run autonomous AI coding loops.
+- [Claude Desktop](https://ralphstarter.ai/docs/mcp/claude-desktop): Configure Claude Desktop to use ralph-starter
+- [MCP Setup](https://ralphstarter.ai/docs/mcp/setup): Use ralph-starter as an MCP server
+- [Figma](https://ralphstarter.ai/docs/sources/figma): Fetch design specs, tokens, components, and assets from Figma
+- [GitHub](https://ralphstarter.ai/docs/sources/github): Fetch specs from GitHub Issues
+- [Linear](https://ralphstarter.ai/docs/sources/linear): Fetch specs from Linear issues
+- [Notion](https://ralphstarter.ai/docs/sources/notion): Fetch specs from Notion pages
+- [Overview](https://ralphstarter.ai/docs/sources/overview): Fetch specs from anywhere - GitHub, Linear, Notion, URLs, PDFs
+- [Idea Mode](https://ralphstarter.ai/docs/wizard/idea-mode): Brainstorm project ideas when you don't know what to build
+- [Overview](https://ralphstarter.ai/docs/wizard/overview): The interactive wizard for guided project creation

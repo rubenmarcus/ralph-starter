@@ -1,0 +1,86 @@
+name: Docs SEO and AEO Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/docs/**'
+      - 'docs/src/**'
+      - 'docs/docusaurus.config.ts'
+      - 'docs/sidebars.ts'
+      - 'docs/plugins/**'
+      - 'docs/static/robots.txt'
+      - 'docs/package.json'
+      - 'docs/pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-seo-assets:
+    name: Build and Sync SEO/AEO Assets
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@c5ba7f7862a0f64c1b1a05fbac13e0b8e86ba08c # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: docs/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: docs
+        run: pnpm install --frozen-lockfile
+
+      - name: Build docs
+        working-directory: docs
+        run: pnpm build
+
+      - name: Validate SEO/AEO outputs
+        working-directory: docs
+        run: pnpm seo:check
+
+      - name: Sync generated assets into docs/static
+        working-directory: docs
+        run: pnpm seo:sync
+
+      - name: Commit synced assets
+        run: |
+          if git diff --quiet -- docs/static/sitemap.xml docs/static/llms.txt docs/static/llms-full.txt docs/static/docs.json docs/static/docs-urls.txt docs/static/ai-index.json docs/static/sidebar.json; then
+            echo "No SEO/AEO asset changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/static/sitemap.xml docs/static/llms.txt docs/static/llms-full.txt docs/static/docs.json docs/static/docs-urls.txt docs/static/ai-index.json docs/static/sidebar.json
+          git commit -m "chore(docs): sync generated SEO/AEO assets [skip ci]"
+          git push
+
+      - name: Notify search engines
+        run: |
+          set +e
+          SITEMAP_URL="https://ralphstarter.ai/sitemap.xml"
+
+          echo "Pinging Bing sitemap endpoint..."
+          curl -fsS "https://www.bing.com/ping?sitemap=${SITEMAP_URL}" >/dev/null && echo "Bing ping sent." || echo "Bing ping failed (non-fatal)."
+
+          echo "Pinging Google sitemap endpoint (best effort)..."
+          curl -fsS "https://www.google.com/ping?sitemap=${SITEMAP_URL}" >/dev/null && echo "Google ping sent." || echo "Google ping not accepted (non-fatal)."
+
+          if [ -n "${INDEXNOW_KEY}" ]; then
+            echo "Submitting IndexNow URL update..."
+            curl -fsS "https://api.indexnow.org/indexnow?url=https://ralphstarter.ai/docs/intro&key=${INDEXNOW_KEY}" >/dev/null && echo "IndexNow submitted." || echo "IndexNow submission failed (non-fatal)."
+          else
+            echo "INDEXNOW_KEY not configured; skipping IndexNow submission."
+          fi
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}

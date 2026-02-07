@@ -2,6 +2,11 @@ import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
+const siteUrl = 'https://ralphstarter.ai';
+const algoliaAppId = process.env.ALGOLIA_APP_ID;
+const algoliaApiKey = process.env.ALGOLIA_SEARCH_API_KEY;
+const hasAlgoliaConfig = Boolean(algoliaAppId && algoliaApiKey);
+
 const config: Config = {
   title: 'ralph-starter - AI-Powered Autonomous Coding from Specs to Production',
   tagline: 'Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically with autonomous loops.',
@@ -12,7 +17,7 @@ const config: Config = {
   },
 
   // Cloudflare Pages URL
-  url: 'https://ralphstarter.ai',
+  url: siteUrl,
   baseUrl: '/',
 
   // Project config
@@ -21,7 +26,12 @@ const config: Config = {
   trailingSlash: false,
 
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenAnchors: 'throw',
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
 
   i18n: {
     defaultLocale: 'en',
@@ -52,6 +62,46 @@ const config: Config = {
         content: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
       },
     },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'googlebot',
+        content: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'bingbot',
+        content: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'alternate',
+        type: 'text/plain',
+        href: `${siteUrl}/llms.txt`,
+        title: 'LLMs.txt',
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'alternate',
+        type: 'application/json',
+        href: `${siteUrl}/docs.json`,
+        title: 'Documentation Manifest',
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'sitemap',
+        type: 'application/xml',
+        href: `${siteUrl}/sitemap.xml`,
+      },
+    },
     // JSON-LD: SoftwareApplication schema
     {
       tagName: 'script',
@@ -63,7 +113,7 @@ const config: Config = {
         '@type': 'SoftwareApplication',
         name: 'ralph-starter',
         description: 'AI-powered autonomous coding tool. Connect GitHub, Linear, Notion and run AI coding loops from specs to production.',
-        url: 'https://ralphstarter.ai',
+        url: siteUrl,
         applicationCategory: 'DeveloperApplication',
         operatingSystem: 'macOS, Linux, Windows',
         offers: {
@@ -83,6 +133,24 @@ const config: Config = {
         keywords: ['AI coding', 'autonomous coding', 'claude code', 'MCP server', 'developer tools'],
       }),
     },
+    // JSON-LD: Organization schema for stronger search understanding
+    {
+      tagName: 'script',
+      attributes: {
+        type: 'application/ld+json',
+      },
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'ralph-starter',
+        url: siteUrl,
+        logo: `${siteUrl}/img/small-logo.png`,
+        sameAs: [
+          'https://github.com/rubenmarcus/ralph-starter',
+          'https://www.npmjs.com/package/ralph-starter',
+        ],
+      }),
+    },
     // JSON-LD: WebSite schema for docs
     {
       tagName: 'script',
@@ -93,11 +161,11 @@ const config: Config = {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
         name: 'ralph-starter Documentation',
-        url: 'https://ralphstarter.ai',
+        url: siteUrl,
         description: 'Documentation for ralph-starter - AI-powered autonomous coding from specs to production',
         potentialAction: {
           '@type': 'SearchAction',
-          target: 'https://ralphstarter.ai/search?q={search_term_string}',
+          target: `${siteUrl}/search?q={search_term_string}`,
           'query-input': 'required name=search_term_string',
         },
       }),
@@ -113,7 +181,7 @@ const config: Config = {
         '@type': 'TechArticle',
         headline: 'ralph-starter Documentation',
         description: 'Complete documentation for ralph-starter - AI-powered autonomous coding tool. Learn how to connect Figma, GitHub, Linear, and Notion to run AI coding loops from specs to production.',
-        url: 'https://ralphstarter.ai/docs/intro',
+        url: `${siteUrl}/docs/intro`,
         author: {
           '@type': 'Person',
           name: 'rubenmarcus',
@@ -122,9 +190,9 @@ const config: Config = {
         publisher: {
           '@type': 'Organization',
           name: 'ralph-starter',
-          url: 'https://ralphstarter.ai',
+          url: siteUrl,
         },
-        mainEntityOfPage: 'https://ralphstarter.ai/docs/intro',
+        mainEntityOfPage: `${siteUrl}/docs/intro`,
         articleSection: 'Documentation',
         proficiencyLevel: 'Beginner',
         dependencies: 'Node.js 18+',
@@ -178,8 +246,9 @@ const config: Config = {
           customCss: './src/css/custom.css',
         },
         sitemap: {
-          changefreq: 'weekly',
-          priority: 0.5,
+          changefreq: 'daily',
+          priority: 0.7,
+          ignorePatterns: ['/search/**'],
         },
         gtag: {
           trackingID: 'G-4HSM6GRG3R',
@@ -198,13 +267,15 @@ const config: Config = {
     },
     metadata: [
       { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'og:type', content: 'website' },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:site_name', content: 'ralph-starter' },
       { property: 'og:title', content: 'ralph-starter - AI-Powered Autonomous Coding' },
       { property: 'og:description', content: 'Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically.' },
-      { property: 'og:image', content: 'https://ralphstarter.ai/img/thumbnail.png' },
+      { property: 'og:image', content: `${siteUrl}/img/thumbnail.png` },
       { name: 'twitter:title', content: 'ralph-starter - AI-Powered Autonomous Coding' },
       { name: 'twitter:description', content: 'Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically.' },
-      { name: 'twitter:image', content: 'https://ralphstarter.ai/img/thumbnail.png' },
+      { name: 'twitter:image', content: `${siteUrl}/img/thumbnail.png` },
+      { name: 'twitter:site', content: '@rubenmarcus' },
     ],
     navbar: {
       title: '',
@@ -291,13 +362,16 @@ const config: Config = {
       darkTheme: prismThemes.dracula,
       additionalLanguages: ['bash', 'json', 'typescript'],
     },
-    algolia: {
-      // TODO: Set up Algolia search
-      appId: 'YOUR_APP_ID',
-      apiKey: 'YOUR_SEARCH_API_KEY',
-      indexName: 'ralph-starter',
-      contextualSearch: true,
-    },
+    ...(hasAlgoliaConfig
+      ? {
+          algolia: {
+            appId: algoliaAppId as string,
+            apiKey: algoliaApiKey as string,
+            indexName: 'ralph-starter',
+            contextualSearch: true,
+          },
+        }
+      : {}),
   } satisfies Preset.ThemeConfig,
 };
 

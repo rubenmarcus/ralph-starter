@@ -84,7 +84,7 @@ export default function LLMProviders(): React.ReactElement {
           </div>
 
           <Link
-            to="/docs/installation#optional-api-key-configuration"
+            to="/docs/installation#llm-provider-configuration"
             className={`${styles.configLink} ${styles.animateIn} ${styles.delay2}`}
           >
             Configure providers

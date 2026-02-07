@@ -1,0 +1,438 @@
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "ralph-starter - AI-Powered Autonomous Coding from Specs to Production",
+  "description": "Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically with autonomous loops.",
+  "url": "https://ralphstarter.ai",
+  "version": "1.0.0",
+  "generatedAt": "2026-02-07T15:34:03.717Z",
+  "summary": {
+    "purpose": "ralph-starter is an AI-powered CLI tool that fetches specs from tools like Figma, GitHub, Linear, and Notion, then runs autonomous AI coding loops to build production-ready code.",
+    "primaryUseCase": "Developers use ralph-starter to automate coding tasks by providing natural language specs or importing requirements from external tools.",
+    "keyFeatures": [
+      "Fetch design specs from Figma",
+      "Import issues from GitHub and Linear",
+      "Pull requirements from Notion",
+      "Run AI coding loops with Claude",
+      "Automatic git commits and PR creation",
+      "MCP server for Claude Desktop integration"
+    ]
+  },
+  "topics": [
+    {
+      "name": "Getting Started",
+      "description": "Installation and initial setup of ralph-starter",
+      "entryPoints": [
+        "/docs/intro",
+        "/docs/installation"
+      ]
+    },
+    {
+      "name": "Interactive Wizard",
+      "description": "AI-powered wizard for generating specs from natural language",
+      "entryPoints": [
+        "/docs/wizard/overview",
+        "/docs/wizard/idea-mode"
+      ]
+    },
+    {
+      "name": "Integrations",
+      "description": "Connect external tools like Figma, GitHub, Linear, and Notion",
+      "entryPoints": [
+        "/docs/sources/overview"
+      ]
+    },
+    {
+      "name": "MCP Server",
+      "description": "Model Context Protocol integration for Claude Desktop",
+      "entryPoints": [
+        "/docs/mcp/setup",
+        "/docs/mcp/claude-desktop"
+      ]
+    },
+    {
+      "name": "CLI Commands",
+      "description": "Command-line interface reference for all ralph-starter commands",
+      "entryPoints": [
+        "/docs/cli/run",
+        "/docs/cli/init",
+        "/docs/cli/plan"
+      ]
+    },
+    {
+      "name": "Advanced Usage",
+      "description": "Ralph playbooks, validation, and git automation",
+      "entryPoints": [
+        "/docs/advanced/ralph-playbook",
+        "/docs/advanced/validation"
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "name": "Advanced",
+      "documentCount": 3,
+      "documents": [
+        {
+          "title": "Git Automation",
+          "description": "Auto-commit, push, and create pull requests",
+          "url": "https://ralphstarter.ai/docs/advanced/git-automation",
+          "markdownUrl": "https://ralphstarter.ai/docs/advanced/git-automation.md",
+          "keywords": [
+            "git",
+            "commit",
+            "push",
+            "pull request",
+            "automation"
+          ]
+        },
+        {
+          "title": "Ralph Playbook",
+          "description": "Understanding the Ralph Playbook methodology",
+          "url": "https://ralphstarter.ai/docs/advanced/ralph-playbook",
+          "markdownUrl": "https://ralphstarter.ai/docs/advanced/ralph-playbook.md",
+          "keywords": [
+            "ralph playbook",
+            "methodology",
+            "workflow",
+            "agents"
+          ]
+        },
+        {
+          "title": "Validation",
+          "description": "Running tests, lint, and build validation",
+          "url": "https://ralphstarter.ai/docs/advanced/validation",
+          "markdownUrl": "https://ralphstarter.ai/docs/advanced/validation.md",
+          "keywords": [
+            "validation",
+            "tests",
+            "lint",
+            "build",
+            "backpressure"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cli",
+      "documentCount": 6,
+      "documents": [
+        {
+          "title": "config",
+          "description": "Manage source configuration and credentials",
+          "url": "https://ralphstarter.ai/docs/cli/config",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/config.md",
+          "keywords": [
+            "cli",
+            "config",
+            "command",
+            "credentials"
+          ]
+        },
+        {
+          "title": "init",
+          "description": "Initialize Ralph Playbook in a project",
+          "url": "https://ralphstarter.ai/docs/cli/init",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/init.md",
+          "keywords": [
+            "cli",
+            "init",
+            "command",
+            "setup"
+          ]
+        },
+        {
+          "title": "plan",
+          "description": "Create implementation plan from specs",
+          "url": "https://ralphstarter.ai/docs/cli/plan",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/plan.md",
+          "keywords": [
+            "cli",
+            "plan",
+            "command",
+            "implementation"
+          ]
+        },
+        {
+          "title": "run",
+          "description": "Run an autonomous AI coding loop",
+          "url": "https://ralphstarter.ai/docs/cli/run",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/run.md",
+          "keywords": [
+            "cli",
+            "run",
+            "command",
+            "coding loop"
+          ]
+        },
+        {
+          "title": "source",
+          "description": "Manage input sources",
+          "url": "https://ralphstarter.ai/docs/cli/source",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/source.md",
+          "keywords": [
+            "cli",
+            "source",
+            "command",
+            "integrations"
+          ]
+        },
+        {
+          "title": "template",
+          "description": "Browse and use project templates",
+          "url": "https://ralphstarter.ai/docs/cli/template",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/template.md",
+          "keywords": [
+            "cli",
+            "template",
+            "command",
+            "project templates",
+            "scaffolding"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Community",
+      "documentCount": 3,
+      "documents": [
+        {
+          "title": "Changelog",
+          "description": "Release notes and version history for ralph-starter",
+          "url": "https://ralphstarter.ai/docs/community/changelog",
+          "markdownUrl": "https://ralphstarter.ai/docs/community/changelog.md",
+          "keywords": []
+        },
+        {
+          "title": "Contributing",
+          "description": "How to contribute to ralph-starter",
+          "url": "https://ralphstarter.ai/docs/community/contributing",
+          "markdownUrl": "https://ralphstarter.ai/docs/community/contributing.md",
+          "keywords": []
+        },
+        {
+          "title": "Ideas & Roadmap",
+          "description": "Feature ideas and development roadmap for ralph-starter",
+          "url": "https://ralphstarter.ai/docs/community/ideas",
+          "markdownUrl": "https://ralphstarter.ai/docs/community/ideas.md",
+          "keywords": []
+        }
+      ]
+    },
+    {
+      "name": "General",
+      "documentCount": 3,
+      "documents": [
+        {
+          "title": "FAQ",
+          "description": "Frequently asked questions about ralph-starter - AI-powered autonomous coding",
+          "url": "https://ralphstarter.ai/docs/faq",
+          "markdownUrl": "https://ralphstarter.ai/docs/faq.md",
+          "keywords": [
+            "faq",
+            "questions",
+            "help",
+            "troubleshooting",
+            "support"
+          ]
+        },
+        {
+          "title": "Installation",
+          "description": "How to install ralph-starter and get started",
+          "url": "https://ralphstarter.ai/docs/installation",
+          "markdownUrl": "https://ralphstarter.ai/docs/installation.md",
+          "keywords": [
+            "installation",
+            "npm",
+            "setup",
+            "requirements"
+          ]
+        },
+        {
+          "title": "Introduction",
+          "description": "ralph-starter - Ralph Wiggum made easy. One command to run autonomous AI coding loops.",
+          "url": "https://ralphstarter.ai/docs/intro",
+          "markdownUrl": "https://ralphstarter.ai/docs/intro.md",
+          "keywords": [
+            "ralph wiggum",
+            "autonomous coding",
+            "AI coding loops",
+            "claude code"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Guides",
+      "documentCount": 2,
+      "documents": [
+        {
+          "title": "Extending ralph-starter",
+          "description": "Developer guide for extending ralph-starter with custom sources, agents, and integrations",
+          "url": "https://ralphstarter.ai/docs/guides/extending-ralph-starter",
+          "markdownUrl": "https://ralphstarter.ai/docs/guides/extending-ralph-starter.md",
+          "keywords": [
+            "developer",
+            "extension",
+            "custom sources",
+            "api",
+            "contributing",
+            "plugins"
+          ]
+        },
+        {
+          "title": "Testing Integrations",
+          "description": "How to test ralph-starter integrations and verify everything works",
+          "url": "https://ralphstarter.ai/docs/guides/testing-integrations",
+          "markdownUrl": "https://ralphstarter.ai/docs/guides/testing-integrations.md",
+          "keywords": [
+            "testing",
+            "integrations",
+            "api keys",
+            "setup",
+            "verification",
+            "environment variables"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Mcp",
+      "documentCount": 2,
+      "documents": [
+        {
+          "title": "Claude Desktop",
+          "description": "Configure Claude Desktop to use ralph-starter",
+          "url": "https://ralphstarter.ai/docs/mcp/claude-desktop",
+          "markdownUrl": "https://ralphstarter.ai/docs/mcp/claude-desktop.md",
+          "keywords": [
+            "claude desktop",
+            "mcp",
+            "configuration"
+          ]
+        },
+        {
+          "title": "MCP Setup",
+          "description": "Use ralph-starter as an MCP server",
+          "url": "https://ralphstarter.ai/docs/mcp/setup",
+          "markdownUrl": "https://ralphstarter.ai/docs/mcp/setup.md",
+          "keywords": [
+            "mcp",
+            "model context protocol",
+            "claude desktop",
+            "ai tools"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sources",
+      "documentCount": 5,
+      "documents": [
+        {
+          "title": "Figma",
+          "description": "Fetch design specs, tokens, components, and assets from Figma",
+          "url": "https://ralphstarter.ai/docs/sources/figma",
+          "markdownUrl": "https://ralphstarter.ai/docs/sources/figma.md",
+          "keywords": [
+            "figma",
+            "design",
+            "tokens",
+            "components",
+            "assets",
+            "integration"
+          ]
+        },
+        {
+          "title": "GitHub",
+          "description": "Fetch specs from GitHub Issues",
+          "url": "https://ralphstarter.ai/docs/sources/github",
+          "markdownUrl": "https://ralphstarter.ai/docs/sources/github.md",
+          "keywords": [
+            "github",
+            "issues",
+            "integration"
+          ]
+        },
+        {
+          "title": "Linear",
+          "description": "Fetch specs from Linear issues",
+          "url": "https://ralphstarter.ai/docs/sources/linear",
+          "markdownUrl": "https://ralphstarter.ai/docs/sources/linear.md",
+          "keywords": [
+            "linear",
+            "issues",
+            "integration"
+          ]
+        },
+        {
+          "title": "Notion",
+          "description": "Fetch specs from Notion pages",
+          "url": "https://ralphstarter.ai/docs/sources/notion",
+          "markdownUrl": "https://ralphstarter.ai/docs/sources/notion.md",
+          "keywords": [
+            "notion",
+            "pages",
+            "integration"
+          ]
+        },
+        {
+          "title": "Overview",
+          "description": "Fetch specs from anywhere - GitHub, Linear, Notion, URLs, PDFs",
+          "url": "https://ralphstarter.ai/docs/sources/overview",
+          "markdownUrl": "https://ralphstarter.ai/docs/sources/overview.md",
+          "keywords": [
+            "sources",
+            "integrations",
+            "github",
+            "linear",
+            "notion"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Wizard",
+      "documentCount": 2,
+      "documents": [
+        {
+          "title": "Idea Mode",
+          "description": "Brainstorm project ideas when you don't know what to build",
+          "url": "https://ralphstarter.ai/docs/wizard/idea-mode",
+          "markdownUrl": "https://ralphstarter.ai/docs/wizard/idea-mode.md",
+          "keywords": [
+            "brainstorm",
+            "ideas",
+            "creativity",
+            "project discovery"
+          ]
+        },
+        {
+          "title": "Overview",
+          "description": "The interactive wizard for guided project creation",
+          "url": "https://ralphstarter.ai/docs/wizard/overview",
+          "markdownUrl": "https://ralphstarter.ai/docs/wizard/overview.md",
+          "keywords": [
+            "wizard",
+            "interactive",
+            "guided",
+            "project creation"
+          ]
+        }
+      ]
+    }
+  ],
+  "access": {
+    "llmsTxt": "https://ralphstarter.ai/llms.txt",
+    "llmsFullTxt": "https://ralphstarter.ai/llms-full.txt",
+    "docsManifest": "https://ralphstarter.ai/docs.json",
+    "sidebarHierarchy": "https://ralphstarter.ai/sidebar.json",
+    "rawMarkdown": "Append .md to any /docs/* URL",
+    "sitemap": "https://ralphstarter.ai/sitemap.xml"
+  },
+  "stats": {
+    "totalDocuments": 26,
+    "totalCategories": 8,
+    "lastUpdated": "2026-02-07T15:34:03.717Z"
+  }
+}

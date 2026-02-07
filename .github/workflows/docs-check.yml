@@ -78,3 +78,7 @@ jobs:
       - name: Build docs
         working-directory: docs
         run: pnpm build
+
+      - name: Validate SEO/AEO artifacts
+        working-directory: docs
+        run: pnpm seo:check

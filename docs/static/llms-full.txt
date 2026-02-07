@@ -1,0 +1,4664 @@
+# ralph-starter Documentation
+
+> AI-powered autonomous coding tool. Connect GitHub, Linear, Notion and run AI coding loops from specs to production.
+
+This file contains all documentation content in a single document following the llmstxt.org standard.
+
+## Git Automation
+
+
+ralph-starter can automatically commit changes, push to remote, and create pull requests.
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `--commit` | Auto-commit after each successful task |
+| `--push` | Push commits to remote |
+| `--pr` | Create a pull request when done |
+
+## Commit Automation
+
+### Enable
+
+```bash
+ralph-starter run "add feature" --commit
+```
+
+### Behavior
+
+After each successful task (and validation if enabled):
+
+1. Stage all changes
+2. Create commit with descriptive message
+3. Continue to next task
+
+### Commit Messages
+
+Commits follow conventional commit format:
+
+```
+feat(auth): add login form component
+
+- Created LoginForm component
+- Added form validation
+- Connected to auth API
+```
+
+## Push Automation
+
+### Enable
+
+```bash
+ralph-starter run "add feature" --commit --push
+```
+
+### Behavior
+
+After all tasks complete:
+
+1. Push commits to remote
+2. Uses current branch
+
+### Requirements
+
+- Git remote configured
+- Authentication set up (SSH or HTTPS)
+
+## Pull Request Creation
+
+### Enable
+
+```bash
+ralph-starter run "add feature" --commit --push --pr
+```
+
+### Behavior
+
+After pushing:
+
+1. Creates PR using GitHub CLI (`gh`)
+2. Auto-generates title and description
+3. Opens PR against default branch
+
+### Requirements
+
+- [GitHub CLI](https://cli.github.com/) installed
+- Authenticated (`gh auth login`)
+
+### PR Format
+
+```markdown
+## Summary
+- Added user authentication
+- Created login and registration forms
+- Implemented session management
+
+## Changes
+- src/components/LoginForm.tsx
+- src/components/RegisterForm.tsx
+- src/lib/auth.ts
+- src/pages/login.tsx
+
+## Testing
+- [x] Tests pass
+- [x] Lint passes
+- [x] Build succeeds
+```
+
+## Workflow Examples
+
+### Feature Development
+
+```bash
+# Create feature branch
+git checkout -b feature/user-auth
+
+# Run with full automation
+ralph-starter run "add user authentication" --commit --push --pr --validate
+
+# Result:
+# - Multiple commits as tasks complete
+# - Pushed to feature/user-auth
+# - PR created against main
+```
+
+### Bug Fix
+
+```bash
+git checkout -b fix/login-bug
+
+ralph-starter run "fix login redirect bug" --commit --push --pr
+
+# Single commit, PR created
+```
+
+### Incremental Work
+
+```bash
+# Commit each task but don't push yet
+ralph-starter run --commit
+
+# Review changes
+git log --oneline
+
+# Push manually when ready
+git push
+```
+
+## Best Practices
+
+### Branch Strategy
+
+```bash
+# Always work on feature branches
+git checkout -b feature/my-feature
+ralph-starter run --commit --pr
+```
+
+### Atomic Commits
+
+Each task creates one commit. Keep tasks small for atomic commits:
+
+Good:
+```markdown
+- [ ] Add LoginForm component
+- [ ] Add form validation
+- [ ] Connect to API
+```
+
+Bad:
+```markdown
+- [ ] Add complete authentication system
+```
+
+### Review Before Push
+
+```bash
+# Commit locally first
+ralph-starter run --commit
+
+# Review
+git log -p
+
+# Then push
+git push
+```
+
+## Troubleshooting
+
+### Push Fails
+
+```
+error: failed to push some refs
+```
+
+Solution: Pull latest changes first
+
+```bash
+git pull --rebase origin main
+ralph-starter run --commit --push
+```
+
+### PR Creation Fails
+
+```
+gh: command not found
+```
+
+Solution: Install GitHub CLI
+
+```bash
+# macOS
+brew install gh
+
+# Then authenticate
+gh auth login
+```
+
+### No Changes to Commit
+
+If validation fails repeatedly, no commits are made. Check validation output.
+
+## See Also
+
+- [Validation](/docs/advanced/validation)
+- [Ralph Playbook](/docs/advanced/ralph-playbook)
+
+---
+
+## Ralph Playbook
+
+
+ralph-starter follows the [Ralph Playbook](https://claytonfarr.github.io/ralph-playbook/) methodology for structuring AI-assisted development.
+
+## Overview
+
+The Ralph Playbook is a set of conventions for organizing projects so AI coding agents can work effectively. It provides:
+
+1. **Clear instructions** for agents
+2. **Structured specifications**
+3. **Prioritized task lists**
+4. **Validation commands**
+
+## Files
+
+### AGENTS.md
+
+The main configuration file for AI agents.
+
+```markdown
+# AGENTS.md
+
+## Project: my-app
+
+### Overview
+Brief description of the project.
+
+### Tech Stack
+- Frontend: React with TypeScript
+- Backend: Node.js with Express
+- Database: PostgreSQL
+
+### Validation Commands
+- test: npm test
+- lint: npm run lint
+- build: npm run build
+- typecheck: npm run typecheck
+
+### Coding Standards
+- Use TypeScript strict mode
+- Follow ESLint rules
+- Write tests for new features
+
+### File Structure
+src/
+├── components/    # React components
+├── pages/         # Page components
+├── api/           # API routes
+├── lib/           # Utilities
+└── types/         # TypeScript types
+```
+
+### PROMPT_plan.md
+
+Instructions for planning mode.
+
+```markdown
+# Planning Mode
+
+You are analyzing specifications to create an implementation plan.
+
+## Instructions
+1. Read all specs in `specs/`
+2. Identify dependencies between features
+3. Prioritize tasks (setup → core → polish)
+4. Create detailed task breakdowns
+
+## Output
+Write to IMPLEMENTATION_PLAN.md with:
+- Overview section
+- Phased task list with checkboxes
+- Dependencies
+- Notes for implementation
+```
+
+### PROMPT_build.md
+
+Instructions for building mode.
+
+```markdown
+# Building Mode
+
+You are implementing tasks from the implementation plan.
+
+## Instructions
+1. Read IMPLEMENTATION_PLAN.md
+2. Find the next unchecked task
+3. Implement it completely
+4. Run validation commands
+5. Mark task as complete
+
+## Guidelines
+- Follow coding standards in AGENTS.md
+- Write tests for new features
+- Keep commits atomic and descriptive
+```
+
+### IMPLEMENTATION_PLAN.md
+
+The prioritized task list.
+
+```markdown
+# Implementation Plan
+
+## Overview
+Building a habit tracking application.
+
+## Tasks
+
+### Phase 1: Setup
+- [x] Initialize React project
+- [x] Set up TypeScript
+- [ ] Configure ESLint and Prettier
+
+### Phase 2: Core Features
+- [ ] Create habit list component
+- [ ] Add habit creation form
+- [ ] Implement habit tracking logic
+- [ ] Add streak calculation
+
+### Phase 3: Polish
+- [ ] Add animations
+- [ ] Improve error handling
+- [ ] Write tests
+```
+
+### specs/
+
+Directory containing feature specifications.
+
+```
+specs/
+├── user-auth.md
+├── dashboard.md
+├── settings.md
+└── notifications.md
+```
+
+## Workflow
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Specs     │ ──▶ │    Plan     │ ──▶ │   Build     │
+│ (specs/*.md)│     │(IMPL_PLAN)  │     │(code + test)│
+└─────────────┘     └─────────────┘     └─────────────┘
+       │                  │                   │
+       ▼                  ▼                   ▼
+  Requirements      Task breakdown       Working code
+```
+
+1. **Write Specs**: Define what to build in `specs/`
+2. **Plan**: Run `ralph-starter plan` to create task list
+3. **Build**: Run `ralph-starter run` to implement tasks
+4. **Validate**: Each iteration runs tests/lint/build
+5. **Commit**: Changes are committed with meaningful messages
+
+## Best Practices
+
+### Writing Good Specs
+
+```markdown
+# Feature: User Dashboard
+
+## Description
+A dashboard showing user's habits and progress.
+
+## Requirements
+- [ ] Display list of habits
+- [ ] Show completion status for today
+- [ ] Display streak counts
+- [ ] Weekly progress chart
+
+## Technical Notes
+- Use React Query for data fetching
+- Chart.js for visualizations
+- Mobile-responsive design
+
+## Acceptance Criteria
+- Dashboard loads in under 2 seconds
+- Works on mobile devices
+- Shows accurate streak counts
+```
+
+### AGENTS.md Tips
+
+1. **Be specific about tech stack** - Include versions if important
+2. **List all validation commands** - test, lint, build, typecheck
+3. **Document file structure** - Help agent navigate codebase
+4. **Include coding standards** - ESLint config, naming conventions
+
+### Task Breakdown
+
+Good task breakdown:
+```markdown
+- [ ] Create UserDashboard component
+- [ ] Add habit list with completion toggles
+- [ ] Implement streak calculation utility
+- [ ] Add weekly chart component
+- [ ] Connect to API endpoints
+- [ ] Add loading states
+- [ ] Write component tests
+```
+
+Bad task breakdown:
+```markdown
+- [ ] Build dashboard
+```
+
+## See Also
+
+- [Validation](/docs/advanced/validation)
+- [Git Automation](/docs/advanced/git-automation)
+- [Ralph Playbook (Original)](https://claytonfarr.github.io/ralph-playbook/)
+
+---
+
+## Validation
+
+# Validation (Backpressure)
+
+The `--validate` flag enables backpressure validation, running tests/lint/build after each iteration to catch issues early.
+
+## How It Works
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  AI codes   │ ──▶ │  Validate   │ ──▶ │   Pass?     │
+└─────────────┘     └─────────────┘     └─────────────┘
+                                               │
+                    ┌──────────────────────────┤
+                    │                          │
+                    ▼                          ▼
+              ┌─────────────┐           ┌─────────────┐
+              │ Fix issues  │           │   Commit    │
+              └─────────────┘           └─────────────┘
+```
+
+1. AI implements a task
+2. Validation commands run
+3. If failed → AI gets error output and fixes issues
+4. If passed → Changes are committed (if `--commit`)
+5. Loop continues
+
+## Enable Validation
+
+```bash
+ralph-starter run "add feature" --validate
+```
+
+## Validation Commands
+
+ralph-starter looks for validation commands in two places:
+
+### 1. AGENTS.md
+
+```markdown
+### Validation Commands
+- test: npm test
+- lint: npm run lint
+- build: npm run build
+- typecheck: npm run typecheck
+```
+
+### 2. package.json (Fallback)
+
+```json
+{
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint src/",
+    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit"
+  }
+}
+```
+
+## Command Detection
+
+ralph-starter automatically detects:
+
+| Command | Detected From |
+|---------|---------------|
+| `test` | AGENTS.md or package.json `test` script |
+| `lint` | AGENTS.md or package.json `lint` script |
+| `build` | AGENTS.md or package.json `build` script |
+| `typecheck` | AGENTS.md or package.json `typecheck` script |
+
+## Validation Order
+
+Commands run in order:
+1. `test` - Run tests
+2. `lint` - Check code style
+3. `build` - Build project
+
+If any command fails, validation stops and the AI receives the error output.
+
+## Error Feedback
+
+When validation fails, the AI receives:
+
+```markdown
+## Validation Failed
+
+### npm run test
+```
+FAIL src/components/Dashboard.test.tsx
+  ● Dashboard › renders habits
+    Expected: 3
+    Received: 0
+```
+
+Please fix the above issues before continuing.
+```
+
+The AI then attempts to fix the issues before continuing.
+
+## Examples
+
+### With Commit
+
+```bash
+# Validate and commit if passed
+ralph-starter run "add tests" --validate --commit
+```
+
+### Full Automation
+
+```bash
+# Auto mode with validation and commit
+ralph-starter run --auto --validate --commit
+```
+
+### Maximum Iterations
+
+```bash
+# Limit iterations to prevent infinite fix loops
+ralph-starter run --validate --max-iterations 20
+```
+
+## Custom Validation
+
+### In AGENTS.md
+
+```markdown
+### Validation Commands
+- test: npm test -- --coverage --watchAll=false
+- lint: npm run lint -- --max-warnings 0
+- build: npm run build
+- e2e: npm run test:e2e
+```
+
+### Multiple Commands
+
+You can specify multiple validation steps:
+
+```markdown
+### Validation Commands
+- typecheck: npm run typecheck
+- lint: npm run lint
+- test: npm test
+- build: npm run build
+```
+
+## Timeout
+
+Each validation command has a 5-minute timeout. Long-running tests may need adjustment.
+
+## Skipping Validation
+
+For quick iterations without validation:
+
+```bash
+ralph-starter run "quick fix" --commit
+```
+
+## Tips
+
+1. **Start with validation** - Catches issues early
+2. **Fast tests** - Use watch mode disabled for CI-like behavior
+3. **Strict lint** - Use `--max-warnings 0` for strict linting
+4. **Build always** - Include build to catch TypeScript errors
+
+## See Also
+
+- [Git Automation](/docs/advanced/git-automation)
+- [Ralph Playbook](/docs/advanced/ralph-playbook)
+
+---
+
+## config
+
+# ralph-starter config
+
+Manage source configuration and credentials.
+
+## Synopsis
+
+```bash
+ralph-starter config <action> [args...]
+```
+
+## Actions
+
+| Action | Description |
+|--------|-------------|
+| `list` | Show all configuration |
+| `get <key>` | Get a specific value |
+| `set <key> <value>` | Set a value |
+| `delete <key>` | Remove a value |
+
+## Examples
+
+### List Configuration
+
+```bash
+ralph-starter config list
+```
+
+Output:
+```
+Configuration:
+  apiKey: sk-ant-...
+  linear.apiKey: lin_api_...
+  notion.token: secret_...
+```
+
+### Get Value
+
+```bash
+ralph-starter config get linear.apiKey
+```
+
+### Set Value
+
+```bash
+# Set LLM provider API keys
+ralph-starter config set providers.anthropic.apiKey sk-ant-xxxx
+ralph-starter config set providers.openai.apiKey sk-xxxx
+ralph-starter config set providers.openrouter.apiKey sk-or-xxxx
+
+# Set active LLM provider
+ralph-starter config set llm.provider anthropic
+
+# Set source integration keys
+ralph-starter config set linear.apiKey lin_api_xxxx
+ralph-starter config set notion.token secret_xxxx
+ralph-starter config set github.token ghp_xxxx
+ralph-starter config set figma.token figd_xxxx
+
+# Set defaults
+ralph-starter config set github.defaultIssuesRepo owner/repo
+```
+
+### Delete Value
+
+```bash
+ralph-starter config delete linear.apiKey
+```
+
+## Configuration Keys
+
+### LLM Provider Keys
+
+| Key | Description |
+|-----|-------------|
+| `llm.provider` | Active LLM provider (`anthropic`, `openai`, `openrouter`) |
+| `providers.anthropic.apiKey` | Anthropic API key |
+| `providers.openai.apiKey` | OpenAI API key |
+| `providers.openrouter.apiKey` | OpenRouter API key |
+
+### Source Integration Keys
+
+| Key | Description |
+|-----|-------------|
+| `linear.apiKey` | Linear API key |
+| `notion.token` | Notion integration token |
+| `github.token` | GitHub personal access token |
+| `github.defaultIssuesRepo` | Default repo for `--issue` without `--project` |
+| `figma.token` | Figma personal access token |
+
+## Storage Location
+
+Configuration is stored in:
+
+```
+~/.ralph-starter/config.json
+```
+
+Example file:
+```json
+{
+  "llm": {
+    "provider": "anthropic"
+  },
+  "providers": {
+    "anthropic": {
+      "apiKey": "sk-ant-xxxx"
+    }
+  }
+}
+```
+
+Source credentials are stored in:
+
+```
+~/.ralph-starter/sources.json
+```
+
+## Security Notes
+
+- Credentials are stored in plain text
+- File permissions are set to user-only (600)
+- Consider using environment variables for sensitive keys:
+  - `ANTHROPIC_API_KEY`
+  - `GITHUB_TOKEN`
+
+## Environment Variables
+
+These environment variables override config file values:
+
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | Anthropic API key |
+| `OPENAI_API_KEY` | OpenAI API key |
+| `OPENROUTER_API_KEY` | OpenRouter API key |
+| `GITHUB_TOKEN` | GitHub token |
+| `FIGMA_TOKEN` | Figma token |
+| `LINEAR_API_KEY` | Linear API key |
+| `NOTION_TOKEN` | Notion integration token |
+
+## See Also
+
+- [ralph-starter source](/docs/cli/source)
+- [Input Sources](/docs/sources/overview)
+
+---
+
+## init
+
+# ralph-starter init
+
+Initialize Ralph Playbook in an existing project.
+
+## Synopsis
+
+```bash
+ralph-starter init [options]
+```
+
+## Description
+
+The `init` command sets up Ralph Playbook files in the current directory. These files guide AI agents in understanding and building your project.
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `-n, --name <name>` | Project name |
+
+## Files Created
+
+| File | Description |
+|------|-------------|
+| `AGENTS.md` | Agent instructions and validation commands |
+| `PROMPT_plan.md` | Planning mode prompt template |
+| `PROMPT_build.md` | Building mode prompt template |
+| `IMPLEMENTATION_PLAN.md` | Task list (initially empty) |
+| `specs/` | Directory for specification files |
+
+## Examples
+
+```bash
+# Initialize in current directory
+ralph-starter init
+
+# With project name
+ralph-starter init --name my-awesome-app
+
+# In a new project
+mkdir my-project && cd my-project
+git init
+ralph-starter init --name my-project
+```
+
+## Generated Files
+
+### AGENTS.md
+
+```markdown
+# AGENTS.md
+
+## Project: my-project
+
+### Validation Commands
+- test: npm test
+- lint: npm run lint
+- build: npm run build
+
+### Agent Instructions
+[Instructions for AI agents...]
+```
+
+### PROMPT_plan.md
+
+```markdown
+# Planning Mode
+
+Read the specs in `specs/` and create an implementation plan.
+
+[Planning instructions...]
+```
+
+### PROMPT_build.md
+
+```markdown
+# Building Mode
+
+Execute tasks from IMPLEMENTATION_PLAN.md.
+
+[Building instructions...]
+```
+
+## When to Use
+
+Use `ralph-starter init` when:
+
+1. **Starting a new project** - Set up Ralph Playbook from scratch
+2. **Adding to existing project** - Integrate ralph-starter into current codebase
+3. **Manual workflow** - When not using the interactive wizard
+
+## Workflow
+
+After initialization:
+
+1. Write specs in `specs/` directory
+2. Run `ralph-starter plan` to create implementation plan
+3. Run `ralph-starter run` to start building
+
+## See Also
+
+- [ralph-starter plan](/docs/cli/plan)
+- [ralph-starter run](/docs/cli/run)
+- [Ralph Playbook](/docs/advanced/ralph-playbook)
+
+---
+
+## plan
+
+# ralph-starter plan
+
+Create an implementation plan from specifications.
+
+## Synopsis
+
+```bash
+ralph-starter plan [options]
+```
+
+## Description
+
+The `plan` command analyzes specs in the `specs/` directory and generates an `IMPLEMENTATION_PLAN.md` with prioritized tasks.
+
+## Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--auto` | Run in automated mode (skip prompts) | false |
+
+## Prerequisites
+
+- Ralph Playbook initialized (`ralph-starter init`)
+- At least one spec file in `specs/` directory
+
+## Examples
+
+```bash
+# Interactive planning
+ralph-starter plan
+
+# Automated planning
+ralph-starter plan --auto
+```
+
+## How It Works
+
+1. **Read Specs**: Scans `specs/` for markdown files
+2. **Analyze**: AI analyzes requirements and dependencies
+3. **Prioritize**: Creates ordered task list
+4. **Generate**: Writes IMPLEMENTATION_PLAN.md
+
+## Generated Plan Format
+
+```markdown
+# Implementation Plan
+
+## Overview
+Brief summary of the project.
+
+## Tasks
+
+### Phase 1: Setup
+- [ ] Initialize project structure
+- [ ] Set up development environment
+- [ ] Configure build tools
+
+### Phase 2: Core Features
+- [ ] Implement user authentication
+- [ ] Create main dashboard
+- [ ] Add data persistence
+
+### Phase 3: Polish
+- [ ] Add error handling
+- [ ] Write tests
+- [ ] Documentation
+
+## Dependencies
+- Task B depends on Task A
+- Task C depends on Task B
+
+## Notes
+Additional context for the AI agent.
+```
+
+## Spec File Format
+
+For best results, write detailed specs:
+
+```markdown
+# Feature: User Authentication
+
+## Description
+Add email/password authentication to the application.
+
+## Requirements
+- Login form with email and password
+- Registration with email verification
+- Password reset flow
+- Session management
+
+## Technical Notes
+- Use NextAuth.js
+- Store sessions in database
+- Implement rate limiting
+
+## Acceptance Criteria
+- [ ] User can register with email
+- [ ] User can log in
+- [ ] User can reset password
+- [ ] Sessions persist across page loads
+```
+
+## Workflow
+
+```bash
+# 1. Initialize
+ralph-starter init
+
+# 2. Write specs
+echo "# My Feature\n\nDescription here..." > specs/feature.md
+
+# 3. Create plan
+ralph-starter plan
+
+# 4. Review plan
+cat IMPLEMENTATION_PLAN.md
+
+# 5. Start building
+ralph-starter run
+```
+
+## Tips
+
+1. **One spec per feature** - Keep specs focused
+2. **Include acceptance criteria** - Helps AI know when task is complete
+3. **Add technical notes** - Specify tech preferences
+4. **Review the plan** - Check the generated plan before running
+
+## See Also
+
+- [ralph-starter init](/docs/cli/init)
+- [ralph-starter run](/docs/cli/run)
+- [Ralph Playbook](/docs/advanced/ralph-playbook)
+
+---
+
+## run
+
+# ralph-starter run
+
+Run an autonomous AI coding loop.
+
+## Synopsis
+
+```bash
+ralph-starter run [task] [options]
+```
+
+## Description
+
+The `run` command executes an autonomous coding loop. The AI agent works on tasks iteratively until completion.
+
+## Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `task` | Optional task description. If not provided, uses the implementation plan. |
+
+## Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--auto` | Skip permission prompts | false |
+| `--commit` | Auto-commit after each task | false |
+| `--push` | Push commits to remote | false |
+| `--pr` | Create pull request when done | false |
+| `--validate` | Run tests/lint/build after iterations | false |
+| `--prd <file>` | Read tasks from markdown PRD | - |
+| `--agent <name>` | Specify agent (claude-code, cursor, codex, opencode) | auto-detect |
+| `--max-iterations <n>` | Maximum loop iterations | 50 |
+| `--from <source>` | Fetch spec from source | - |
+| `--project <name>` | Project filter for sources | - |
+| `--label <name>` | Label filter for sources | - |
+| `--status <status>` | Status filter for sources | - |
+| `--limit <n>` | Max items from source | 20 |
+| `--issue <n>` | Specific issue number (for GitHub) | - |
+| `--output-dir <path>` | Directory to run the task in | cwd |
+
+## Examples
+
+### Basic Usage
+
+```bash
+# Run a single task
+ralph-starter run "build a todo app with React"
+
+# Run from implementation plan
+ralph-starter run
+```
+
+### With Git Automation
+
+```bash
+# Auto-commit changes
+ralph-starter run "add login page" --commit
+
+# Commit and push
+ralph-starter run "fix bug" --commit --push
+
+# Full automation with PR
+ralph-starter run "add feature" --commit --push --pr
+```
+
+### With Validation
+
+```bash
+# Run tests/lint/build after each iteration
+ralph-starter run "refactor auth" --validate
+
+# Combine with commit
+ralph-starter run "add tests" --commit --validate
+```
+
+### From External Sources
+
+```bash
+# From URL
+ralph-starter run --from https://example.com/spec.md
+
+# From GitHub
+ralph-starter run --from github --project owner/repo --label "ready"
+
+# From a specific GitHub issue
+ralph-starter run --from github --project owner/repo --issue 123
+
+# From Linear
+ralph-starter run --from linear --label "in-progress"
+```
+
+### Project Location
+
+When fetching from integration sources (GitHub, Linear, Notion), you'll be prompted where to run the task:
+
+```
+? Where do you want to run this task?
+  ❯ Current directory (/Users/you/current)
+    Create new project folder
+    Enter custom path
+```
+
+To skip the prompt:
+
+```bash
+# Use --output-dir to specify the directory
+ralph-starter run --from github --project owner/repo --issue 42 --output-dir ~/projects/new-app
+
+# Use --auto for non-interactive mode (uses current directory)
+ralph-starter run --from github --project owner/repo --issue 42 --auto
+```
+
+### From PRD File
+
+Work through tasks from a Product Requirements Document (PRD) file. The standard ralph-wiggum filename is `PRD.md`:
+
+```bash
+# Run tasks from PRD.md (standard filename)
+ralph-starter run --prd PRD.md
+
+# Or specify a custom path
+ralph-starter run --prd ./specs/feature-prd.md
+
+# Combine with automation
+ralph-starter run --prd PRD.md --commit --validate
+```
+
+**PRD.md Format Example:**
+
+```markdown
+# User Authentication
+
+Implement secure authentication for the application.
+
+## Backend
+- [ ] Create user model with email/password
+- [ ] Implement JWT token generation
+- [ ] Add password hashing with bcrypt
+
+## Frontend
+- [ ] Build login form component
+- [ ] Add session management
+- [ ] Handle authentication errors
+```
+
+The agent will:
+1. Parse tasks from checkbox format (`- [ ]` / `- [x]`)
+2. Work through pending tasks one by one
+3. Track progress (completed vs pending)
+4. Group tasks by section headers
+5. Mark tasks complete by changing `[ ]` to `[x]`
+
+### Advanced
+
+```bash
+# Specify agent
+ralph-starter run "build API" --agent claude-code
+
+# Limit iterations
+ralph-starter run "complex task" --max-iterations 100
+
+# Full automation
+ralph-starter run --auto --commit --validate --max-iterations 30
+```
+
+## Behavior
+
+1. **Task Resolution**:
+   - If `task` provided → use that task
+   - If `--from` provided → fetch spec from source
+   - If `--prd` provided → parse tasks from PRD file
+   - Otherwise → read from IMPLEMENTATION_PLAN.md
+
+2. **Loop Execution**:
+   - Agent works on task
+   - If `--validate` → run validation commands
+   - If validation fails → agent fixes issues
+   - If `--commit` → commit changes
+   - Repeat until task complete or max iterations
+
+3. **Completion**:
+   - If `--push` → push to remote
+   - If `--pr` → create pull request
+
+## Exit Codes
+
+| Code | Description |
+|------|-------------|
+| 0 | Success |
+| 1 | Error (validation failed, agent error, etc.) |
+
+## See Also
+
+- [ralph-starter init](/docs/cli/init)
+- [ralph-starter plan](/docs/cli/plan)
+- [Input Sources](/docs/sources/overview)
+
+---
+
+## source
+
+# ralph-starter source
+
+Manage input sources.
+
+## Synopsis
+
+```bash
+ralph-starter source <action> [args...] [options]
+```
+
+## Actions
+
+| Action | Description |
+|--------|-------------|
+| `list` | Show available sources |
+| `help <name>` | Get help for a source |
+| `test <name>` | Test source connectivity |
+| `preview <name>` | Preview items from source |
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `--project <name>` | Project/repo filter |
+| `--label <name>` | Label filter |
+| `--status <status>` | Status filter |
+| `--limit <n>` | Max items (default: 10) |
+
+## Examples
+
+### List Sources
+
+```bash
+ralph-starter source list
+```
+
+Output:
+```
+Available Sources:
+
+Built-in:
+  file     - Local files and directories
+  url      - Remote URLs (markdown, HTML)
+  pdf      - PDF documents
+
+Integrations:
+  github   - GitHub Issues [configured]
+  linear   - Linear issues [not configured]
+  notion   - Notion pages [not configured]
+```
+
+### Get Help
+
+```bash
+ralph-starter source help github
+```
+
+Output:
+```
+GitHub Source
+
+Fetch specs from GitHub Issues.
+
+Authentication:
+  - GitHub CLI (gh auth login)
+  - Or: ralph-starter config set github.token <token>
+
+Usage:
+  ralph-starter run --from github --project owner/repo
+
+Options:
+  --project   Repository (owner/repo format)
+  --label     Filter by label
+  --status    Filter by status (open, closed, all)
+  --limit     Max issues to fetch
+```
+
+### Test Connectivity
+
+```bash
+ralph-starter source test linear
+```
+
+Output:
+```
+Testing Linear connection...
+✓ Connected successfully
+✓ Found 3 teams
+✓ API access verified
+```
+
+### Preview Items
+
+```bash
+ralph-starter source preview github --project owner/repo --label "ready"
+```
+
+Output:
+```
+Previewing items from GitHub (owner/repo):
+
+1. Add user authentication (#42)
+   Labels: feature, ready
+   Created: 2024-01-15
+
+2. Fix login bug (#38)
+   Labels: bug, ready
+   Created: 2024-01-14
+
+3. Update dashboard (#35)
+   Labels: enhancement, ready
+   Created: 2024-01-12
+
+Found 3 items matching filters.
+```
+
+## Available Sources
+
+### Built-in
+
+| Source | Description |
+|--------|-------------|
+| `file` | Local files (.md, directories) |
+| `url` | Remote URLs (fetches and converts) |
+| `pdf` | PDF documents (extracts text) |
+
+### Integrations
+
+| Source | Auth Method |
+|--------|-------------|
+| `github` | gh CLI or token |
+| `linear` | API key |
+| `notion` | Integration token |
+
+## Workflow
+
+```bash
+# 1. Check available sources
+ralph-starter source list
+
+# 2. Configure if needed
+ralph-starter config set linear.apiKey <key>
+
+# 3. Test connection
+ralph-starter source test linear
+
+# 4. Preview items
+ralph-starter source preview linear --label "in-progress"
+
+# 5. Run with source
+ralph-starter run --from linear --label "in-progress"
+```
+
+## See Also
+
+- [ralph-starter config](/docs/cli/config)
+- [Input Sources Overview](/docs/sources/overview)
+- [GitHub Source](/docs/sources/github)
+- [Linear Source](/docs/sources/linear)
+
+---
+
+## template
+
+# ralph-starter template
+
+Browse and use project templates from the ralph-templates repository.
+
+## Synopsis
+
+```bash
+ralph-starter template [action] [args...] [options]
+```
+
+## Description
+
+The `template` command lets you browse, preview, and use pre-built project templates. Templates are curated specs that describe complete projects, which the AI agent builds from scratch.
+
+Templates are fetched from [github.com/rubenmarcus/ralph-templates](https://github.com/rubenmarcus/ralph-templates) and cached locally for offline use.
+
+## Actions
+
+| Action | Description |
+|--------|-------------|
+| `list` | List all available templates |
+| `preview <name>` | Preview a template's content |
+| `use <name>` | Use a template to start a new project |
+| `browse` | Interactive template browser |
+| `help` | Show help |
+
+## Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--category <name>` | Filter by category | - |
+| `--refresh` | Force refresh the cache | false |
+| `--auto` | Skip confirmation prompts | false |
+| `--output-dir <path>` | Directory to create the project in | cwd |
+| `--commit` | Auto-commit after each task | false |
+| `--push` | Push commits to remote | false |
+| `--pr` | Create pull request when done | false |
+| `--validate` | Run tests/lint/build after iterations | false |
+| `--agent <name>` | Specify agent | auto-detect |
+| `--max-iterations <n>` | Maximum loop iterations | auto |
+
+## Categories
+
+Templates are organized into categories:
+
+- `web-dev` - Web development projects (SaaS, landing pages, dashboards)
+- `blockchain` - Web3 and blockchain projects
+- `devops` - DevOps tools and automation
+- `mobile` - Mobile app projects
+- `tools` - CLI tools and utilities
+- `seo` - SEO and Answer Engine Optimization toolkits
+
+## Examples
+
+### List Templates
+
+```bash
+# List all templates
+ralph-starter template list
+
+# Filter by category
+ralph-starter template list --category web-dev
+
+# Force refresh from remote
+ralph-starter template list --refresh
+```
+
+### Preview a Template
+
+```bash
+# Preview template content
+ralph-starter template preview nextjs-saas
+
+# Preview a CLI tool template
+ralph-starter template preview cli-tool
+```
+
+### Use a Template
+
+```bash
+# Use a template (interactive)
+ralph-starter template use landing-page
+
+# Specify output directory
+ralph-starter template use nextjs-saas --output-dir ~/projects/my-saas
+
+# Skip prompts
+ralph-starter template use cli-tool --auto
+
+# With full automation
+ralph-starter template use landing-page --auto --commit --pr
+```
+
+### Interactive Browser
+
+```bash
+# Browse templates interactively
+ralph-starter template browse
+```
+
+### Quick Use (Shorthand)
+
+```bash
+# Use template name directly as action
+ralph-starter template nextjs-saas
+```
+
+## Template Structure
+
+Each template includes:
+
+- **ID** - Unique identifier (e.g., `nextjs-saas`)
+- **Name** - Display name
+- **Description** - What the template builds
+- **Category** - Organization category
+- **Tags** - Searchable keywords
+- **Difficulty** - `beginner`, `intermediate`, or `advanced`
+- **Spec Content** - The actual project specification in markdown
+
+## Caching
+
+Templates are cached locally at `~/.ralph-starter/templates-cache/`:
+
+- Cache expires after 1 hour
+- Use `--refresh` to force update
+- Registry and individual templates are cached separately
+
+## Workflow
+
+1. **Browse** - Find a template that matches your needs
+2. **Preview** - Check the spec content
+3. **Use** - Let the AI agent build it
+4. **Customize** - Modify the generated project as needed
+
+## Creating Custom Templates
+
+To contribute templates, see the [ralph-templates repository](https://github.com/rubenmarcus/ralph-templates).
+
+## Exit Codes
+
+| Code | Description |
+|------|-------------|
+| 0 | Success |
+| 1 | Error (template not found, network error, etc.) |
+
+## See Also
+
+- [ralph-starter run](/docs/cli/run)
+- [ralph-starter wizard](/docs/wizard/overview)
+- [Input Sources](/docs/sources/overview)
+
+---
+
+## Changelog
+
+
+All notable changes to ralph-starter are documented here.
+
+## [Unreleased]
+
+### Planned
+- Interactive wizard mode improvements
+- Additional input source integrations
+- Template marketplace
+
+---
+
+## [0.1.x] - Initial Release
+
+### Added
+- Core CLI with `run`, `init`, `plan`, `config`, and `source` commands
+- GitHub integration for fetching issues and PRs
+- Linear integration for fetching issues
+- Notion integration for fetching pages
+- Interactive wizard with idea mode
+- MCP server integration for Claude Desktop
+- Ralph Playbook support for custom configurations
+- Git automation for commits and PRs
+- Validation system for specs
+
+### Features
+- **Multi-source support**: Fetch specs from GitHub, Linear, or Notion
+- **Autonomous coding loops**: Let AI agents build from specs
+- **Interactive wizard**: Step-by-step project setup
+- **MCP integration**: Use with Claude Desktop
+
+---
+
+## Version History
+
+For the complete version history and release notes, see:
+
+- [GitHub Releases](https://github.com/rubenmarcus/ralph-starter/releases)
+- [npm Package History](https://www.npmjs.com/package/ralph-starter?activeTab=versions)
+
+## Upgrade Guide
+
+### Upgrading to latest
+
+```bash
+npm install -g ralph-starter@latest
+# or
+pnpm add -g ralph-starter@latest
+```
+
+### Check current version
+
+```bash
+ralph-starter --version
+```
+
+## Contributing
+
+Found a bug or want to contribute?
+
+- [Report Issues](https://github.com/rubenmarcus/ralph-starter/issues)
+- [Submit Ideas](https://github.com/rubenmarcus/ralph-ideas/issues)
+- [View Source](https://github.com/rubenmarcus/ralph-starter)
+
+---
+
+## Contributing
+
+
+Thank you for your interest in contributing to ralph-starter! This guide will help you get started.
+
+## Ways to Contribute
+
+### Report Bugs
+
+Found a bug? Please report it on [GitHub Issues](https://github.com/rubenmarcus/ralph-starter/issues).
+
+When reporting bugs, please include:
+- ralph-starter version (`ralph-starter --version`)
+- Node.js version (`node --version`)
+- Operating system
+- Steps to reproduce
+- Expected vs actual behavior
+- Error messages or logs
+
+### Submit Ideas
+
+Have a feature idea? Submit it to [ralph-ideas](https://github.com/rubenmarcus/ralph-ideas/issues).
+
+Good idea submissions include:
+- Clear description of the feature
+- Use case / problem it solves
+- Suggested implementation (optional)
+- Examples from other tools (optional)
+
+### Contribute Code
+
+1. **Fork the repository**
+   ```bash
+   gh repo fork rubenmarcus/ralph-starter
+   ```
+
+2. **Clone your fork**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/ralph-starter
+   cd ralph-starter
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pnpm install
+   ```
+
+4. **Create a feature branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+5. **Make your changes**
+   - Follow the existing code style
+   - Add tests for new functionality
+   - Update documentation if needed
+
+6. **Run tests**
+   ```bash
+   pnpm test
+   ```
+
+7. **Commit your changes**
+   ```bash
+   git commit -m "feat: add your feature description"
+   ```
+
+8. **Push and create a PR**
+   ```bash
+   git push origin feature/your-feature-name
+   gh pr create
+   ```
+
+## Development Setup
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm
+- Git
+
+### Project Structure
+
+```
+ralph-starter/
+├── src/              # Source code
+│   ├── cli/          # CLI commands
+│   ├── sources/      # Input source integrations
+│   ├── core/         # Core functionality
+│   └── utils/        # Utility functions
+├── docs/             # Documentation (Docusaurus)
+├── tests/            # Test files
+└── package.json
+```
+
+### Running Locally
+
+```bash
+# Build the project
+pnpm build
+
+# Run in development
+pnpm dev
+
+# Run tests
+pnpm test
+
+# Run linting
+pnpm lint
+```
+
+## Code Style
+
+- Use TypeScript
+- Follow existing patterns in the codebase
+- Use meaningful variable and function names
+- Add JSDoc comments for public APIs
+- Keep functions small and focused
+
+## Commit Messages
+
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation changes
+- `chore:` Maintenance tasks
+- `refactor:` Code refactoring
+- `test:` Adding or updating tests
+
+Examples:
+```
+feat: add Jira integration
+fix: resolve GitHub auth token refresh issue
+docs: update installation guide
+```
+
+## Pull Request Guidelines
+
+- Keep PRs focused on a single change
+- Include tests for new functionality
+- Update documentation if needed
+- Link to related issues
+- Respond to review feedback promptly
+
+## Questions?
+
+- [Browse Templates](https://github.com/rubenmarcus/ralph-templates)
+- [Open an Issue](https://github.com/rubenmarcus/ralph-starter/issues)
+
+---
+
+Thank you for contributing to ralph-starter!
+
+---
+
+## Ideas & Roadmap
+
+
+Browse and contribute to the future of ralph-starter. All ideas and feature requests are tracked in the [ralph-ideas](https://github.com/rubenmarcus/ralph-ideas) repository.
+
+## Quick Links
+
+- [View All Ideas](https://github.com/rubenmarcus/ralph-ideas/issues)
+- [Submit New Idea](https://github.com/rubenmarcus/ralph-ideas/issues/new)
+- [Browse Templates](https://github.com/rubenmarcus/ralph-templates) - Ready-to-use project templates
+- [P1 - Critical Priority](https://github.com/rubenmarcus/ralph-ideas/labels/P1)
+- [P2 - High Priority](https://github.com/rubenmarcus/ralph-ideas/labels/P2)
+- [P3 - Medium Priority](https://github.com/rubenmarcus/ralph-ideas/labels/P3)
+
+## Categories
+
+### Templates
+
+Browse available templates at [ralph-templates](https://github.com/rubenmarcus/ralph-templates) or request new ones below:
+
+| Template Request | Priority | Status |
+|------------------|----------|--------|
+| [Next.js SaaS Starter](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Atemplates+saas) | P1 | Planned |
+| [Marketing Landing Page](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Atemplates+landing) | P1 | Planned |
+| [GitHub Actions CI/CD](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Adevops+actions) | P1 | Planned |
+| [Express.js REST API](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Atemplates+express) | P2 | Planned |
+| [Chrome Extension](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Atemplates+extension) | P2 | Planned |
+| [CLI Tool](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Atemplates+cli) | P2 | Planned |
+
+[Request new template →](https://github.com/rubenmarcus/ralph-ideas/issues/new?labels=templates)
+
+### Automation
+
+Tools to streamline development workflows:
+
+| Feature | Priority | Status |
+|---------|----------|--------|
+| [Auto PR Review Bot](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Aautomation+PR+review) | P1 | Planned |
+| [Auto Release Notes](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Aautomation+release) | P1 | Planned |
+| [Auto Issue Triage](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Aautomation+triage) | P2 | Planned |
+| [Auto Dependency Updates](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Aautomation+dependency) | P2 | Planned |
+| [Auto Documentation](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Aautomation+docs) | P2 | Planned |
+| [Auto Test Generator](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Aautomation+test) | P2 | Planned |
+
+[View all automation ideas →](https://github.com/rubenmarcus/ralph-ideas/labels/automation)
+
+### Blockchain & Web3
+
+Blockchain and decentralized application templates:
+
+| Template | Priority | Status |
+|----------|----------|--------|
+| [Web3 dApp Frontend](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Ablockchain+dapp) | P2 | Planned |
+| [ERC-20 Token](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Ablockchain+erc20) | P3 | Backlog |
+| [NFT Collection](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Ablockchain+nft) | P3 | Backlog |
+| [DeFi Staking Contract](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Ablockchain+defi) | P3 | Backlog |
+
+[View all blockchain ideas →](https://github.com/rubenmarcus/ralph-ideas/labels/blockchain)
+
+### DevOps & Infrastructure
+
+CI/CD and infrastructure templates:
+
+| Template | Priority | Status |
+|----------|----------|--------|
+| [Docker Compose Dev Environment](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Adevops+docker) | P2 | Planned |
+| [Kubernetes + Helm Charts](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Adevops+kubernetes) | P3 | Backlog |
+| [Terraform Infrastructure](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Adevops+terraform) | P3 | Backlog |
+| [Monitoring Stack](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Adevops+monitoring) | P3 | Backlog |
+
+[View all DevOps ideas →](https://github.com/rubenmarcus/ralph-ideas/labels/devops)
+
+### Scripts & Utilities
+
+Helpful scripts and developer tools:
+
+| Utility | Priority | Status |
+|---------|----------|--------|
+| [Git Hooks Setup](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Ascripts+hooks) | P2 | Planned |
+| [Database Seeder](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Ascripts+seeder) | P2 | Planned |
+| [OpenAPI Client Generator](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Ascripts+openapi) | P3 | Backlog |
+| [Environment Validator](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Ascripts+env) | P3 | Backlog |
+| [Project Health Check](https://github.com/rubenmarcus/ralph-ideas/issues?q=label%3Ascripts+health) | P3 | Backlog |
+
+[View all scripts & utilities →](https://github.com/rubenmarcus/ralph-ideas/labels/scripts)
+
+## Integrations
+
+Feature requests for ralph-starter core:
+
+| Feature | Priority | Status |
+|---------|----------|--------|
+| [Slack Integration](https://github.com/rubenmarcus/ralph-ideas/issues?q=slack) | Enhancement | Planned |
+| [Figma Integration](https://github.com/rubenmarcus/ralph-ideas/issues?q=figma) | Enhancement | Planned |
+| [Debug/Interactive Mode](https://github.com/rubenmarcus/ralph-ideas/issues?q=debug+mode) | Enhancement | Planned |
+| [Swarm Mode](https://github.com/rubenmarcus/ralph-ideas/issues?q=swarm) | Enhancement | Planned |
+| [GitHub Action](https://github.com/rubenmarcus/ralph-ideas/issues?q=github+action) | Enhancement | Planned |
+| [Ollama Support](https://github.com/rubenmarcus/ralph-ideas/issues?q=ollama) | Enhancement | Planned |
+| [Google Gemini Provider](https://github.com/rubenmarcus/ralph-ideas/issues?q=gemini) | Enhancement | Planned |
+
+## Contributing Ideas
+
+Have a feature request or idea? We'd love to hear it!
+
+1. **Check existing issues** - Search [ralph-ideas](https://github.com/rubenmarcus/ralph-ideas/issues) to avoid duplicates
+2. **Create a new issue** - Use a clear, descriptive title
+3. **Add labels** - Use appropriate priority (P1/P2/P3) and category labels
+4. **Describe the use case** - Explain why this feature would be useful
+
+### Priority Guidelines
+
+- **P1 (Critical)**: Core features that many users need
+- **P2 (High)**: Important features that enhance the experience
+- **P3 (Medium)**: Nice-to-have features for specific use cases
+
+---
+
+## FAQ
+
+# Frequently Asked Questions
+
+## General
+
+### What is ralph-starter?
+
+ralph-starter is a CLI tool that runs autonomous AI coding loops. Give it a task or specification, and it will build production-ready code automatically using Claude Code or other AI coding agents.
+
+### What is Ralph Wiggum?
+
+Ralph Wiggum is a technique for running AI coding agents in autonomous loops until tasks are completed. Instead of prompting back and forth with an AI, you give it a task and let it iterate until done. ralph-starter makes this technique accessible to everyone.
+
+### Do I need to be a developer to use ralph-starter?
+
+No. ralph-starter includes an interactive wizard that guides anyone through creating projects. Just run `ralph-starter` with no arguments and follow the prompts.
+
+### Is ralph-starter free?
+
+ralph-starter is open source and free to use. However, it uses AI APIs (like Anthropic's Claude) which may have associated costs depending on your usage.
+
+---
+
+## Installation
+
+### How do I install ralph-starter?
+
+```bash
+npm install -g ralph-starter
+```
+
+Or use without installing:
+
+```bash
+npx ralph-starter
+```
+
+### What are the system requirements?
+
+- Node.js 18 or higher
+- npm or yarn
+- Git (optional, for version control features)
+- Claude Code CLI (for AI coding features)
+
+### How do I update ralph-starter?
+
+```bash
+npm update -g ralph-starter
+```
+
+---
+
+## Usage
+
+### How do I start a new project?
+
+Run the interactive wizard:
+
+```bash
+ralph-starter
+```
+
+Or specify a task directly:
+
+```bash
+ralph-starter run "build a todo app with React"
+```
+
+### What is Idea Mode?
+
+Idea Mode helps you brainstorm project ideas when you don't know what to build:
+
+```bash
+ralph-starter ideas
+```
+
+It uses AI to generate project suggestions based on your interests, skills, or trending technologies.
+
+### Can I fetch specifications from external tools?
+
+Yes. ralph-starter supports fetching specs from:
+
+- **GitHub Issues**: `ralph-starter run --from github --project owner/repo`
+- **Linear**: `ralph-starter run --from linear --label "ready"`
+- **Notion**: `ralph-starter run --from notion --project "Specs Database"`
+- **URLs**: `ralph-starter run --from https://example.com/spec.md`
+- **Local files**: `ralph-starter run --from ./requirements.pdf`
+
+### How do I configure API keys?
+
+Use the config command:
+
+```bash
+ralph-starter config set linear.apiKey lin_api_xxxx
+ralph-starter config set notion.token secret_xxxx
+ralph-starter config set github.token ghp_xxxx
+```
+
+---
+
+## Integrations
+
+### How do I connect GitHub?
+
+GitHub integration uses the `gh` CLI. If you're logged into `gh`, no additional setup is needed:
+
+```bash
+gh auth login
+ralph-starter source test github
+```
+
+### How do I connect Linear?
+
+1. Get your API key from [linear.app/settings/api](https://linear.app/settings/api)
+2. Configure ralph-starter:
+
+```bash
+ralph-starter config set linear.apiKey lin_api_xxxx
+ralph-starter source test linear
+```
+
+### How do I connect Notion?
+
+1. Create an integration at [notion.so/my-integrations](https://www.notion.so/my-integrations)
+2. Share your pages/databases with the integration
+3. Configure ralph-starter:
+
+```bash
+ralph-starter config set notion.token secret_xxxx
+ralph-starter source test notion
+```
+
+### Can I use public Notion pages without authentication?
+
+Yes. For public Notion pages, use the URL source:
+
+```bash
+ralph-starter run --from https://notion.so/Your-Public-Page-abc123
+```
+
+Note: Content extraction is limited for public pages since Notion renders client-side.
+
+---
+
+## MCP Server
+
+### What is the MCP server?
+
+ralph-starter can run as an MCP (Model Context Protocol) server, allowing AI assistants like Claude Desktop to use its capabilities directly.
+
+### How do I use ralph-starter with Claude Desktop?
+
+Add this to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "ralph-starter": {
+      "command": "npx",
+      "args": ["ralph-starter", "mcp"]
+    }
+  }
+}
+```
+
+---
+
+## Troubleshooting
+
+### "Command not found: ralph-starter"
+
+Ensure npm global binaries are in your PATH:
+
+```bash
+export PATH="$PATH:$(npm config get prefix)/bin"
+```
+
+Or use npx instead:
+
+```bash
+npx ralph-starter
+```
+
+### "Source test failed"
+
+1. Verify your API key is correct
+2. Check the key hasn't expired
+3. Ensure you have the required permissions
+
+```bash
+ralph-starter config set linear.apiKey <new-key>
+ralph-starter source test linear
+```
+
+### "No items found" when fetching from a source
+
+- **Linear**: Make sure you have issues matching your filter
+- **Notion**: Ensure the page/database is shared with your integration
+- **GitHub**: Check the repo exists and you have access
+
+### Where are credentials stored?
+
+Credentials are stored in `~/.ralph-starter/sources.json`. This file has user-only permissions (600). Never commit this file to version control.
+
+---
+
+## Contributing
+
+### How can I contribute to ralph-starter?
+
+1. Fork the repository on GitHub
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+See the [contributing guide](https://github.com/rubenmarcus/ralph-starter/blob/main/CONTRIBUTING.md) for details.
+
+### How do I report bugs?
+
+Open an issue on GitHub: [github.com/rubenmarcus/ralph-starter/issues](https://github.com/rubenmarcus/ralph-starter/issues)
+
+---
+
+## More Questions?
+
+- Check the [full documentation](/docs/intro)
+- Browse [Templates](https://github.com/rubenmarcus/ralph-templates)
+- Open an [issue](https://github.com/rubenmarcus/ralph-starter/issues)
+
+---
+
+## Extending ralph-starter
+
+
+This guide covers how developers can extend ralph-starter with custom input sources, use the programmatic API, and contribute to the project.
+
+## Architecture Overview
+
+```
+ralph-starter/
+├── src/
+│   ├── cli.ts              # CLI entry point
+│   ├── index.ts            # Public API exports
+│   ├── commands/           # CLI commands
+│   ├── sources/            # Input source system
+│   │   ├── types.ts        # Source interface definitions
+│   │   ├── base.ts         # Base source class
+│   │   ├── builtin/        # Built-in sources (file, url, pdf)
+│   │   └── integrations/   # Integration sources (linear, notion, etc.)
+│   ├── wizard/             # Interactive wizard
+│   ├── loop/               # Autonomous loop engine
+│   ├── mcp/                # MCP server
+│   └── automation/         # Git automation
+```
+
+---
+
+## Creating Custom Input Sources
+
+ralph-starter's source system is designed for extensibility. Here's how to create your own input source.
+
+### The Source Interface
+
+```typescript
+import type { InputSource, SourceResult, SourceOptions } from 'ralph-starter';
+
+interface InputSource {
+  // Unique identifier for the source
+  name: string;
+
+  // Human-readable description
+  description: string;
+
+  // Check if this source is available (e.g., CLI tool installed, API reachable)
+  isAvailable(): Promise<boolean>;
+
+  // Whether authentication is required
+  requiresAuth(): boolean;
+
+  // Fetch items from the source
+  fetch(identifier: string, options?: SourceOptions): Promise<SourceResult>;
+}
+```
+
+### Example: Custom Source
+
+Here's an example of creating a custom source that fetches from Trello:
+
+```typescript
+// src/sources/integrations/trello.ts
+import { BaseSource } from '../base.js';
+import type { SourceResult, SourceOptions } from '../types.js';
+import { getSourceCredentials } from '../config.js';
+
+export class TrelloSource extends BaseSource {
+  name = 'trello';
+  description = 'Fetch cards from Trello boards';
+
+  async isAvailable(): Promise<boolean> {
+    const creds = getSourceCredentials('trello');
+    return !!(creds?.apiKey && creds?.token);
+  }
+
+  requiresAuth(): boolean {
+    return true;
+  }
+
+  async fetch(boardId: string, options?: SourceOptions): Promise<SourceResult> {
+    const creds = getSourceCredentials('trello');
+    if (!creds?.apiKey || !creds?.token) {
+      return {
+        success: false,
+        error: 'Trello API key and token required',
+      };
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.trello.com/1/boards/${boardId}/cards?key=${creds.apiKey}&token=${creds.token}`
+      );
+      const cards = await response.json();
+
+      // Filter by label if specified
+      let filtered = cards;
+      if (options?.label) {
+        filtered = cards.filter((card: any) =>
+          card.labels.some((l: any) => l.name === options.label)
+        );
+      }
+
+      // Apply limit
+      if (options?.limit) {
+        filtered = filtered.slice(0, options.limit);
+      }
+
+      // Convert to spec format
+      const specs = filtered.map((card: any) => ({
+        title: card.name,
+        content: this.formatSpec(card),
+        metadata: {
+          source: 'trello',
+          cardId: card.id,
+          url: card.url,
+        },
+      }));
+
+      return {
+        success: true,
+        items: specs,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to fetch from Trello: ${error}`,
+      };
+    }
+  }
+
+  private formatSpec(card: any): string {
+    return `# ${card.name}
+
+Source: Trello Card
+Board: ${card.idBoard}
+Labels: ${card.labels.map((l: any) => l.name).join(', ')}
+
+## Description
+
+${card.desc || 'No description provided.'}
+
+## Checklist Items
+
+${card.checklists?.map((cl: any) =>
+  cl.checkItems.map((item: any) =>
+    `- [${item.state === 'complete' ? 'x' : ' '}] ${item.name}`
+  ).join('\n')
+).join('\n') || 'No checklists.'}
+`;
+  }
+}
+```
+
+### Registering Your Source
+
+Add your source to the registry:
+
+```typescript
+// src/sources/index.ts
+import { TrelloSource } from './integrations/trello.js';
+
+// Add to the sources array
+const sources: InputSource[] = [
+  // ... existing sources
+  new TrelloSource(),
+];
+```
+
+### Adding Environment Variable Support
+
+Update the config to support your source's env vars:
+
+```typescript
+// src/sources/config.ts
+const ENV_VAR_MAPPINGS: Record<string, Record<string, string>> = {
+  // ... existing mappings
+  trello: {
+    apiKey: 'TRELLO_API_KEY',
+    token: 'TRELLO_TOKEN',
+  },
+};
+```
+
+---
+
+## Using ralph-starter Programmatically
+
+ralph-starter exports its core functionality for use in other tools.
+
+### Installation
+
+```bash
+npm install ralph-starter
+```
+
+### Available Exports
+
+```typescript
+import {
+  // Commands
+  initCommand,
+  planCommand,
+  runCommand,
+
+  // Source system
+  getSource,
+  getAllSources,
+  getSourceCredentials,
+  setSourceCredential,
+
+  // Wizard
+  runWizard,
+  runIdeaMode,
+
+  // Loop
+  detectBestAgent,
+  runLoop,
+
+  // Types
+  type InputSource,
+  type SourceResult,
+  type SourceOptions,
+} from 'ralph-starter';
+```
+
+### Example: Running a Loop Programmatically
+
+```typescript
+import { runCommand, detectBestAgent } from 'ralph-starter';
+
+async function buildFeature(spec: string) {
+  // Check for available agent
+  const agent = await detectBestAgent();
+  if (!agent) {
+    throw new Error('No coding agent available');
+  }
+
+  // Run the loop
+  await runCommand(spec, {
+    auto: true,
+    commit: true,
+    validate: true,
+    maxIterations: 20,
+  });
+}
+
+// Usage
+await buildFeature('Add dark mode toggle to settings page');
+```
+
+### Example: Fetching from Sources
+
+```typescript
+import { getSource } from 'ralph-starter';
+
+async function fetchLinearIssues() {
+  const source = getSource('linear');
+  if (!source) {
+    throw new Error('Linear source not found');
+  }
+
+  const result = await source.fetch('team-id', {
+    label: 'ready-to-build',
+    limit: 5,
+  });
+
+  if (!result.success) {
+    throw new Error(result.error);
+  }
+
+  return result.items;
+}
+```
+
+### Example: Using the Wizard Programmatically
+
+```typescript
+import { runWizard, runIdeaMode } from 'ralph-starter';
+
+// Run the full wizard
+await runWizard();
+
+// Or just idea mode
+const selectedIdea = await runIdeaMode();
+console.log('User selected:', selectedIdea);
+```
+
+---
+
+## Adding New Agents
+
+ralph-starter supports multiple coding agents. Here's how to add support for a new one.
+
+### Agent Detection
+
+Agents are detected in `src/loop/agents.ts`:
+
+```typescript
+interface Agent {
+  name: string;
+  command: string;
+  args: string[];
+  isAvailable(): Promise<boolean>;
+}
+
+const agents: Agent[] = [
+  {
+    name: 'claude-code',
+    command: 'claude',
+    args: ['--dangerously-skip-permissions'],
+    async isAvailable() {
+      // Check if claude CLI is available
+      try {
+        await execa('claude', ['--version']);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  },
+  // Add your agent here
+  {
+    name: 'my-agent',
+    command: 'my-agent-cli',
+    args: ['--auto'],
+    async isAvailable() {
+      try {
+        await execa('my-agent-cli', ['--version']);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  },
+];
+```
+
+### Agent Priority
+
+Agents are tried in order. Place your agent at the appropriate priority level:
+
+```typescript
+// Higher priority agents first
+const agentPriority = [
+  'claude-code',  // Most capable
+  'cursor',
+  'codex',
+  'my-agent',     // Your custom agent
+  'opencode',
+];
+```
+
+---
+
+## MCP Tools Extension
+
+You can extend ralph-starter's MCP server with custom tools.
+
+### Adding a New Tool
+
+```typescript
+// src/mcp/tools.ts
+import { z } from 'zod';
+
+export const tools = [
+  // ... existing tools
+  {
+    name: 'ralph_custom_action',
+    description: 'Perform a custom action',
+    inputSchema: z.object({
+      action: z.string().describe('The action to perform'),
+      options: z.record(z.string()).optional(),
+    }),
+    async handler(input: { action: string; options?: Record<string, string> }) {
+      // Implement your tool logic
+      return {
+        success: true,
+        result: `Performed action: ${input.action}`,
+      };
+    },
+  },
+];
+```
+
+---
+
+## Contributing
+
+### Development Setup
+
+```bash
+# Clone the repo
+git clone https://github.com/rubenmarcus/ralph-starter.git
+cd ralph-starter
+
+# Install dependencies
+npm install
+
+# Build
+npm run build
+
+# Run locally
+npm link
+ralph-starter --version
+```
+
+### Project Structure
+
+| Directory | Purpose |
+|-----------|---------|
+| `src/cli.ts` | CLI entry point and command registration |
+| `src/commands/` | Command implementations |
+| `src/sources/` | Input source system |
+| `src/wizard/` | Interactive wizard |
+| `src/loop/` | Autonomous loop engine |
+| `src/mcp/` | MCP server implementation |
+| `src/automation/` | Git automation |
+| `docs/` | Docusaurus documentation |
+
+### Testing
+
+```bash
+# Run tests
+npm test
+
+# Type check
+npm run typecheck
+
+# Lint
+npm run lint
+```
+
+### Pull Request Guidelines
+
+1. **Branch from main** - Create a feature branch from `main`
+2. **Keep PRs focused** - One feature or fix per PR
+3. **Add tests** - For new functionality
+4. **Update docs** - If you add/change features
+5. **Follow conventions** - Use conventional commits
+
+### Conventional Commits
+
+```
+feat: add trello source integration
+fix: handle empty linear responses
+docs: add extension guide
+refactor: extract source base class
+```
+
+---
+
+## API Reference
+
+### Source Types
+
+```typescript
+interface SourceOptions {
+  project?: string;
+  label?: string;
+  status?: string;
+  limit?: number;
+}
+
+interface SourceResult {
+  success: boolean;
+  items?: SourceItem[];
+  error?: string;
+}
+
+interface SourceItem {
+  title: string;
+  content: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface SourceCredentials {
+  [key: string]: string;
+}
+```
+
+### Command Options
+
+```typescript
+interface RunOptions {
+  auto?: boolean;
+  commit?: boolean;
+  push?: boolean;
+  pr?: boolean;
+  validate?: boolean;
+  from?: string;
+  project?: string;
+  label?: string;
+  status?: string;
+  limit?: number;
+  prd?: string;
+  agent?: string;
+  maxIterations?: number;
+}
+
+interface InitOptions {
+  name?: string;
+  force?: boolean;
+}
+
+interface PlanOptions {
+  auto?: boolean;
+}
+```
+
+---
+
+## Need Help?
+
+- [GitHub Issues](https://github.com/rubenmarcus/ralph-starter/issues) - Bug reports and feature requests
+- [Documentation](https://rubenmarcus.github.io/ralph-starter/) - Full docs
+- [Templates](https://github.com/rubenmarcus/ralph-templates) - Project templates
+
+---
+
+## Testing Integrations
+
+# Testing ralph-starter Integrations
+
+This guide walks you through testing ralph-starter features and setting up integrations.
+
+## Configuring API Keys
+
+You have two options for storing API keys:
+
+Use the config command to set your API keys:
+
+```bash
+ralph-starter config set linear.apiKey lin_api_xxxxx
+ralph-starter config set notion.token secret_xxxxx
+ralph-starter config set github.token ghp_xxxxx
+```
+
+## Quick Start Testing (No API Keys)
+
+You can test many features without any API keys:
+
+### 1. Test the Interactive Wizard
+
+```bash
+ralph-starter
+```
+
+This launches the wizard - follow the prompts to describe a project and see the AI refinement flow.
+
+### 2. Test Idea Mode
+
+```bash
+ralph-starter ideas
+```
+
+Choose a discovery method and see AI-generated project ideas.
+
+### 3. Test with Public URLs
+
+Fetch specs from any public markdown or HTML page:
+
+```bash
+# Public GitHub raw file
+ralph-starter run --from https://raw.githubusercontent.com/rubenmarcus/ralph-starter/main/README.md
+
+# Public gist
+ralph-starter run --from https://gist.githubusercontent.com/user/id/raw/spec.md
+
+# Any public webpage
+ralph-starter run --from https://example.com/docs/feature-spec
+```
+
+### 4. Test with Local Files
+
+```bash
+# Create a simple spec
+echo "Build a counter app with React that increments and decrements" > test-spec.md
+
+# Run with local file
+ralph-starter run --from ./test-spec.md
+```
+
+### 5. Test with PDF Files
+
+```bash
+# If you have a PDF spec
+ralph-starter run --from ./requirements.pdf
+```
+
+---
+
+## GitHub Integration (No API Key Usually Needed)
+
+GitHub uses the `gh` CLI, which doesn't require a separate API key if you're logged in.
+
+### Setup
+
+```bash
+# Install GitHub CLI (if not installed)
+# macOS
+brew install gh
+
+# Linux
+sudo apt install gh
+
+# Windows
+winget install GitHub.cli
+```
+
+### Authenticate
+
+```bash
+gh auth login
+# Follow prompts to authenticate via browser
+```
+
+### Test Connection
+
+```bash
+ralph-starter source test github
+```
+
+### Test Fetching Issues
+
+```bash
+# Preview issues from any public repo
+ralph-starter source preview github --project rubenmarcus/ralph-starter --limit 5
+
+# Run with a public repo
+ralph-starter run --from github --project rubenmarcus/ralph-starter --label "enhancement"
+```
+
+### Alternative: Personal Access Token
+
+If you prefer not to use `gh`:
+
+1. Go to [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens)
+2. Click "Generate new token (classic)"
+3. Select scopes: `repo` (or just `public_repo` for public repos)
+4. Copy the token
+
+```bash
+ralph-starter config set github.token ghp_xxxxxxxxxxxx
+ralph-starter source test github
+```
+
+---
+
+## Linear Integration
+
+### Get Your API Key
+
+1. Go to [linear.app/settings/api](https://linear.app/settings/api)
+2. Click "Create key" under "Personal API keys"
+3. Name it "ralph-starter"
+4. Copy the key (starts with `lin_api_`)
+
+### Configure
+
+```bash
+ralph-starter config set linear.apiKey lin_api_xxxxxxxxxxxx
+```
+
+### Test Connection
+
+```bash
+ralph-starter source test linear
+```
+
+### Test Fetching Issues
+
+```bash
+# Preview issues
+ralph-starter source preview linear --limit 5
+
+# Filter by label
+ralph-starter source preview linear --label "bug" --limit 3
+
+# Filter by project
+ralph-starter source preview linear --project "My Project"
+```
+
+### Create a Test Issue
+
+In Linear:
+1. Create a new issue with detailed description
+2. Add a label like "ralph-test"
+
+```bash
+ralph-starter run --from linear --label "ralph-test"
+```
+
+---
+
+## Notion Integration
+
+Notion requires a few more steps because you need to create an integration and share pages with it.
+
+### 1. Create an Integration
+
+1. Go to [notion.so/my-integrations](https://www.notion.so/my-integrations)
+2. Click "New integration"
+3. Fill in:
+   - Name: "ralph-starter"
+   - Associated workspace: Select your workspace
+   - Capabilities: Read content, Read user information
+4. Click "Submit"
+5. Copy the "Internal Integration Secret" (starts with `secret_`)
+
+### 2. Configure ralph-starter
+
+```bash
+ralph-starter config set notion.token secret_xxxxxxxxxxxx
+```
+
+### 3. Share Pages with the Integration
+
+**This step is required!** Notion integrations can only access pages explicitly shared with them.
+
+1. Open the Notion page or database you want to use
+2. Click the "..." menu in the top right
+3. Click "Add connections"
+4. Search for "ralph-starter" and select it
+5. Click "Confirm"
+
+### Test Connection
+
+```bash
+ralph-starter source test notion
+```
+
+### Test Fetching Pages
+
+```bash
+# Preview pages from a database
+ralph-starter source preview notion --project "My Database Name" --limit 5
+```
+
+### Create a Test Page
+
+1. Create a new page in a database shared with ralph-starter
+2. Add content like:
+   ```markdown
+   Build a simple blog with Next.js
+
+   Features:
+   - List blog posts
+   - View single post
+   - Markdown support
+   ```
+3. Fetch it:
+   ```bash
+   ralph-starter run --from notion --project "Your Database Name" --limit 1
+   ```
+
+---
+
+## Verifying Your Setup
+
+### Check All Sources
+
+```bash
+# List available sources
+ralph-starter source list
+
+# Test each configured source
+ralph-starter source test github
+ralph-starter source test linear
+ralph-starter source test notion
+```
+
+### View Current Config
+
+```bash
+ralph-starter config list
+```
+
+### Check Specific Config
+
+```bash
+ralph-starter config get linear
+ralph-starter config get notion
+ralph-starter config get github
+```
+
+---
+
+## Troubleshooting
+
+### "Source test failed"
+
+1. Verify your API key is correct
+2. Check the key hasn't expired
+3. Ensure you have the right permissions
+
+```bash
+# Re-enter the API key
+ralph-starter config set linear.apiKey <new-key>
+```
+
+### "No items found"
+
+1. For Linear: Make sure you have issues matching your filter
+2. For Notion: Ensure the page/database is shared with your integration
+3. For GitHub: Check the repo exists and you have access
+
+### "Authentication failed" for Notion
+
+Notion is strict about sharing. Make sure:
+1. The integration exists in your workspace
+2. You've clicked "Add connections" on the specific page/database
+3. You've refreshed the page after adding the connection
+
+### Config file location
+
+All credentials are stored in:
+```
+~/.ralph-starter/sources.json
+```
+
+You can manually edit this file if needed.
+
+---
+
+## Security Notes
+
+1. **API keys are stored locally** in `~/.ralph-starter/sources.json`
+2. **Never commit** this file to version control
+3. **Use read-only tokens** when possible
+4. **Revoke unused tokens** periodically
+
+### Removing Credentials
+
+```bash
+# Remove a specific key
+ralph-starter config delete linear.apiKey
+
+# Remove all config for a source
+ralph-starter config delete linear
+```
+
+---
+
+## Testing the Full Workflow
+
+Once integrations are set up, test the full workflow:
+
+```bash
+# 1. Initialize a new project
+mkdir test-project && cd test-project
+git init
+
+# 2. Fetch a spec from your favorite source
+ralph-starter run --from linear --label "ralph-test" --commit
+
+# 3. Watch the magic happen!
+```
+
+Or use the wizard:
+```bash
+ralph-starter
+# Follow prompts...
+```
+
+---
+
+## Installation
+
+
+## Quick Install
+
+```bash
+npm install -g ralph-starter
+```
+
+Or use directly with npx:
+
+```bash
+npx ralph-starter
+```
+
+## Requirements
+
+- **Node.js 18+** - Required for running ralph-starter
+- **Coding Agent** - At least one of the supported agents (see setup below)
+- **Git** - For version control features (`--commit`, `--push`, `--pr`)
+- **GitHub CLI** - For PR creation and GitHub source integration
+
+## Setting Up a Coding Agent
+
+ralph-starter works with several AI coding agents. You need at least one installed:
+
+### Claude Code (Recommended)
+
+The official Anthropic CLI for Claude.
+
+```bash
+# Install via npm
+npm install -g @anthropic-ai/claude-code
+
+# Authenticate
+claude login
+```
+
+Claude Code offers the best integration with ralph-starter's autonomous loops.
+
+### Cursor
+
+AI-powered code editor with built-in agent capabilities.
+
+1. Download from [cursor.sh](https://cursor.sh/)
+2. Install and open Cursor
+3. Sign in with your account
+4. Enable the Cursor CLI: `Cursor → Install 'cursor' command`
+
+### Codex (OpenAI)
+
+OpenAI's coding assistant.
+
+```bash
+# Install the OpenAI CLI
+npm install -g openai
+```
+
+### OpenCode
+
+Open-source alternative with multiple model support.
+
+```bash
+# Install
+npm install -g opencode-ai
+
+# Configure
+opencode setup
+```
+
+## Verify Installation
+
+```bash
+ralph-starter --version
+```
+
+## LLM Provider Configuration
+
+ralph-starter uses an LLM for the interactive wizard and spec refinement. Configure your preferred provider:
+
+### Anthropic (Recommended)
+
+```bash
+ralph-starter config set providers.anthropic.apiKey sk-ant-xxxx
+ralph-starter config set llm.provider anthropic
+```
+
+### OpenAI
+
+```bash
+ralph-starter config set providers.openai.apiKey sk-xxxx
+ralph-starter config set llm.provider openai
+```
+
+### OpenRouter
+
+```bash
+ralph-starter config set providers.openrouter.apiKey sk-or-xxxx
+ralph-starter config set llm.provider openrouter
+```
+
+Without an API key configured, ralph-starter falls back to using your installed coding agent for LLM tasks.
+
+## Next Steps
+
+After installation:
+
+1. Run `ralph-starter` to launch the interactive wizard
+2. Or run `ralph-starter ideas` if you need help brainstorming
+3. Check out the [Interactive Wizard](/docs/wizard/overview) guide
+
+---
+
+## Introduction
+
+# ralph-starter
+
+> **Ralph Wiggum made easy.** One command to run autonomous AI coding loops.
+
+## What is Ralph Wiggum?
+
+Ralph Wiggum is a technique for running AI coding agents in autonomous loops until tasks are completed. Instead of prompting back and forth, you give the AI a task and let it iterate until done.
+
+**ralph-starter** makes this dead simple - for developers and non-developers alike.
+
+## Quick Start
+
+### For Everyone
+
+Just run `ralph-starter` with no arguments:
+
+```bash
+ralph-starter
+```
+
+The interactive wizard will guide you through:
+1. Describing your project idea (or brainstorming one)
+2. Refining it with AI
+3. Customizing the tech stack
+4. Building it automatically
+
+### Don't Know What to Build?
+
+```bash
+ralph-starter ideas
+```
+
+This launches **Idea Mode** - a brainstorming session to help you discover project ideas.
+
+### Use a Template
+
+```bash
+# Browse available templates
+ralph-starter template list
+
+# Use a template to start a project
+ralph-starter template use nextjs-saas
+```
+
+Templates are pre-built project specs - just pick one and let the AI build it.
+
+### For Developers
+
+```bash
+# Run a single task
+ralph-starter run "build a todo app with React"
+
+# With git automation
+ralph-starter run "add user authentication" --commit --pr
+
+# Fetch specs from external sources
+ralph-starter run --from github --project myorg/myrepo --label "ready"
+```
+
+## Features
+
+- **Interactive Wizard** - Guided project creation for everyone
+- **Idea Mode** - AI-powered brainstorming when you don't know what to build
+- **Project Templates** - Pre-built specs for common project types (SaaS, CLI tools, etc.)
+- **Input Sources** - Fetch specs from GitHub, Linear, Notion, URLs, PDFs
+- **MCP Server** - Use from Claude Desktop or any MCP client
+- **Git Automation** - Auto-commit, push, and create PRs
+- **Validation** - Run tests/lint/build after each iteration (backpressure)
+- **Multi-Agent Support** - Works with Claude Code, Cursor, Codex, OpenCode
+
+## Next Steps
+
+- [Installation](/docs/installation) - Get ralph-starter installed
+- [Interactive Wizard](/docs/wizard/overview) - Learn about the guided experience
+- [Project Templates](/docs/cli/template) - Use pre-built project templates
+- [Input Sources](/docs/sources/overview) - Connect to GitHub, Linear, and more
+- [MCP Integration](/docs/mcp/setup) - Use from Claude Desktop
+
+---
+
+## Claude Desktop
+
+# Claude Desktop Setup
+
+Configure Claude Desktop to use ralph-starter as an MCP server.
+
+## Prerequisites
+
+1. [Claude Desktop](https://claude.ai/download) installed
+2. ralph-starter installed globally: `npm install -g ralph-starter`
+
+## Configuration
+
+### 1. Find Config Location
+
+The Claude Desktop config file is located at:
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+### 2. Add ralph-starter
+
+Edit the config file and add ralph-starter to `mcpServers`:
+
+```json
+{
+  "mcpServers": {
+    "ralph-starter": {
+      "command": "ralph-starter",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+If you have other MCP servers, add ralph-starter alongside them:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-filesystem"]
+    },
+    "ralph-starter": {
+      "command": "ralph-starter",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+### 3. Restart Claude Desktop
+
+Close and reopen Claude Desktop for the changes to take effect.
+
+## Verify Installation
+
+In Claude Desktop, you should see ralph-starter tools available. Try:
+
+> "Use ralph-starter to check the status of the current directory"
+
+Claude should call `ralph_status` and show the Ralph Playbook status.
+
+## Usage Examples
+
+### Scaffold a New Project
+
+> "Use ralph-starter to scaffold a React todo app in ~/projects/my-todo"
+
+Claude will:
+1. Call `ralph_init` to initialize
+2. Create a spec file
+3. Call `ralph_plan` to create implementation plan
+4. Call `ralph_run` to start building
+
+### Continue Building
+
+> "Use ralph-starter to continue building the project in the current directory"
+
+Claude will:
+1. Call `ralph_status` to check progress
+2. Call `ralph_run` to continue
+
+### Fetch and Build
+
+> "Use ralph-starter to fetch specs from GitHub issues labeled 'ready' in my-org/my-repo and start building"
+
+Claude will:
+1. Call `ralph_run` with `from: "github"` and appropriate filters
+
+## Prompts
+
+Use the built-in prompts for common workflows:
+
+### scaffold_project
+
+> "Use the scaffold_project prompt to build a habit tracker app"
+
+### continue_building
+
+> "Use the continue_building prompt"
+
+### check_progress
+
+> "Use the check_progress prompt to see what's left"
+
+### fetch_and_build
+
+> "Use fetch_and_build with GitHub as the source"
+
+## Resources
+
+Access Ralph Playbook files as MCP resources:
+
+> "Read the implementation plan resource from ralph-starter"
+
+This reads `ralph://project/implementation_plan`.
+
+## Troubleshooting
+
+### ralph-starter not found
+
+Ensure it's installed globally and in your PATH:
+
+```bash
+which ralph-starter  # Should show path
+ralph-starter --version  # Should show version
+```
+
+### Tools not appearing
+
+1. Check the config file syntax (must be valid JSON)
+2. Restart Claude Desktop completely
+3. Check Claude Desktop logs for errors
+
+### Permission errors
+
+If ralph-starter needs to access certain directories, ensure Claude Desktop has the necessary permissions.
+
+## Tips
+
+1. **Use auto mode** - When asking Claude to build, mention "in auto mode" for fewer permission prompts
+2. **Specify paths** - Be explicit about project paths to avoid confusion
+3. **Check status first** - Ask Claude to check status before running commands
+4. **Combine with filesystem MCP** - Use alongside filesystem MCP for full file access
+
+---
+
+## MCP Setup
+
+# MCP Integration
+
+ralph-starter can run as an MCP (Model Context Protocol) server, allowing you to use it from Claude Desktop, Claude Code, or any MCP-compatible client.
+
+## What is MCP?
+
+[Model Context Protocol](https://modelcontextprotocol.io/) is a standard for connecting AI assistants to external tools and data sources. When ralph-starter runs as an MCP server, Claude can directly call ralph-starter tools.
+
+## Start the MCP Server
+
+```bash
+ralph-starter mcp
+```
+
+This starts ralph-starter as a JSON-RPC 2.0 server over stdio.
+
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `ralph_init` | Initialize Ralph Playbook in a project |
+| `ralph_plan` | Create implementation plan from specs |
+| `ralph_run` | Execute autonomous coding loop |
+| `ralph_status` | Check playbook status and progress |
+| `ralph_validate` | Run tests/lint/build validation |
+
+### ralph_init
+
+Initialize Ralph Playbook files in a project.
+
+**Parameters:**
+- `path` (required): Project path to initialize
+- `name` (optional): Project name
+
+**Example:**
+```json
+{
+  "tool": "ralph_init",
+  "arguments": {
+    "path": "/path/to/project",
+    "name": "my-app"
+  }
+}
+```
+
+### ralph_plan
+
+Create an implementation plan from specs.
+
+**Parameters:**
+- `path` (required): Project path
+- `auto` (optional): Run in automated mode
+
+### ralph_run
+
+Execute the autonomous coding loop.
+
+**Parameters:**
+- `path` (required): Project path
+- `task` (optional): Specific task to execute
+- `auto` (optional): Run in automated mode
+- `commit` (optional): Auto-commit changes
+- `validate` (optional): Run validation after changes
+- `from` (optional): Source to fetch spec from
+- `project` (optional): Project filter for source
+- `label` (optional): Label filter for source
+
+### ralph_status
+
+Check the current status of Ralph Playbook in a project.
+
+**Parameters:**
+- `path` (required): Project path
+
+**Returns:**
+- Files present (AGENTS.md, specs/, etc.)
+- Implementation progress
+- Available specs
+
+### ralph_validate
+
+Run validation commands (tests, lint, build).
+
+**Parameters:**
+- `path` (required): Project path
+
+## Available Resources
+
+| Resource URI | Description |
+|--------------|-------------|
+| `ralph://project/implementation_plan` | IMPLEMENTATION_PLAN.md content |
+| `ralph://project/agents` | AGENTS.md content |
+| `ralph://project/prompt_build` | PROMPT_build.md content |
+| `ralph://project/prompt_plan` | PROMPT_plan.md content |
+| `ralph://project/specs/{name}` | Individual spec files |
+
+## Available Prompts
+
+| Prompt | Description |
+|--------|-------------|
+| `scaffold_project` | Initialize and build a new project |
+| `continue_building` | Continue from implementation plan |
+| `check_progress` | Check project status |
+| `fetch_and_build` | Fetch spec from source and build |
+
+## Next Steps
+
+- [Claude Desktop Setup](/docs/mcp/claude-desktop) - Configure Claude Desktop to use ralph-starter
+
+---
+
+## Figma
+
+# Figma Source
+
+Fetch design specifications, design tokens, component code, and assets from Figma to power your AI coding loops.
+
+## Features
+
+| Mode | Description |
+|------|-------------|
+| **spec** | Convert Figma frames to markdown design specifications |
+| **tokens** | Extract colors, typography, shadows to CSS/SCSS/JSON/Tailwind |
+| **components** | Generate React, Vue, Svelte, or HTML component code |
+| **assets** | Export icons and images with download scripts |
+| **content** | Extract text content and apply to existing templates |
+
+## Authentication
+
+### Personal Access Token
+
+1. Go to **Figma** → **Settings** → **Account** → **Personal Access Tokens**
+2. Click **Create a new personal access token**
+3. Copy the token
+
+```bash
+ralph-starter config set figma.token <your-token>
+```
+
+## Usage
+
+### Basic Usage
+
+```bash
+# Fetch design spec from a Figma file
+ralph-starter run --from figma --project "https://figma.com/file/ABC123/MyDesign"
+
+# Using file key directly
+ralph-starter run --from figma --project "ABC123"
+```
+
+### Mode: Design Spec (default)
+
+Converts Figma frames into markdown specifications for AI coding loops:
+
+```bash
+# Fetch entire file
+ralph-starter integrations fetch figma "ABC123"
+
+# Fetch specific frames by node ID
+ralph-starter integrations fetch figma "ABC123" --figma-nodes "1:23,1:45"
+```
+
+Output includes:
+- Frame hierarchy with headings
+- Dimensions and layout information
+- Auto-layout properties (flex, gap, padding)
+- Typography details
+- Component properties and variants
+- Visual effects (shadows, blur)
+
+### Mode: Design Tokens
+
+Extract design tokens for your codebase:
+
+```bash
+# CSS custom properties (default)
+ralph-starter integrations fetch figma "ABC123" --figma-mode tokens
+
+# SCSS variables
+ralph-starter integrations fetch figma "ABC123" --figma-mode tokens --figma-format scss
+
+# JSON
+ralph-starter integrations fetch figma "ABC123" --figma-mode tokens --figma-format json
+
+# Tailwind config
+ralph-starter integrations fetch figma "ABC123" --figma-mode tokens --figma-format tailwind
+```
+
+Extracted tokens:
+- **Colors** – From fill styles
+- **Typography** – Font family, size, weight, line height
+- **Shadows** – Drop shadows and inner shadows
+- **Border Radii** – From frames and shapes
+- **Spacing** – From auto-layout gaps
+
+### Mode: Component Code
+
+Generate framework-specific component code:
+
+```bash
+# React (default)
+ralph-starter integrations fetch figma "ABC123" --figma-mode components
+
+# Vue SFC
+ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework vue
+
+# Svelte
+ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework svelte
+
+# Astro
+ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework astro
+
+# Next.js (with 'use client')
+ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework nextjs
+
+# Nuxt (Vue 3 with CSS modules)
+ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework nuxt
+
+# HTML + CSS
+ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework html
+```
+
+### Mode: Asset Export
+
+Export icons and images:
+
+```bash
+# SVG (default)
+ralph-starter integrations fetch figma "ABC123" --figma-mode assets
+
+# PNG at 2x scale
+ralph-starter integrations fetch figma "ABC123" --figma-mode assets --figma-format png --figma-scale 2
+```
+
+Assets are detected by name patterns: `icon`, `asset`, `logo`, `illustration`.
+
+:::note
+Export URLs expire after 30 days. Re-run the fetch to get fresh URLs.
+:::
+
+### Mode: Content Extraction
+
+Extract text content from Figma designs and apply it directly to your existing templates:
+
+```bash
+# Extract content and apply to existing project
+ralph-starter run --from figma --project "ABC123" --figma-mode content
+
+# Preview changes without applying
+ralph-starter run --from figma --project "ABC123" --figma-mode content --figma-preview
+
+# Target specific directory
+ralph-starter run --from figma --project "ABC123" --figma-mode content --figma-target "src/pages"
+
+# Use custom content mapping
+ralph-starter run --from figma --project "ABC123" --figma-mode content --figma-mapping mapping.json
+```
+
+Content mode extracts:
+- **Text content** – All text layers organized by frame hierarchy
+- **Semantic roles** – Headings, body text, buttons, labels
+- **Information architecture** – Page structure and navigation patterns
+- **Component mapping** – Matches Figma frames to existing project components
+
+#### Content Mapping File
+
+Create a custom mapping file to control how Figma content maps to your components:
+
+```json
+{
+  "pages": {
+    "Home": "src/pages/Home.tsx",
+    "About": "src/pages/About.tsx"
+  },
+  "components": {
+    "Hero": {
+      "file": "src/components/Hero.tsx",
+      "props": {
+        "heading": "title",
+        "subheading": "subtitle",
+        "cta": "buttonText"
+      }
+    }
+  }
+}
+```
+
+#### Use Cases
+
+- **Update copy** – Change text content without touching code structure
+- **Localization prep** – Extract all text for translation
+- **Design sync** – Keep your app in sync with design changes
+- **Content-first development** – Start with real content from designs
+
+## Options
+
+| Option | Description | Values |
+|--------|-------------|--------|
+| `--figma-mode` | Operation mode | `spec`, `tokens`, `components`, `assets`, `content` |
+| `--figma-format` | Token output format | `css`, `scss`, `json`, `tailwind` |
+| `--figma-framework` | Component framework | `react`, `vue`, `svelte`, `astro`, `nextjs`, `nuxt`, `html` |
+| `--figma-nodes` | Specific node IDs | Comma-separated (e.g., `1:23,1:45`) |
+| `--figma-scale` | Image export scale | Number (default: `1`) |
+| `--figma-target` | Target directory (content mode) | Path (e.g., `src/pages`) |
+| `--figma-preview` | Preview without applying (content mode) | Flag |
+| `--figma-mapping` | Custom mapping file (content mode) | File path (e.g., `mapping.json`) |
+
+## Figma URL Formats
+
+The integration accepts various URL formats:
+
+```bash
+# Full file URL
+https://www.figma.com/file/ABC123/MyDesign
+
+# Design URL (new format)
+https://www.figma.com/design/ABC123/MyDesign
+
+# With node selection
+https://www.figma.com/file/ABC123/MyDesign?node-id=1:23
+
+# File key only
+ABC123
+```
+
+## Example Workflows
+
+### Design-to-Code with AI Loop
+
+```bash
+# Use Figma design as task specification
+ralph-starter run --from figma \
+  --project "https://figma.com/file/ABC123/LoginPage" \
+  --preset feature
+```
+
+### Generate Theme File
+
+```bash
+# Extract tokens and redirect to file
+ralph-starter integrations fetch figma "ABC123" \
+  --figma-mode tokens \
+  --figma-format css > theme.css
+```
+
+### Export All Icons
+
+```bash
+# Get icon manifest with download script
+ralph-starter integrations fetch figma "ABC123" --figma-mode assets
+
+# Run the generated curl commands to download
+```
+
+## Test Connection
+
+Verify your authentication:
+
+```bash
+ralph-starter integrations test figma
+```
+
+## Troubleshooting
+
+### "Invalid Figma token"
+
+Your token may have expired or been revoked. Create a new token in Figma settings.
+
+### "Access denied"
+
+Ensure your token has access to the file. For team files, you need to be a member of the team.
+
+### "File not found"
+
+Check the file key or URL is correct. The file key is the 22-character string after `/file/` in the URL.
+
+### No assets found
+
+Assets are detected by name patterns. Rename your icon frames to include "icon", "logo", or "asset" in the name, or specify node IDs directly with `--figma-nodes`.
+
+## Limitations
+
+- **Variables API** requires Figma Enterprise plan (falls back to styles)
+- **Image export URLs** expire after 30 days
+- **Large files** may be slow; use `--figma-nodes` to target specific frames
+
+---
+
+## GitHub
+
+# GitHub Source
+
+Fetch specifications from GitHub Issues to turn them into built projects.
+
+## Authentication
+
+GitHub source works in two modes:
+
+### 1. GitHub CLI (Recommended)
+
+If you have [GitHub CLI](https://cli.github.com/) installed and authenticated:
+
+```bash
+gh auth login
+```
+
+No additional configuration needed.
+
+### 2. Personal Access Token
+
+```bash
+ralph-starter config set github.token ghp_xxxxxxxxxxxx
+```
+
+Create a token at [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens).
+
+Required scopes:
+- `repo` (for private repositories)
+- `public_repo` (for public repositories only)
+
+## Usage
+
+```bash
+# Fetch all open issues from a repo
+ralph-starter run --from github --project owner/repo
+
+# Filter by label
+ralph-starter run --from github --project owner/repo --label "ready-to-build"
+
+# Filter by status
+ralph-starter run --from github --project owner/repo --status open
+
+# Limit results
+ralph-starter run --from github --project owner/repo --limit 5
+
+# Combine filters
+ralph-starter run --from github --project owner/repo --label "sprint-1" --status open --limit 10
+```
+
+## Fetching a Single Issue
+
+Fetch a specific issue by number:
+
+```bash
+# By issue number (uses default repo if configured)
+ralph-starter run --from github --issue 123
+
+# From a specific repo
+ralph-starter run --from github --project owner/repo --issue 123
+
+# By full URL
+ralph-starter run --from github --project https://github.com/owner/repo/issues/123
+```
+
+This fetches:
+- Issue title and body
+- Labels and state
+- All comments
+
+Perfect for building features from well-specified issues.
+
+## Default Issues Repository
+
+Configure a default repository for fetching issues, so you don't need to specify `--project` every time:
+
+```bash
+# Set your default issues repo
+ralph-starter config set github.defaultIssuesRepo myorg/my-ideas
+
+# Now you can simply run:
+ralph-starter run --from github --issue 42
+```
+
+This is useful for teams that maintain a central ideas or roadmap repository.
+
+## Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--project` | Repository in `owner/repo` format | Configured default or required |
+| `--label` | Filter by label name | None |
+| `--status` | Filter by status (`open`, `closed`, `all`) | `open` |
+| `--limit` | Maximum issues to fetch | 20 |
+| `--issue` | Specific issue number to fetch | None |
+
+## Configuration
+
+| Key | Description |
+|-----|-------------|
+| `github.token` | Personal access token (if not using gh CLI) |
+| `github.defaultIssuesRepo` | Default repository for `--issue` without `--project` |
+
+## Issue Format
+
+GitHub issues are converted to specs with:
+
+- **Title** → Spec title
+- **Body** → Spec description
+- **Labels** → Tags
+- **Comments** → Additional context
+
+### Example Issue
+
+```markdown
+# Add user authentication
+
+## Description
+Add email/password authentication to the app.
+
+## Requirements
+- Login form
+- Registration form
+- Password reset flow
+- Session management
+
+## Acceptance Criteria
+- [ ] Users can register with email
+- [ ] Users can log in
+- [ ] Users can reset password
+```
+
+### Generated Spec
+
+```markdown
+# Add user authentication
+
+Source: GitHub Issue #42 (owner/repo)
+Labels: feature, authentication
+
+## Description
+Add email/password authentication to the app.
+
+## Requirements
+- Login form
+- Registration form
+- Password reset flow
+- Session management
+
+## Acceptance Criteria
+- [ ] Users can register with email
+- [ ] Users can log in
+- [ ] Users can reset password
+```
+
+## Preview Issues
+
+Before running, you can preview what will be fetched:
+
+```bash
+ralph-starter source preview github --project owner/repo --label "ready"
+```
+
+## Test Connection
+
+Verify your authentication:
+
+```bash
+ralph-starter source test github
+```
+
+## Tips
+
+1. **Use labels effectively** - Create a "ready-to-build" or "ralph" label for issues that are well-specified
+2. **Write detailed issues** - Include requirements, acceptance criteria, and context
+3. **One issue = one feature** - Keep issues focused for better results
+
+---
+
+## Linear
+
+# Linear Source
+
+Fetch specifications from Linear issues to build features from your project management tool.
+
+## Authentication
+
+Get your API key from [Linear Settings > API > Personal API keys](https://linear.app/settings/api).
+
+```bash
+ralph-starter config set linear.apiKey lin_api_xxxxxxxxxxxx
+```
+
+## Usage
+
+```bash
+# Fetch issues by label
+ralph-starter run --from linear --label "ready-to-build"
+
+# Filter by project
+ralph-starter run --from linear --project "Mobile App"
+
+# Filter by status
+ralph-starter run --from linear --status "In Progress"
+
+# Combine filters
+ralph-starter run --from linear --project "Web App" --label "sprint-1" --limit 10
+```
+
+## Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--project` | Project name | None (all projects) |
+| `--label` | Filter by label | None |
+| `--status` | Filter by status | None |
+| `--limit` | Maximum issues to fetch | 20 |
+
+## Issue Format
+
+Linear issues are well-suited for ralph-starter because they typically contain:
+
+- Title
+- Description (with markdown support)
+- Acceptance criteria
+- Sub-issues
+- Labels and priority
+
+### Example Linear Issue
+
+```markdown
+Title: Add user authentication
+
+Description:
+Implement email/password authentication for the web app.
+
+## Requirements
+- Login page with email/password
+- Registration with email verification
+- Password reset flow
+- Remember me functionality
+
+## Technical Notes
+- Use NextAuth.js
+- Store sessions in database
+- Add rate limiting
+
+## Acceptance Criteria
+- [ ] User can register with email
+- [ ] User receives verification email
+- [ ] User can log in
+- [ ] User can reset password
+```
+
+## Generated Spec
+
+```markdown
+# Add user authentication
+
+Source: Linear Issue ENG-123
+Project: Web App
+Labels: feature, authentication
+Priority: High
+
+## Description
+Implement email/password authentication for the web app.
+
+## Requirements
+- Login page with email/password
+- Registration with email verification
+- Password reset flow
+- Remember me functionality
+
+## Technical Notes
+- Use NextAuth.js
+- Store sessions in database
+- Add rate limiting
+
+## Acceptance Criteria
+- [ ] User can register with email
+- [ ] User receives verification email
+- [ ] User can log in
+- [ ] User can reset password
+```
+
+## Preview Issues
+
+```bash
+ralph-starter source preview linear --label "ready-to-build"
+```
+
+## Test Connection
+
+```bash
+ralph-starter source test linear
+```
+
+## Workflow Integration
+
+### Recommended Labels
+
+Create these labels in Linear:
+- `ralph-ready` - Issue is well-specified and ready to build
+- `ralph-building` - Currently being built by ralph-starter
+- `ralph-done` - Built by ralph-starter
+
+### Automation Ideas
+
+1. Move issues to "In Progress" when ralph-starter starts
+2. Add comments with build progress
+3. Close issues when build succeeds
+
+## Tips
+
+1. **Write detailed issues** - Linear's rich markdown support is perfect for detailed specs
+2. **Use acceptance criteria** - Checkboxes become testable requirements
+3. **Link related issues** - Sub-issues provide additional context
+4. **Add technical notes** - Specify tech preferences in the description
+
+---
+
+## Notion
+
+# Notion Source
+
+Fetch specifications from Notion pages and databases to build from your documentation.
+
+## Features
+
+- **Full page fetching** - Fetches ALL content with automatic pagination (no 100-block limit)
+- **Nested blocks** - Recursively fetches children of toggles, columns, and other container blocks
+- **Rich content** - Converts Notion blocks to markdown (headings, lists, code, tables, callouts, etc.)
+- **Database support** - Query databases and fetch items with properties
+
+## Authentication
+
+### 1. Create an Integration
+
+1. Go to [Notion Integrations](https://www.notion.so/my-integrations)
+2. Click "New integration"
+3. Name it "ralph-starter"
+4. Select your workspace
+5. Copy the "Internal Integration Token"
+
+### 2. Configure ralph-starter
+
+```bash
+ralph-starter config set notion.token secret_xxxxxxxxxxxx
+```
+
+### 3. Share Pages with Integration
+
+In Notion:
+1. Open the page/database you want to use
+2. Click "..." menu → "Add connections"
+3. Select "ralph-starter"
+
+## Public Pages (No Auth Required)
+
+For **public** Notion pages, you can use the URL source directly without any API key:
+
+```bash
+ralph-starter run --from https://notion.so/Your-Public-Page-abc123
+```
+
+Note: Public page fetching has limited content extraction because Notion renders content client-side. For full content access, use the API integration above.
+
+## Usage
+
+```bash
+# Fetch from a specific database/page
+ralph-starter run --from notion --project "Product Specs"
+
+# With limit
+ralph-starter run --from notion --project "Feature Ideas" --limit 5
+```
+
+## Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--project` | Database or page name | Required |
+| `--limit` | Maximum items to fetch | 20 |
+
+## Page Format
+
+### Simple Page
+
+```markdown
+# Build a Habit Tracker
+
+A mobile app for tracking daily habits with streaks and reminders.
+
+## Features
+- Add/edit/delete habits
+- Daily check-in
+- Streak tracking
+- Push notifications
+
+## Tech Stack
+- React Native
+- SQLite
+- Expo
+```
+
+### Database of Specs
+
+Create a Notion database with columns:
+
+| Name | Type | Description |
+|------|------|-------------|
+| Title | Title | Feature name |
+| Status | Select | Draft, Ready, Building, Done |
+| Priority | Select | Low, Medium, High |
+| Description | Text | Feature description |
+| Requirements | Text | List of requirements |
+
+ralph-starter fetches items where Status = "Ready" (or as filtered).
+
+## Generated Spec
+
+```markdown
+# Build a Habit Tracker
+
+Source: Notion Page
+Database: Product Specs
+
+## Description
+A mobile app for tracking daily habits with streaks and reminders.
+
+## Features
+- Add/edit/delete habits
+- Daily check-in
+- Streak tracking
+- Push notifications
+
+## Tech Stack
+- React Native
+- SQLite
+- Expo
+```
+
+## Preview Pages
+
+```bash
+ralph-starter source preview notion --project "Product Specs"
+```
+
+## Test Connection
+
+```bash
+ralph-starter source test notion
+```
+
+## Best Practices
+
+### Template for Specs
+
+Create a Notion template with these sections:
+
+```markdown
+# [Feature Name]
+
+## Summary
+One paragraph describing the feature.
+
+## Problem
+What problem does this solve?
+
+## Solution
+How will we solve it?
+
+## Requirements
+- [ ] Requirement 1
+- [ ] Requirement 2
+- [ ] Requirement 3
+
+## Technical Notes
+Any specific tech requirements or constraints.
+
+## Acceptance Criteria
+- [ ] Criteria 1
+- [ ] Criteria 2
+```
+
+### Database Setup
+
+1. Create a "Specs" database
+2. Add Status column with options: Draft, Ready, Building, Done
+3. Add Priority column
+4. Share with ralph-starter integration
+5. Use `--project "Specs"` to fetch
+
+## Supported Block Types
+
+ralph-starter converts the following Notion blocks to markdown:
+
+| Block Type | Markdown Output |
+|------------|-----------------|
+| Paragraph | Normal text |
+| Heading 1/2/3 | `##`, `###`, `####` |
+| Bulleted list | `- item` |
+| Numbered list | `1. item` |
+| To-do | `- [ ]` / `- [x]` |
+| Toggle | `<details>` |
+| Quote | `> quote` |
+| Callout | `> 💡 callout` |
+| Code | ` ```lang ``` ` |
+| Divider | `---` |
+| Image | `![Image](url)` |
+| Table | `| cell | cell |` |
+
+**Nested content** (inside toggles, columns, etc.) is properly indented in the output.
+
+## Tips
+
+1. **Use templates** - Create a consistent spec template in Notion
+2. **Status tracking** - Use a Status column to mark specs as "Ready"
+3. **Rich content** - Notion's blocks (code, callouts, etc.) are converted to markdown
+4. **Linked databases** - Reference other pages for additional context
+5. **Large pages** - No content limits! Pages with 100+ blocks are fully fetched
+
+---
+
+## Overview
+
+# Input Sources
+
+ralph-starter can fetch specifications from various external sources, allowing you to turn tasks from your existing tools into built projects.
+
+## Available Sources
+
+### Built-in Sources
+
+| Source | Description | Auth Required |
+|--------|-------------|---------------|
+| `file` | Local files and directories | No |
+| `url` | Remote URLs (markdown, HTML) | No |
+| `pdf` | PDF documents | No |
+
+### Integration Sources
+
+| Source | Description | Auth Required |
+|--------|-------------|---------------|
+| `figma` | Figma designs, tokens, components, assets | Yes (API token) |
+| `github` | GitHub Issues | Optional (gh CLI or token) |
+| `linear` | Linear issues | Yes (API key) |
+| `notion` | Notion pages | Yes (API key) |
+
+## Usage
+
+### Basic Syntax
+
+```bash
+ralph-starter run --from <source> [options]
+```
+
+### Examples
+
+```bash
+# From a URL
+ralph-starter run --from https://example.com/spec.md
+
+# From a local file
+ralph-starter run --from ./requirements.pdf
+
+# From GitHub Issues
+ralph-starter run --from github --project owner/repo --label "sprint-1"
+
+# From Linear
+ralph-starter run --from linear --label "in-progress" --limit 5
+
+# From Notion
+ralph-starter run --from notion --project "Product Specs"
+```
+
+## Configuration
+
+Store credentials for integration sources:
+
+```bash
+# Set credentials
+ralph-starter config set figma.token <your-token>
+ralph-starter config set linear.apiKey <your-key>
+ralph-starter config set notion.token <your-key>
+ralph-starter config set github.token <your-token>
+
+# View all config
+ralph-starter config list
+
+# Get specific value
+ralph-starter config get linear.apiKey
+
+# Remove
+ralph-starter config delete linear.apiKey
+```
+
+Credentials are stored in `~/.ralph-starter/sources.json`.
+
+## Source Commands
+
+```bash
+# List available sources
+ralph-starter source list
+
+# Get help for a source
+ralph-starter source help github
+
+# Test connectivity
+ralph-starter source test linear
+
+# Preview items from source
+ralph-starter source preview github --project owner/repo
+```
+
+## Common Options
+
+| Option | Description |
+|--------|-------------|
+| `--project <name>` | Project/repo filter |
+| `--label <name>` | Label filter |
+| `--status <status>` | Status filter |
+| `--limit <n>` | Maximum items to fetch |
+
+## How It Works
+
+1. ralph-starter fetches items from the source
+2. Items are converted to a specification format
+3. The spec is saved to `specs/` directory
+4. Planning and building proceed as normal
+
+## Next Steps
+
+- [Figma](/docs/sources/figma) - Fetch design specs, tokens, and components
+- [GitHub](/docs/sources/github) - Fetch from GitHub Issues
+- [Linear](/docs/sources/linear) - Fetch from Linear issues
+- [Notion](/docs/sources/notion) - Fetch from Notion pages
+
+---
+
+## Idea Mode
+
+
+**Idea Mode** is for users who don't know what to build. It's a brainstorming session that helps you discover project ideas based on your preferences.
+
+## Launch Idea Mode
+
+Standalone:
+
+```bash
+ralph-starter ideas
+```
+
+Or through the wizard (select "No, help me brainstorm ideas").
+
+## Discovery Methods
+
+### 1. Brainstorm with AI
+
+Open-ended creative suggestions. The AI generates diverse project ideas across different types and complexity levels.
+
+**Best for:** When you want to explore possibilities without constraints.
+
+### 2. Trending Ideas
+
+Ideas based on 2025-2026 technology trends:
+
+- AI/LLM integrations and tooling
+- Local-first and privacy-focused apps
+- Developer productivity tools
+- Sustainable/green tech applications
+- Accessibility and inclusive design
+
+**Best for:** Building something relevant and timely.
+
+### 3. Based on My Skills
+
+Personalized ideas that:
+
+- Build on your existing skills
+- Introduce adjacent technologies
+- Could become portfolio pieces
+
+You'll be asked to select technologies you know:
+- JavaScript/TypeScript
+- React
+- Node.js
+- Python
+- Go, Rust, etc.
+
+**Best for:** Leveraging what you already know.
+
+### 4. Solve a Problem
+
+Describe a frustration or pain point, and get project ideas that could solve it.
+
+Example problems:
+- "I spend too much time organizing my notes"
+- "Managing dotfiles is painful"
+- "I can't find things in my bookmarks"
+
+**Best for:** Building something personally useful.
+
+## Example Session
+
+```
+$ ralph-starter ideas
+
+  ╭─────────────────────────────────────────────────────────────╮
+  │   Let's discover what to build!                             │
+  │   Don't have a project idea? No problem.                    │
+  │   I'll help you brainstorm something awesome.               │
+  ╰─────────────────────────────────────────────────────────────╯
+
+? How would you like to discover ideas?
+❯ Brainstorm with AI - Get creative suggestions
+  See trending ideas - Based on 2025-2026 tech trends
+  Based on my skills - Personalized to what I know
+  Solve a problem I have - Help me fix something
+
+✔ Got some ideas!
+
+  Here are some ideas for you:
+  ────────────────────────────────────────────────────────────
+
+  1. Personal Finance Tracker
+     Track expenses, set budgets, and visualize spending patterns
+     Type: Web App  |  Difficulty: moderate
+     Why: Practical everyday use
+
+  2. Markdown Note Organizer
+     CLI tool to organize, search, and link markdown notes
+     Type: CLI Tool  |  Difficulty: easy
+     Why: Simple to start, can grow in complexity
+
+  3. API Status Dashboard
+     Monitor multiple API endpoints and get alerts when they go down
+     Type: Web App  |  Difficulty: moderate
+     Why: Useful for developers
+
+  4. Git Commit Analyzer
+     Analyze git history to show contribution patterns and stats
+     Type: CLI Tool  |  Difficulty: easy
+     Why: Work with familiar tools
+
+  5. Recipe API
+     RESTful API for storing and retrieving recipes
+     Type: API  |  Difficulty: easy
+     Why: Classic CRUD project
+
+  ────────────────────────────────────────────────────────────
+
+? Which idea interests you?
+❯ Personal Finance Tracker - Track expenses, set budgets...
+  Markdown Note Organizer - CLI tool to organize, search...
+  API Status Dashboard - Monitor multiple API endpoints...
+  Git Commit Analyzer - Analyze git history to show...
+  Recipe API - RESTful API for storing and retrieving...
+  None of these - I'll describe my own idea
+  Generate more ideas
+```
+
+## Idea Properties
+
+Each generated idea includes:
+
+| Property | Description |
+|----------|-------------|
+| **Title** | Short, memorable project name |
+| **Description** | One sentence about what it does |
+| **Project Type** | web, api, cli, mobile, library, automation |
+| **Difficulty** | easy, moderate, challenging |
+| **Reasons** | Why this is a good project to build |
+
+## Offline Fallback
+
+If no LLM is available (no API key and no coding agent), Idea Mode uses 20 pre-built template ideas across all discovery methods.
+
+## After Selecting an Idea
+
+Once you select an idea:
+- The idea is passed to the wizard
+- The AI refines it further
+- You can customize the tech stack and features
+- Building begins
+
+Or select "None of these - I'll describe my own idea" to enter a custom description.
+
+---
+
+## Overview(Wizard)
+
+# Interactive Wizard
+
+The interactive wizard is the easiest way to use ralph-starter. It guides you through the entire process of creating a project, from idea to running code.
+
+## Launch the Wizard
+
+```bash
+ralph-starter
+```
+
+Or explicitly:
+
+```bash
+ralph-starter wizard
+```
+
+## How It Works
+
+### Step 1: Project Idea
+
+The wizard first asks if you have a project idea:
+
+- **"Yes, I know what I want to build"** - Proceed to describe your idea
+- **"No, help me brainstorm ideas"** - Launch [Idea Mode](/docs/wizard/idea-mode)
+
+### Step 2: Idea Refinement
+
+Once you describe your idea (e.g., "a habit tracker app"), the AI:
+
+1. Suggests a project name
+2. Determines the project type (web app, CLI, API, etc.)
+3. Recommends a tech stack
+4. Identifies core features
+5. Suggests additional features
+6. Estimates complexity
+
+### Step 3: Customization
+
+You can then customize:
+
+- **Project Type** - Web, API, CLI, Mobile, Library, Automation
+- **Tech Stack** - Frontend, backend, database choices
+- **Features** - Select which features to include
+- **Complexity** - Prototype, MVP, or Full-featured
+
+### Step 4: Execution Options
+
+Choose how to proceed:
+
+- **Start building automatically** - Begin the AI coding loop
+- **Just create the plan** - Generate files for manual execution later
+
+Optional: Enable auto-commit to save changes as you build.
+
+### Step 5: Build
+
+The wizard then:
+
+1. Creates the project directory
+2. Initializes Ralph Playbook files (AGENTS.md, specs/, etc.)
+3. Writes a detailed specification
+4. Generates an implementation plan
+5. Starts building with AI (if auto-run enabled)
+
+## Example Session
+
+```
+$ ralph-starter
+
+  ╭─────────────────────────────────────────────────────────────╮
+  │   Welcome to ralph-starter!                                 │
+  │   Let's build something awesome together.                   │
+  ╰─────────────────────────────────────────────────────────────╯
+
+? Do you have a project idea?
+❯ Yes, I know what I want to build
+  No, help me brainstorm ideas
+
+? What's your idea for today?
+  (e.g., "a habit tracker app" or "an API for managing recipes")
+> a personal finance tracker
+
+✔ Got it!
+
+  Here's what I understand:
+  ────────────────────────────────────────
+  Project: personal-finance-tracker
+  Type: Web Application
+
+  Tech Stack:
+    Frontend: react
+    Backend: nodejs
+    Database: sqlite
+
+  Key Features:
+    • Transaction tracking
+    • Budget management
+    • Expense categories
+    • Monthly reports
+
+  Complexity: Working MVP
+
+? Does this look right?
+❯ Yes, let's build it!
+  I want to change something
+  Start over with a different idea
+```
+
+## Existing Project Detection
+
+The wizard automatically detects existing projects when you select a working directory.
+
+### Ralph Playbook Projects
+
+If the directory contains Ralph Playbook files (like AGENTS.md, IMPLEMENTATION_PLAN.md), the wizard recognizes it as an existing Ralph project:
+
+```
+  Ralph Playbook detected!
+  ────────────────────────────────────────
+
+  Directory: /path/to/my-project
+
+  Found files:
+    ✓ AGENTS.md
+    ✓ IMPLEMENTATION_PLAN.md
+    ✓ PROMPT_build.md
+    ✓ PROMPT_plan.md
+    ✓ specs/
+
+  ────────────────────────────────────────
+
+? This project is already set up for Ralph. What would you like to do?
+❯ Continue working on this project
+  Start fresh (will overwrite existing Ralph files)
+  Choose a different directory
+```
+
+When you choose **"Continue working"**, you can:
+- **Run the build loop** - Execute tasks from the implementation plan
+- **Regenerate the implementation plan** - Re-analyze specs and update tasks
+- **Add a new spec** - Add additional requirements to the project
+
+### Language Projects
+
+If the directory contains a language project file (package.json, pyproject.toml, Cargo.toml, go.mod) but no Ralph Playbook, the wizard offers:
+
+- **Add features to this existing project** - Set up Ralph in the existing project
+- **Create new project in a subfolder** - Keep the existing project separate
+- **Choose a different directory** - Pick a different location
+
+## Non-Developer Friendly
+
+The wizard uses plain language instead of technical jargon:
+
+| Technical Term | Wizard Language |
+|---------------|-----------------|
+| "Configure database" | "How should it store data?" |
+| "Select framework" | "What type of app?" |
+| "Initialize repository" | "Let me set up the project" |
+| "Run build pipeline" | "Start building" |
+
+## Next Steps
+
+- [Idea Mode](/docs/wizard/idea-mode) - For when you don't know what to build
+- [Input Sources](/docs/sources/overview) - Fetch specs from external services
