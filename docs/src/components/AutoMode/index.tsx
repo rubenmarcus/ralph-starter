@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from '@docusaurus/Link';
-import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './styles.module.css';
 
 export default function AutoMode(): React.ReactElement {
