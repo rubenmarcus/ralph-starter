@@ -3,13 +3,31 @@
  * Quantum Theme - Professional dark aesthetic matching MultiVM Labs
  */
 
-/* Import professional fonts */
+/* Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* Simpsons font - kept for logo only */
 @font-face {
   font-family: 'Simpsons';
   src: url('/Simpsonfont.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Geist Mono - variable weight for body text */
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Geist Pixel Square - for display/titles */
+@font-face {
+  font-family: 'Geist Pixel';
+  src: url('/fonts/GeistPixel-Square.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -43,8 +61,8 @@
 
   /* Typography */
   --font-display: 'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: 'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --font-body: 'Geist Mono', 'JetBrains Mono', 'SF Mono', monospace;
+  --font-mono: 'Geist Mono', 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 
   /* Spacing scale */
   --space-xs: 0.25rem;
@@ -218,21 +236,13 @@ body::before {
   display: block;
 }
 
-/* Navbar slash separator */
-.navbar__slash {
-  color: var(--quantum-ash);
-  font-size: 1.5rem;
-  font-weight: 200;
-  margin: 0 0.75rem;
-  line-height: 1;
-}
-
 /* Navbar brand title */
 .navbar__brand-stack {
   display: inline-flex;
   align-items: center;
   text-decoration: none;
   height: 25px;
+  margin-left: 0.5rem;
 }
 
 .navbar__brand-stack:hover {
@@ -255,6 +265,32 @@ body::before {
   height: 100%;
 }
 
+/* Navbar container - constrain width */
+.navbar__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Navbar badge links */
+.navbar__badge-link {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.navbar__badge-link:hover {
+  opacity: 1;
+  text-decoration: none;
+}
+
+.navbar__badge-link img {
+  border-radius: 6px;
+  height: 28px;
+}
+
 /* ============================================
    FOOTER - Clean dark footer
    ============================================ */
@@ -262,6 +298,12 @@ body::before {
   background: var(--quantum-void);
   border-top: 1px solid var(--quantum-tungsten);
   padding: var(--space-4xl) var(--space-xl);
+}
+
+.footer > .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
 .footer__links {
@@ -332,6 +374,41 @@ body::before {
 
 .footer__copyright a:hover {
   text-decoration-color: var(--quantum-white);
+}
+
+/* Footer dual logos (ralph & multivmlabs) */
+.footer__logos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: var(--space-lg);
+}
+
+.footer__logo-link {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.footer__logo-link:hover {
+  opacity: 1;
+}
+
+.footer__logo-link img {
+  height: 28px;
+  width: auto;
+}
+
+.footer__logo-separator {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--quantum-steel);
+}
+
+.footer__copyright-text {
+  margin-top: 0;
 }
 
 /* ============================================
@@ -428,6 +505,17 @@ body::before {
    ============================================ */
 .main-wrapper {
   background: var(--quantum-void);
+}
+
+/* Doc page wrapper - constrain to container with visual boundary */
+div[class*="docsWrapper"] {
+  max-width: 1200px;
+  margin: 1rem auto;
+  width: calc(100% - 2rem);
+  border: 1px solid var(--quantum-tungsten);
+  border-radius: var(--radius-lg);
+  background: var(--quantum-deep);
+  overflow: hidden;
 }
 
 /* Doc page container - balanced spacing like Next.js */

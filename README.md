@@ -134,6 +134,13 @@ npm install -g ralph-starter
 npx ralph-starter
 ```
 
+After installing, run the setup wizard and verify your environment:
+
+```bash
+ralph-starter setup    # Configure API keys and preferences
+ralph-starter check    # Verify system requirements and connectivity
+```
+
 ## Quick Start
 
 ### For Everyone (Non-Developers Welcome!)
@@ -417,9 +424,12 @@ This creates:
 |---------|-------------|
 | `ralph-starter` | Launch interactive wizard |
 | `ralph-starter run [task]` | Run an autonomous coding loop |
+| `ralph-starter auto` | Batch-process issues from GitHub/Linear |
 | `ralph-starter integrations <action>` | Manage integrations (list, help, test, fetch) |
 | `ralph-starter plan` | Create implementation plan from specs |
 | `ralph-starter init` | Initialize Ralph Playbook in a project |
+| `ralph-starter setup` | Configure environment and API keys interactively |
+| `ralph-starter check` | Verify system requirements and connectivity |
 | `ralph-starter ideas` | Brainstorm project ideas |
 | `ralph-starter presets` | List available workflow presets |
 | `ralph-starter mcp` | Start as MCP server |

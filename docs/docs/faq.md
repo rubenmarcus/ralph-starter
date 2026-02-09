@@ -210,6 +210,72 @@ Credentials are stored in `~/.ralph-starter/sources.json`. This file has user-on
 
 ---
 
+## Workflow Presets
+
+### What are workflow presets?
+
+Presets are pre-configured sets of loop options for common workflows. Instead of remembering flags like `--max-iterations 30 --validate --commit --circuit-breaker-failures 3`, you can just use `--preset feature`:
+
+```bash
+ralph-starter run "add auth" --preset feature
+```
+
+ralph-starter ships with 19 built-in presets across 5 categories: development, debugging, review, documentation, and specialized.
+
+### How do I see all available presets?
+
+```bash
+ralph-starter presets
+```
+
+### Can I create custom presets?
+
+Not yet — presets are currently built-in. Custom user presets are on the roadmap.
+
+---
+
+## Skills
+
+### What are agent skills?
+
+Skills are markdown files that provide domain-specific knowledge to AI agents. For example, a "react-best-practices" skill teaches the agent React patterns. Skills are auto-matched to your project's tech stack.
+
+### How do I install skills?
+
+```bash
+ralph-starter skill add vercel-labs/agent-skills
+```
+
+Skills are installed to `~/.claude/skills/` (global) or `.claude/skills/` (per-project).
+
+### Where can I find community skills?
+
+```bash
+ralph-starter skill browse
+```
+
+---
+
+## Cost & Rate Limiting
+
+### How much does ralph-starter cost to run?
+
+ralph-starter itself is free. Costs depend on the AI agent you use and how many iterations your task requires. A typical feature implementation (5-15 iterations with Claude Sonnet) costs approximately $0.10-$1.00 (as of Feb 2026). See the [Cost Tracking](/docs/guides/cost-tracking) guide.
+
+### How do I limit API costs?
+
+Use rate limiting and iteration caps:
+
+```bash
+ralph-starter run "add feature" --rate-limit 30 --max-iterations 10
+```
+
+### What is the circuit breaker?
+
+The circuit breaker automatically stops the loop when the agent is stuck on the same error. By default it trips after 3 consecutive failures or 5 occurrences of the same error. See [Circuit Breaker](/docs/advanced/circuit-breaker).
+
+---
+
 ## Contributing
 
 ### How can I contribute to ralph-starter?

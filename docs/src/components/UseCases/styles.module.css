@@ -58,7 +58,7 @@
 }
 
 .subtitle {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 1.1rem;
   color: #808088;
   margin: 0;
@@ -127,7 +127,7 @@
 }
 
 .caseDescription {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.875rem;
   color: #808088;
   line-height: 1.6;
@@ -184,7 +184,7 @@
 }
 
 .promoText {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.9rem;
   color: #808088;
   margin: 0;
@@ -197,7 +197,7 @@
   background: transparent;
   border: 1px solid #38383F;
   color: #C0C0C5;
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.875rem;
   font-weight: 500;
   padding: 0.75rem 1.25rem;

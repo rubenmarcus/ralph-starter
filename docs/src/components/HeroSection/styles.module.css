@@ -1,10 +1,10 @@
-/* Hero Section - Quantum Dark Theme */
+/* Hero Section */
 .hero {
   position: relative;
-  min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  padding-top: 16rem;
+  padding-bottom: 4rem;
   overflow: hidden;
   background: #08080A;
 }
@@ -20,46 +20,117 @@
   pointer-events: none;
 }
 
-/* Floating Ralph with glow effect */
-.floatingRalph {
+/* Border trail segments on grid lines */
+.trail {
   position: absolute;
-  top: 10%;
-  right: 8%;
-  z-index: 2;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+/* Horizontal trails: sit on a grid row, travel left→right */
+.trailH {
+  height: 1px;
+  width: 120px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(200, 200, 205, 0.05) 20%,
+    rgba(200, 200, 205, 0.25) 80%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+  box-shadow:
+    60px 0 8px rgba(255, 255, 255, 0.08),
+    60px 0 20px rgba(200, 200, 205, 0.06);
+}
+
+/* Vertical trails: sit on a grid column, travel top→bottom */
+.trailV {
+  width: 1px;
+  height: 120px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(200, 200, 205, 0.05) 20%,
+    rgba(200, 200, 205, 0.25) 80%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+  box-shadow:
+    0 60px 8px rgba(255, 255, 255, 0.08),
+    0 60px 20px rgba(200, 200, 205, 0.06);
+}
+
+/* Each trail on a different grid row/col with staggered timing */
+/* Row 3 (top: 12rem) */
+.trailH1 {
+  top: calc(4rem * 3);
+  animation: slideRight 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: 0s;
   opacity: 0;
-  transform: translateY(-30px) translateX(30px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+/* Row 7 (top: 28rem) */
+.trailH2 {
+  top: calc(4rem * 7);
+  animation: slideRight 10s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: -4s;
+  opacity: 0;
+}
+/* Row 11 (top: 44rem) */
+.trailH3 {
+  top: calc(4rem * 11);
+  animation: slideRight 9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: -7s;
+  opacity: 0;
 }
 
-.floatingRalph.visible {
-  opacity: 1;
-  transform: translateY(0) translateX(0);
+/* Col at ~20% */
+.trailV1 {
+  left: calc(4rem * 5);
+  animation: slideDown 9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: -2s;
+  opacity: 0;
+}
+/* Col at ~55% */
+.trailV2 {
+  left: calc(4rem * 14);
+  animation: slideDown 11s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: -6s;
+  opacity: 0;
+}
+/* Col at ~80% */
+.trailV3 {
+  left: calc(4rem * 20);
+  animation: slideDown 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: -3s;
+  opacity: 0;
 }
 
-.ralphImage {
-  width: 420px;
-  height: auto;
-  filter: drop-shadow(0 0 60px rgba(200, 200, 205, 0.15));
-  animation: float 6s ease-in-out infinite;
+@keyframes slideRight {
+  0%   { left: -120px; opacity: 0; }
+  5%   { opacity: 1; }
+  85%  { opacity: 1; }
+  95%  { opacity: 0; }
+  100% { left: 100%; opacity: 0; }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  25% { transform: translateY(-12px) rotate(2deg); }
-  50% { transform: translateY(-20px) rotate(0deg); }
-  75% { transform: translateY(-12px) rotate(-2deg); }
+@keyframes slideDown {
+  0%   { top: -120px; opacity: 0; }
+  5%   { opacity: 1; }
+  85%  { opacity: 1; }
+  95%  { opacity: 0; }
+  100% { top: 100%; opacity: 0; }
 }
 
-/* Content */
-.heroContent {
+/* Wrapper for two-column layout */
+.heroWrapper {
   position: relative;
   z-index: 3;
-  text-align: center;
-  padding: 2rem;
-  max-width: 800px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 4rem;
 }
 
-.heroContent.visible .animateIn {
+.heroWrapper.visible .animateIn {
   opacity: 1;
   transform: translateY(0);
 }
@@ -74,67 +145,161 @@
 .delay2 { transition-delay: 0.2s; }
 .delay3 { transition-delay: 0.3s; }
 .delay4 { transition-delay: 0.4s; }
-.delay5 { transition-delay: 0.5s; }
 
-/* Logo */
-.logoContainer {
-  margin-bottom: 2rem;
+/* Ralph astronaut - large, centered behind content */
+.ralphContainer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1s ease;
 }
 
-.logo {
-  width: 380px;
-  max-width: 85vw;
+.ralphContainer.visible {
+  opacity: 1;
+}
+
+.ralphContainer .ralphImage {
+  position: static;
+  width: 640px;
   height: auto;
-  filter: drop-shadow(0 0 40px rgba(200, 200, 205, 0.2));
-  transition: transform 0.3s ease;
+  filter: drop-shadow(0 0 80px rgba(200, 200, 205, 0.12));
+  animation: float 6s ease-in-out infinite;
+  opacity: 0.95;
+  margin-top: 6rem;
 }
 
-.logo:hover {
-  transform: scale(1.02);
+/* Two-column inner layout */
+.heroInner {
+  display: flex;
+  align-items: flex-end;
+  gap: 4rem;
 }
 
-/* Section label */
-.sectionLabel {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #98989F;
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
-  margin-bottom: 1rem;
+/* Left column: text content */
+.heroContent {
+  flex: 1;
+  min-width: 0;
 }
 
 /* Tagline */
 .tagline {
   font-family: 'Instrument Sans', sans-serif;
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 600;
   color: #E8E8EA;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
   letter-spacing: -0.03em;
-  line-height: 1.2;
-  text-shadow: 0 0 40px rgba(200, 200, 205, 0.1);
+  line-height: 1.15;
 }
 
+/* Subtitle */
 .subtitle {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 1.1rem;
   color: #808088;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
   font-weight: 500;
   line-height: 1.7;
-  max-width: 550px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 480px;
 }
 
-/* Integration logos */
+/* CTA row: button + install command side by side */
+.ctaRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.button {
+  font-family: 'Geist Mono', monospace;
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.buttonPrimary {
+  background: #E8E8EA;
+  color: #08080A;
+  border: 1px solid #E8E8EA;
+}
+
+.buttonPrimary:hover {
+  background: #C0C0C5;
+  border-color: #C0C0C5;
+  color: #08080A;
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(200, 200, 205, 0.3);
+}
+
+/* Install command as a clickable button */
+.installCommand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(18, 18, 24, 0.8);
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid #28282E;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-family: inherit;
+  color: #98989F;
+}
+
+.installCommand code {
+  font-size: 0.875rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: inherit;
+  background: none;
+  padding: 0;
+  border: none;
+}
+
+.installCommand:hover {
+  border-color: #38383F;
+  color: #E8E8EA;
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(200, 200, 205, 0.1);
+}
+
+.copyIcon {
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.installCommand:hover .copyIcon {
+  opacity: 1;
+}
+
+/* Right column: visual */
+.heroVisual {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Integration logos (in right column) */
 .integrations {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 2rem;
-  margin-bottom: 3rem;
+  gap: 1.5rem;
 }
 
 .integrationLabel {
@@ -149,12 +314,13 @@
 .integrationLogos {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
+  margin-left: 0.5rem;
 }
 
 .integrationLogo {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
   opacity: 0.5;
   filter: grayscale(100%) brightness(2);
@@ -166,6 +332,20 @@
   filter: grayscale(0%) brightness(1);
 }
 
+/* Integration link */
+.integrationLink {
+  display: inline-flex;
+  text-decoration: none;
+  line-height: 0;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-12px) rotate(2deg); }
+  50% { transform: translateY(-20px) rotate(0deg); }
+  75% { transform: translateY(-12px) rotate(-2deg); }
+}
+
 /* Terminal */
 .terminal {
   background: linear-gradient(145deg, #121218 0%, #0A0A0F 100%);
@@ -175,8 +355,8 @@
   box-shadow:
     0 0 0 1px rgba(40, 40, 46, 0.3),
     0 20px 50px -20px rgba(0, 0, 0, 0.5);
-  margin: 2rem auto;
-  max-width: 560px;
+  width: 100%;
+  max-width: 520px;
   text-align: left;
   transition: all 0.4s ease;
 }
@@ -250,121 +430,53 @@
   opacity: 1 !important;
 }
 
-/* Buttons */
-.buttons {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 2.5rem;
-}
-
-.button {
-  font-family: 'Instrument Sans', sans-serif;
-  font-weight: 500;
-  font-size: 0.875rem;
-  padding: 0.875rem 1.75rem;
-  border-radius: 10px;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.buttonPrimary {
-  background: #E8E8EA;
-  color: #08080A;
-  border: 1px solid #E8E8EA;
-}
-
-.buttonPrimary:hover {
-  background: #C0C0C5;
-  border-color: #C0C0C5;
-  color: #08080A;
-  text-decoration: none;
-  transform: translateY(-2px);
-  box-shadow: 0 0 30px rgba(200, 200, 205, 0.3);
-}
-
-.buttonSecondary {
-  background: transparent;
-  color: #E8E8EA;
-  border: 1px solid #38383F;
-}
-
-.buttonSecondary:hover {
-  border-color: #98989F;
-  background: rgba(152, 152, 159, 0.05);
-  color: #E8E8EA;
-  text-decoration: none;
-  transform: translateY(-2px);
-  box-shadow: 0 0 20px rgba(200, 200, 205, 0.1);
-}
-
-/* Install command */
-.installCommand {
-  margin-top: 2rem;
-}
-
-.installCommand code {
-  background: rgba(18, 18, 24, 0.8);
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-family: 'JetBrains Mono', monospace;
-  color: #98989F;
-  border: 1px solid #28282E;
-  transition: all 0.25s ease;
-  cursor: pointer;
-  display: inline-block;
-}
-
-.installCommand code:hover {
-  border-color: #38383F;
-  color: #E8E8EA;
-  transform: translateY(-2px);
-  box-shadow: 0 0 20px rgba(200, 200, 205, 0.1);
-}
-
-/* Responsive */
+/* Responsive: tablet */
 @media screen and (max-width: 996px) {
   .hero {
-    min-height: auto;
-    padding: 6rem 1rem 4rem;
+    padding-top: 4rem;
+    padding-bottom: 3rem;
   }
 
-  .floatingRalph {
-    position: relative;
-    top: auto;
-    right: auto;
-    margin-bottom: 1.5rem;
+  .heroWrapper {
+    padding: 2rem 2rem;
   }
 
-  .floatingRalph.visible {
-    transform: translateY(0);
+  .heroInner {
+    flex-direction: column;
+    gap: 3rem;
   }
 
-  .ralphImage {
-    width: 260px;
-  }
-
-  .logo {
-    width: 280px;
+  .heroContent {
+    text-align: center;
   }
 
   .tagline {
-    font-size: 1.8rem;
+    font-size: 2rem;
   }
 
   .subtitle {
+    margin-left: auto;
+    margin-right: auto;
     font-size: 1rem;
   }
 
+  .ctaRow {
+    justify-content: center;
+  }
+
+  .heroVisual {
+    align-items: center;
+  }
+
+  .integrations {
+    justify-content: center;
+  }
+
+  .ralphContainer .ralphImage {
+    width: 480px;
+  }
+
   .terminal {
-    margin: 1rem;
     max-width: 100%;
   }
 
@@ -373,32 +485,57 @@
     padding: 1rem;
   }
 
-  .integrations {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
   .button {
     padding: 0.75rem 1.5rem;
     font-size: 0.8rem;
   }
 }
 
+/* Responsive: mobile */
 @media screen and (max-width: 600px) {
-  .tagline {
-    font-size: 1.5rem;
+  .heroWrapper {
+    padding: 2rem 1.25rem;
   }
 
-  .ralphImage {
-    width: 200px;
+  .tagline {
+    font-size: 1.75rem;
+  }
+
+  .ctaRow {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .ralphContainer .ralphImage {
+    width: 320px;
   }
 
   .integrationLogos {
-    gap: 1rem;
+    margin-left: 0;
+    gap: 0.75rem;
+    justify-content: center;
   }
 
   .integrationLogo {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .trail {
+    animation: none;
+    opacity: 0;
+  }
+
+  .ralphContainer .ralphImage {
+    animation: none;
+  }
+
+  .animateIn {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }

@@ -38,7 +38,7 @@
 }
 
 .subtitle {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 1.2rem;
   color: #808088;
   margin: 0 auto 2rem;
@@ -59,7 +59,7 @@
   gap: 0.6rem;
   background: #E8E8EA;
   color: #08080A;
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.95rem;
   font-weight: 600;
   padding: 0.875rem 1.5rem;
@@ -83,7 +83,7 @@
   background: transparent;
   border: 1px solid #38383F;
   color: #C0C0C5;
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.95rem;
   font-weight: 500;
   padding: 0.875rem 1.5rem;
@@ -123,7 +123,7 @@
 }
 
 .sectionSubtitle {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 1rem;
   color: #808088;
   margin: 0;
@@ -217,7 +217,7 @@
 }
 
 .templateDescription {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.875rem;
   color: #808088;
   line-height: 1.6;
@@ -298,7 +298,7 @@
 }
 
 .contributeText {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 1rem;
   color: #808088;
   margin: 0;
@@ -311,7 +311,7 @@
   background: transparent;
   border: 1px solid #38383F;
   color: #C0C0C5;
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.9rem;
   font-weight: 500;
   padding: 0.875rem 1.5rem;

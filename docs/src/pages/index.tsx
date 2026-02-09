@@ -9,6 +9,9 @@ import UseCases from '@site/src/components/UseCases';
 import ClientShowcase from '@site/src/components/ClientShowcase';
 import LLMProviders from '@site/src/components/LLMProviders';
 import IntegrationShowcase from '@site/src/components/IntegrationShowcase';
+import AutoMode from '@site/src/components/AutoMode';
+import PresetsShowcase from '@site/src/components/PresetsShowcase';
+import SkillsShowcase from '@site/src/components/SkillsShowcase';
 
 export default function Home(): ReactNode {
   useDocusaurusContext();
@@ -28,6 +31,9 @@ export default function Home(): ReactNode {
       <HeroSection />
       <main>
         <FeatureSections />
+        <AutoMode />
+        <PresetsShowcase />
+        <SkillsShowcase />
         <QuickStart />
         <UseCases />
         <ClientShowcase />

@@ -134,7 +134,7 @@
 }
 
 .featureDescription {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 1rem;
   line-height: 1.75;
   color: #808088;
@@ -152,7 +152,7 @@
 }
 
 .highlights li {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.9rem;
   font-weight: 500;
   display: flex;
@@ -250,7 +250,7 @@
 }
 
 .featureLink {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-weight: 500;
   font-size: 0.875rem;
   color: #98989F;

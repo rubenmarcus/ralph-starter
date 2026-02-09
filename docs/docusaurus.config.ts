@@ -272,19 +272,19 @@ const config: Config = {
       { name: 'twitter:title', content: 'ralph-starter - AI-Powered Autonomous Coding' },
       { name: 'twitter:description', content: 'Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically.' },
       { name: 'twitter:image', content: `${siteUrl}/img/thumbnail.png` },
-      { name: 'twitter:site', content: '@rubenmarcus' },
+      { name: 'twitter:site', content: '@ralphstarter' },
     ],
     navbar: {
       title: '',
       logo: {
         alt: 'ralph-starter',
-        src: 'img/small-logo.png',
+        src: 'img/favicon-96x96.png',
       },
       items: [
         {
           type: 'html',
           position: 'left',
-          value: '<span class="navbar__slash">/</span><a href="/" class="navbar__brand-stack"><span class="navbar__brand-title">ralph starter</span></a>',
+          value: '<a href="/" class="navbar__brand-stack"><span class="navbar__brand-title">ralph starter</span></a>',
         },
         {
           type: 'docSidebar',
@@ -308,14 +308,14 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://github.com/rubenmarcus/ralph-starter',
-          label: 'GitHub',
+          type: 'html',
           position: 'right',
+          value: '<a href="https://www.npmjs.com/package/ralph-starter" target="_blank" rel="noopener noreferrer" class="navbar__badge-link"><img src="https://img.shields.io/npm/dm/ralph-starter?style=for-the-badge&colorA=08080A&colorB=28282E&label=downloads&logo=npm&logoColor=CB3837" alt="npm downloads" height="28" /></a>',
         },
         {
-          href: 'https://www.npmjs.com/package/ralph-starter',
-          label: 'npm',
+          type: 'html',
           position: 'right',
+          value: '<a href="https://github.com/rubenmarcus/ralph-starter" target="_blank" rel="noopener noreferrer" class="navbar__badge-link"><img src="https://img.shields.io/github/stars/rubenmarcus/ralph-starter?style=for-the-badge&colorA=08080A&colorB=28282E&label=stars&logo=github&logoColor=white" alt="GitHub stars" height="28" /></a>',
         },
       ],
     },
@@ -334,6 +334,7 @@ const config: Config = {
           title: 'Community',
           items: [
             { label: 'GitHub', href: 'https://github.com/rubenmarcus/ralph-starter' },
+            { label: 'Twitter / X', href: 'https://x.com/ralphstarter' },
             { label: 'Ideas & Roadmap', href: 'https://github.com/rubenmarcus/ralph-ideas/issues' },
             { label: 'Templates', href: 'https://github.com/rubenmarcus/ralph-templates' },
           ],
@@ -342,17 +343,11 @@ const config: Config = {
           title: 'More',
           items: [
             { label: 'npm', href: 'https://www.npmjs.com/package/ralph-starter' },
+            { label: 'Changelog', to: '/docs/community/changelog' },
           ],
         },
       ],
-      logo: {
-        alt: 'MultiVM Labs',
-        src: 'img/multivm-logo.png',
-        href: 'https://multivmlabs.com',
-        width: 130,
-        height: 29,
-      },
-      copyright: `vibecoded with love ❤️ by <a href="https://github.com/rubenmarcus" target="_blank" rel="noopener noreferrer">rubenmarcus</a>`,
+      copyright: `<div class="footer__logos"><a href="/" class="footer__logo-link"><img src="/img/favicon-96x96.png" alt="ralph-starter" height="28" /></a><span class="footer__logo-separator">&</span><a href="https://multivmlabs.com" target="_blank" rel="noopener noreferrer" class="footer__logo-link"><img src="/img/multivm-logo.png" alt="MultiVM Labs" height="28" /></a></div><div class="footer__copyright-text">v0.1.1-beta.16 · vibecoded with love ❤️ by <a href="https://github.com/rubenmarcus" target="_blank" rel="noopener noreferrer">rubenmarcus</a></div>`,
     },
     prism: {
       theme: prismThemes.dracula,

@@ -1,0 +1,240 @@
+/* AI-Human Toggle - fixed bottom pill */
+.toggleWrapper {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(18, 18, 24, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid #28282E;
+  border-radius: 100px;
+  padding: 4px;
+  box-shadow:
+    0 0 0 1px rgba(40, 40, 46, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+}
+
+.toggleWrapper:hover {
+  border-color: #38383F;
+  box-shadow:
+    0 0 0 1px rgba(152, 152, 159, 0.1),
+    0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+.toggleBtn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  color: #606068;
+  white-space: nowrap;
+}
+
+.toggleBtn:hover {
+  color: #98989F;
+}
+
+.toggleBtnActive {
+  background: #E8E8EA;
+  color: #08080A;
+}
+
+.toggleBtnActive:hover {
+  color: #08080A;
+  background: #C0C0C5;
+}
+
+/* Markdown overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  background: #08080A;
+  overflow-y: auto;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.overlayHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: rgba(8, 8, 10, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #28282E;
+}
+
+.overlayMeta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.overlayUrl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: #808088;
+  background: rgba(40, 40, 46, 0.5);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #28282E;
+}
+
+.overlayBadge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #4ADE80;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.overlayActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.overlayBtn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #28282E;
+  border-radius: 6px;
+  background: transparent;
+  color: #98989F;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.overlayBtn:hover {
+  border-color: #38383F;
+  color: #E8E8EA;
+  background: rgba(40, 40, 46, 0.5);
+}
+
+.overlayContent {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.markdownRaw {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  line-height: 1.8;
+  color: #C0C0C5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  tab-size: 2;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #28282E;
+  border-top-color: #E8E8EA;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingText {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: #606068;
+}
+
+.errorText {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: #808088;
+  text-align: center;
+  padding: 4rem 2rem;
+  line-height: 1.8;
+}
+
+.errorText a {
+  color: #E8E8EA;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: #38383F;
+}
+
+/* Responsive */
+@media screen and (max-width: 600px) {
+  .toggleWrapper {
+    bottom: 1rem;
+    right: 1rem;
+  }
+
+  .toggleBtn {
+    font-size: 0.65rem;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .overlayHeader {
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .overlayContent {
+    padding: 1rem;
+  }
+
+  .markdownRaw {
+    font-size: 0.7rem;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    animation: none;
+  }
+
+  .spinner {
+    animation: none;
+    border-top-color: #E8E8EA;
+  }
+}

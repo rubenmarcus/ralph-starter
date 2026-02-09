@@ -38,7 +38,7 @@
 }
 
 .subtitle {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 1.2rem;
   color: #808088;
   margin: 0 auto;
@@ -104,7 +104,7 @@
 }
 
 .useCaseDescription {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.95rem;
   color: #808088;
   line-height: 1.7;
@@ -165,7 +165,7 @@
 }
 
 .stepText {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.85rem;
   color: #C0C0C5;
   line-height: 1.5;
@@ -192,7 +192,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.9rem;
   font-weight: 500;
   color: #C0C0C5;
@@ -232,7 +232,7 @@
 }
 
 .ctaText {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 1.1rem;
   color: #808088;
   margin: 0 0 2rem 0;
@@ -251,7 +251,7 @@
   gap: 0.6rem;
   background: #E8E8EA;
   color: #08080A;
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.95rem;
   font-weight: 600;
   padding: 0.875rem 1.75rem;
@@ -275,7 +275,7 @@
   background: transparent;
   border: 1px solid #38383F;
   color: #C0C0C5;
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.95rem;
   font-weight: 500;
   padding: 0.875rem 1.75rem;

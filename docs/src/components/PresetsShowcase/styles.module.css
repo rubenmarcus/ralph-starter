@@ -1,0 +1,274 @@
+/* Presets Showcase Section */
+.section {
+  position: relative;
+  padding: 6rem 0;
+  background: #08080A;
+  border-bottom: 1px solid #28282E;
+  overflow: hidden;
+}
+
+.gridBg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(152, 152, 159, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(152, 152, 159, 0.02) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.container.visible .animateIn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.animateIn {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.delay1 { transition-delay: 0.1s; }
+.delay2 { transition-delay: 0.2s; }
+.delay3 { transition-delay: 0.3s; }
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.label {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #98989F;
+  background: rgba(152, 152, 159, 0.08);
+  border: 1px solid rgba(152, 152, 159, 0.15);
+  padding: 0.25rem 0.75rem;
+  border-radius: 100px;
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #E8E8EA;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-family: 'Geist Mono', monospace;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: #808088;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* Category grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 3rem;
+}
+
+.card {
+  background: rgba(18, 18, 24, 0.6);
+  border: 1px solid #28282E;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  border-color: #38383F;
+  background: rgba(18, 18, 24, 0.9);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.cardIcon {
+  font-size: 1rem;
+}
+
+.cardName {
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #E8E8EA;
+}
+
+.presetList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.presetTag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: #808088;
+  background: rgba(40, 40, 46, 0.5);
+  border: 1px solid #28282E;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Terminal demo */
+.demo {
+  width: 100%;
+  max-width: 680px;
+  margin-bottom: 2rem;
+}
+
+.terminal {
+  background: linear-gradient(145deg, #121218 0%, #0A0A0F 100%);
+  border: 1px solid #28282E;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(40, 40, 46, 0.3),
+    0 10px 30px -15px rgba(0, 0, 0, 0.4);
+}
+
+.terminalHeader {
+  background: rgba(40, 40, 46, 0.5);
+  padding: 0.625rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid #28282E;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.dot.red { background: #F87171; }
+.dot.yellow { background: #FBBF24; }
+.dot.green { background: #4ADE80; }
+
+.terminalBody {
+  padding: 1rem 1.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+
+.line {
+  margin-bottom: 0.4rem;
+}
+
+.prompt {
+  color: #4ADE80;
+  font-weight: 500;
+}
+
+.cmd {
+  color: #E8E8EA;
+}
+
+.output {
+  color: #808088;
+  font-size: 0.7rem;
+}
+
+.output div {
+  margin: 0.25rem 0;
+  opacity: 0.85;
+}
+
+.divider {
+  height: 1px;
+  background: #28282E;
+  margin: 0.5rem 0;
+  opacity: 0.5;
+}
+
+.success {
+  color: #4ADE80;
+  font-weight: 600;
+}
+
+.red2 {
+  color: #F87171;
+}
+
+.green2 {
+  color: #4ADE80;
+}
+
+/* Link */
+.link {
+  font-family: 'Geist Mono', monospace;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #98989F;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  border-bottom: 1px solid transparent;
+}
+
+.link:hover {
+  color: #E8E8EA;
+  text-decoration: none;
+  border-bottom-color: #38383F;
+}
+
+/* Responsive */
+@media screen and (max-width: 996px) {
+  .section {
+    padding: 4rem 0;
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .terminal {
+    max-width: 100%;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+}

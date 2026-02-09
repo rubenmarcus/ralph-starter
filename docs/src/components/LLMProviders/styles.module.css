@@ -69,7 +69,7 @@
 
 /* Subtitle */
 .subtitle {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 1rem;
   color: #808088;
   margin: 0;
@@ -156,7 +156,7 @@
 }
 
 .providerDesc {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.8rem;
   color: #808088;
 }
@@ -170,7 +170,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 0.875rem;
   font-weight: 500;
   color: #98989F;

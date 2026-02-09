@@ -44,6 +44,13 @@ const sidebars: SidebarsConfig = {
         'cli/plan',
         'cli/config',
         'cli/source',
+        'cli/auto',
+        'cli/auth',
+        'cli/setup',
+        'cli/check',
+        'cli/skill',
+        'cli/integrations',
+        'cli/presets',
       ],
     },
     {
@@ -53,6 +60,10 @@ const sidebars: SidebarsConfig = {
       items: [
         'guides/testing-integrations',
         'guides/extending-ralph-starter',
+        'guides/workflow-presets',
+        'guides/cost-tracking',
+        'guides/prd-workflow',
+        'guides/skills-system',
       ],
     },
     {
@@ -63,6 +74,8 @@ const sidebars: SidebarsConfig = {
         'advanced/ralph-playbook',
         'advanced/validation',
         'advanced/git-automation',
+        'advanced/rate-limiting',
+        'advanced/circuit-breaker',
       ],
     },
     {

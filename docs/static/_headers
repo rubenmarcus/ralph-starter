@@ -2,13 +2,20 @@
 # https://developers.cloudflare.com/pages/configuration/headers/
 
 # Serve markdown files with correct content type for LLM access
+/*.md
+  Content-Type: text/markdown; charset=utf-8
+  X-Content-Type-Options: nosniff
+  Access-Control-Allow-Origin: *
+
 /docs/*.md
   Content-Type: text/markdown; charset=utf-8
   X-Content-Type-Options: nosniff
+  Access-Control-Allow-Origin: *
 
 /docs/**/*.md
   Content-Type: text/markdown; charset=utf-8
   X-Content-Type-Options: nosniff
+  Access-Control-Allow-Origin: *
 
 # LLM documentation files
 /llms.txt

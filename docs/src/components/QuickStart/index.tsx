@@ -1,64 +1,33 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Link from '@docusaurus/Link';
 import styles from './styles.module.css';
-
-interface Step {
-  number: string;
-  title: string;
-  command: string;
-  description: string;
-  link: string;
-}
-
-const steps: Step[] = [
-  {
-    number: '1',
-    title: 'Install',
-    command: 'npm install -g ralph-starter',
-    description: 'Install ralph-starter globally via npm',
-    link: '/docs/installation',
-  },
-  {
-    number: '2',
-    title: 'Configure',
-    command: 'ralph-starter init',
-    description: 'Initialize your project with AI provider settings',
-    link: '/docs/cli/init',
-  },
-  {
-    number: '3',
-    title: 'Run',
-    command: 'ralph-starter run "build a login page"',
-    description: 'Start an autonomous coding loop',
-    link: '/docs/cli/run',
-  },
-];
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async () => {
+  const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
+  }, [text]);
 
   return (
     <button
-      className={styles.copyButton}
+      className={styles.copyBtn}
       onClick={handleCopy}
       aria-label="Copy to clipboard"
+      type="button"
     >
-      {copied ? (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {copied ? (
           <polyline points="20 6 9 17 4 12" />
-        </svg>
-      ) : (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-        </svg>
-      )}
+        ) : (
+          <>
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </>
+        )}
+      </svg>
     </button>
   );
 }
@@ -70,67 +39,72 @@ export default function QuickStart(): React.ReactElement {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
+        if (entry.isIntersecting) setIsVisible(true);
       },
-      { threshold: 0.2 }
+      { threshold: 0.15 }
     );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
+    if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
 
   return (
-    <section ref={sectionRef} className={styles.quickStart}>
-      <div className={styles.container}>
-        <div className={`${styles.content} ${isVisible ? styles.visible : ''}`}>
-          <div className={styles.header}>
-            <span className={`${styles.sectionLabel} ${styles.animateIn}`}>
-              Get Started
-            </span>
-            <h2 className={`${styles.title} ${styles.animateIn}`}>
-              Three steps to autonomous coding
-            </h2>
-            <p className={`${styles.subtitle} ${styles.animateIn}`}>
-              From installation to your first AI-generated code in under a minute
-            </p>
-          </div>
+    <section ref={sectionRef} className={styles.section}>
+      <div className={`${styles.container} ${isVisible ? styles.visible : ''}`}>
+        <div className={styles.left}>
+          <span className={`${styles.label} ${styles.animateIn}`}>Get Started</span>
+          <h2 className={`${styles.title} ${styles.animateIn} ${styles.delay1}`}>
+            Three steps to<br />autonomous coding
+          </h2>
+          <p className={`${styles.subtitle} ${styles.animateIn} ${styles.delay1}`}>
+            From installation to your first AI-generated code in under a minute.
+          </p>
+          <Link to="/docs/installation" className={`${styles.ctaLink} ${styles.animateIn} ${styles.delay2}`}>
+            Read the full guide →
+          </Link>
+        </div>
 
-          <div className={styles.stepsGrid}>
-            {steps.map((step, index) => (
-              <div
-                key={step.number}
-                className={`${styles.step} ${styles.animateIn}`}
-                style={{ transitionDelay: `${0.1 + index * 0.1}s` }}
-              >
-                <div className={styles.stepNumber}>{step.number}</div>
-                <h3 className={styles.stepTitle}>{step.title}</h3>
-                <div className={styles.commandBox}>
-                  <code className={styles.command}>{step.command}</code>
-                  <CopyButton text={step.command} />
+        <div className={`${styles.right} ${styles.animateIn} ${styles.delay2}`}>
+          <div className={styles.terminal}>
+            <div className={styles.terminalHeader}>
+              <span className={`${styles.dot} ${styles.red}`} />
+              <span className={`${styles.dot} ${styles.yellow}`} />
+              <span className={`${styles.dot} ${styles.green}`} />
+            </div>
+            <div className={styles.terminalBody}>
+              {/* Step 1 */}
+              <div className={styles.step}>
+                <span className={styles.comment}># 1. Install</span>
+                <div className={styles.cmdRow}>
+                  <span className={styles.prompt}>$</span>
+                  <code className={styles.cmd}>npm install -g ralph-starter</code>
+                  <CopyButton text="npm install -g ralph-starter" />
                 </div>
-                <p className={styles.stepDescription}>{step.description}</p>
-                <Link to={step.link} className={styles.stepLink}>
-                  Learn more
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={styles.arrowIcon}>
-                    <path d="M7 17L17 7M17 7H7M17 7V17" />
-                  </svg>
-                </Link>
               </div>
-            ))}
-          </div>
 
-          <div className={`${styles.cta} ${styles.animateIn}`} style={{ transitionDelay: '0.4s' }}>
-            <Link to="/docs/installation" className={styles.ctaButton}>
-              Read the full guide
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </Link>
+              {/* Step 2 */}
+              <div className={styles.step}>
+                <span className={styles.comment}># 2. Configure your project</span>
+                <div className={styles.cmdRow}>
+                  <span className={styles.prompt}>$</span>
+                  <code className={styles.cmd}>ralph-starter init</code>
+                  <CopyButton text="ralph-starter init" />
+                </div>
+                <span className={styles.output}>✓ Created .ralph-starter.yml</span>
+              </div>
+
+              {/* Step 3 */}
+              <div className={styles.step}>
+                <span className={styles.comment}># 3. Run your first loop</span>
+                <div className={styles.cmdRow}>
+                  <span className={styles.prompt}>$</span>
+                  <code className={styles.cmd}>ralph-starter run "build a login page"</code>
+                  <CopyButton text='ralph-starter run "build a login page"' />
+                </div>
+                <span className={styles.output}>→ Loop 1: Analyzing requirements...</span>
+                <span className={styles.output}>→ Loop 2: Creating components...</span>
+                <span className={styles.outputSuccess}>✓ Done! 2 files created, 1 commit</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

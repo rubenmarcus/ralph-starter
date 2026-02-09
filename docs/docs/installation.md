@@ -107,10 +107,35 @@ ralph-starter config set llm.provider openrouter
 
 Without an API key configured, ralph-starter falls back to using your installed coding agent for LLM tasks.
 
+## Post-Install Setup
+
+After installing, run the interactive setup wizard to configure your environment:
+
+```bash
+ralph-starter setup
+```
+
+This guides you through:
+- Selecting your preferred coding agent
+- Configuring LLM API keys
+- Setting up integration sources (GitHub, Linear, etc.)
+- Choosing default workflow presets
+
+### Verify Your Setup
+
+Check that everything is configured correctly:
+
+```bash
+ralph-starter check
+```
+
+This validates your configuration, tests LLM connectivity, and verifies agent availability.
+
 ## Next Steps
 
 After installation:
 
-1. Run `ralph-starter` to launch the interactive wizard
-2. Or run `ralph-starter ideas` if you need help brainstorming
-3. Check out the [Interactive Wizard](/docs/wizard/overview) guide
+1. Run `ralph-starter setup` to configure your environment
+2. Run `ralph-starter` to launch the interactive wizard
+3. Or run `ralph-starter ideas` if you need help brainstorming
+4. Check out the [Interactive Wizard](/docs/wizard/overview) guide

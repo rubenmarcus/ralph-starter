@@ -41,7 +41,7 @@ module.exports = function rawMarkdownPlugin(context, options) {
         access: {
           llmsTxt: `${baseUrl}/llms.txt`,
           llmsFullTxt: `${baseUrl}/llms-full.txt`,
-          rawMarkdown: 'Add .md to any docs URL',
+          rawMarkdown: 'Add .md to any URL for raw markdown',
         },
         docs: docs.sort((a, b) => a.path.localeCompare(b.path)),
       };
@@ -70,7 +70,11 @@ module.exports = function rawMarkdownPlugin(context, options) {
         JSON.stringify(sidebarJson, null, 2)
       );
 
+      // Generate .md files for non-docs pages so any URL + .md works for agents
+      const pageCount = generatePageMarkdown(outDir, siteConfig, baseUrl);
+
       console.log(`[raw-markdown] Copied ${docs.length} markdown files for LLM access`);
+      console.log(`[raw-markdown] Generated ${pageCount} page-level .md files`);
       console.log('[raw-markdown] Generated docs.json manifest');
       console.log('[raw-markdown] Generated docs-urls.txt URL list');
       console.log('[raw-markdown] Generated ai-index.json for RAG systems');
@@ -274,7 +278,7 @@ function generateAIIndex(docs, siteConfig, baseUrl) {
       llmsFullTxt: `${baseUrl}/llms-full.txt`,
       docsManifest: `${baseUrl}/docs.json`,
       sidebarHierarchy: `${baseUrl}/sidebar.json`,
-      rawMarkdown: 'Append .md to any /docs/* URL',
+      rawMarkdown: 'Append .md to any URL for raw markdown',
       sitemap: `${baseUrl}/sitemap.xml`,
     },
 
@@ -361,4 +365,154 @@ function generateSidebarJson(docs, baseUrl) {
       category: d.category,
     })),
   };
+}
+
+/**
+ * Generate markdown files for non-docs pages (homepage, use-cases, etc.)
+ * so that appending .md to any URL returns useful content for AI agents.
+ */
+function generatePageMarkdown(outDir, siteConfig, baseUrl) {
+  const pages = [
+    {
+      path: 'index.md',
+      content: `# ${siteConfig.title || 'ralph-starter'}
+
+${siteConfig.tagline || ''}
+
+## Overview
+
+ralph-starter is an AI-powered CLI tool that runs autonomous coding loops.
+It fetches specs from GitHub, Linear, Notion, and Figma, then orchestrates
+AI coding agents to build production-ready code automatically.
+
+## Quick Start
+
+\`\`\`bash
+npm install -g ralph-starter
+ralph-starter init
+ralph-starter run "build a login page"
+\`\`\`
+
+## Key Features
+
+- **Integrations**: Connect GitHub, Linear, Notion, and Figma
+- **AI Agents**: Orchestrate Claude Code, Cursor, Codex, and more
+- **Autonomous Loops**: Run coding loops until task completion
+- **Auto Mode**: Batch process multiple issues automatically
+- **MCP Server**: Integrate with Claude Desktop
+
+## Links
+
+- [Documentation](${baseUrl}/docs/intro)
+- [GitHub](https://github.com/rubenmarcus/ralph-starter)
+- [npm](https://www.npmjs.com/package/ralph-starter)
+- [Full docs as markdown](${baseUrl}/llms-full.txt)
+
+## For AI Agents
+
+- Append \`.md\` to any docs URL for raw markdown
+- Access \`/llms.txt\` for a documentation summary
+- Access \`/llms-full.txt\` for complete documentation
+- Access \`/docs.json\` for structured manifest
+- Access \`/ai-index.json\` for RAG-optimized index
+`,
+    },
+    {
+      path: 'use-cases.md',
+      content: `# Use Cases - ralph-starter
+
+## What can you build with ralph-starter?
+
+ralph-starter automates software development by fetching specs from your tools
+and running AI coding loops. Here are common use cases:
+
+### From Design to Code
+Import Figma designs and let AI agents generate production-ready components.
+
+### Issue-Driven Development
+Connect GitHub or Linear, pick issues, and let ralph-starter build the solution.
+
+### Spec-to-Production
+Write requirements in Notion, fetch them with ralph-starter, and generate code.
+
+### Batch Processing (Auto Mode)
+Process multiple issues automatically with \`ralph-starter auto\`.
+
+## Learn More
+
+- [Getting Started](${baseUrl}/docs/intro)
+- [Figma Integration](${baseUrl}/docs/sources/figma)
+- [GitHub Integration](${baseUrl}/docs/sources/github)
+- [Linear Integration](${baseUrl}/docs/sources/linear)
+- [Notion Integration](${baseUrl}/docs/sources/notion)
+`,
+    },
+    {
+      path: 'integrations.md',
+      content: `# Integrations - ralph-starter
+
+## Supported Integrations
+
+ralph-starter connects to your existing tools to fetch specs and requirements.
+
+### GitHub
+Fetch issues, PRs, and files from any GitHub repository.
+- [GitHub Integration Docs](${baseUrl}/docs/sources/github)
+
+### Figma
+Import design specs, components, and design tokens from Figma.
+- [Figma Integration Docs](${baseUrl}/docs/sources/figma)
+
+### Linear
+Pull tickets by team or project from Linear.
+- [Linear Integration Docs](${baseUrl}/docs/sources/linear)
+
+### Notion
+Fetch pages and database entries from Notion.
+- [Notion Integration Docs](${baseUrl}/docs/sources/notion)
+
+## AI Agents Supported
+
+- Claude Code
+- Cursor
+- OpenCode
+- Codex
+- GitHub Copilot
+- Gemini CLI
+- Amp
+- Openclaw
+`,
+    },
+    {
+      path: 'templates.md',
+      content: `# Templates - ralph-starter
+
+## Project Templates
+
+ralph-starter provides templates to accelerate project setup.
+Browse available templates at: https://github.com/rubenmarcus/ralph-templates
+
+## Using Templates
+
+\`\`\`bash
+ralph-starter init --template <template-name>
+\`\`\`
+
+## Learn More
+
+- [Getting Started](${baseUrl}/docs/intro)
+- [CLI Reference](${baseUrl}/docs/cli/init)
+- [Templates Repository](https://github.com/rubenmarcus/ralph-templates)
+`,
+    },
+  ];
+
+  let count = 0;
+  for (const page of pages) {
+    const targetPath = path.join(outDir, page.path);
+    fs.writeFileSync(targetPath, page.content);
+    count++;
+  }
+
+  return count;
 }

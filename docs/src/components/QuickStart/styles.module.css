@@ -1,42 +1,41 @@
-/* QuickStart Section - Quantum Dark Theme */
-.quickStart {
-  padding: 5rem 2rem;
+/* QuickStart Section */
+.section {
+  padding: 6rem 0;
   background: linear-gradient(180deg, #08080A 0%, #0A0A0F 100%);
   position: relative;
-  overflow: hidden;
+  border-bottom: 1px solid #28282E;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
-}
-
-.content {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  gap: 5rem;
 }
 
-/* Animation classes */
+/* Animation */
 .animateIn {
   opacity: 0;
   transform: translateY(20px);
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
-.content.visible .animateIn {
+.container.visible .animateIn {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* Header */
-.header {
-  text-align: center;
-  margin-bottom: 3rem;
+.delay1 { transition-delay: 0.1s; }
+.delay2 { transition-delay: 0.2s; }
+
+/* Left: text */
+.left {
+  flex: 0 0 340px;
 }
 
-.sectionLabel {
+.label {
   display: inline-block;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
@@ -54,212 +53,211 @@
   color: #E8E8EA;
   margin: 0 0 1rem 0;
   letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .subtitle {
-  font-family: 'Instrument Sans', sans-serif;
-  font-size: 1.1rem;
+  font-family: 'Geist Mono', monospace;
+  font-size: 1.05rem;
   color: #808088;
-  margin: 0;
-  white-space: nowrap;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.7;
 }
 
-/* Steps Grid */
-.stepsGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  width: 100%;
-  max-width: 1000px;
-  margin-bottom: 3rem;
+.ctaLink {
+  font-family: 'Geist Mono', monospace;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #98989F;
+  text-decoration: none;
+  transition: color 0.25s ease;
+  border-bottom: 1px solid transparent;
 }
 
-.step {
-  background: #0F0F14;
+.ctaLink:hover {
+  color: #E8E8EA;
+  text-decoration: none;
+  border-bottom-color: #38383F;
+}
+
+/* Right: terminal */
+.right {
+  flex: 1;
+  min-width: 0;
+}
+
+.terminal {
+  background: linear-gradient(145deg, #121218 0%, #0A0A0F 100%);
   border: 1px solid #28282E;
   border-radius: 14px;
-  padding: 2rem;
-  position: relative;
-  transition: all 0.3s ease;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(40, 40, 46, 0.3),
+    0 20px 50px -20px rgba(0, 0, 0, 0.5);
+  transition: all 0.4s ease;
 }
 
-.step:hover {
+.terminal:hover {
   border-color: #38383F;
-  transform: translateY(-4px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 0 0 1px rgba(152, 152, 159, 0.1),
+    0 25px 60px -20px rgba(0, 0, 0, 0.6),
+    0 0 40px -20px rgba(200, 200, 205, 0.1);
 }
 
-.stepNumber {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: #121218;
-  border: 1px solid #38383F;
-  border-radius: 8px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #C0C0C5;
-  margin-bottom: 1.25rem;
-}
-
-.stepTitle {
-  font-family: 'Instrument Sans', sans-serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #E8E8EA;
-  margin: 0 0 1rem 0;
-}
-
-.commandBox {
+.terminalHeader {
+  background: rgba(40, 40, 46, 0.5);
+  padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: #08080A;
-  border: 1px solid #28282E;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
+  border-bottom: 1px solid #28282E;
 }
 
-.command {
-  flex: 1;
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot.red { background: #F87171; }
+.dot.yellow { background: #FBBF24; }
+.dot.green { background: #4ADE80; }
+
+.terminalBody {
+  padding: 1.5rem;
   font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+
+/* Each step */
+.step {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(40, 40, 46, 0.5);
+}
+
+.step:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.comment {
+  display: block;
+  color: #606068;
   font-size: 0.75rem;
-  color: #C0C0C5;
+  margin-bottom: 0.35rem;
+}
+
+.cmdRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.prompt {
+  color: #4ADE80;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.cmd {
+  color: #E8E8EA;
+  flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  background: none;
+  padding: 0;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
 }
 
-.copyButton {
+.copyBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   background: transparent;
-  border: 1px solid #28282E;
-  border-radius: 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
   color: #606068;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  padding: 0;
 }
 
-.copyButton:hover {
-  background: #121218;
+.copyBtn:hover {
+  background: rgba(40, 40, 46, 0.5);
   border-color: #38383F;
   color: #C0C0C5;
 }
 
-.copyButton svg {
-  width: 14px;
-  height: 14px;
-}
-
-.stepDescription {
-  font-family: 'Instrument Sans', sans-serif;
-  font-size: 0.875rem;
+.output {
+  display: block;
   color: #808088;
-  line-height: 1.6;
-  margin: 0 0 1rem 0;
+  font-size: 0.7rem;
+  margin-top: 0.2rem;
+  padding-left: 1.25rem;
+  opacity: 0.85;
 }
 
-.stepLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: 'JetBrains Mono', monospace;
+.outputSuccess {
+  display: block;
+  color: #E8E8EA;
   font-size: 0.7rem;
   font-weight: 500;
-  color: #808088;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  text-decoration: none;
-  transition: color 0.2s ease;
+  margin-top: 0.2rem;
+  padding-left: 1.25rem;
 }
 
-.stepLink:hover {
-  color: #E8E8EA;
-  text-decoration: none;
-}
-
-.arrowIcon {
-  width: 12px;
-  height: 12px;
-}
-
-/* CTA */
-.cta {
-  text-align: center;
-}
-
-.ctaButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: #E8E8EA;
-  color: #08080A;
-  font-family: 'Instrument Sans', sans-serif;
-  font-size: 0.9rem;
-  font-weight: 600;
-  padding: 0.875rem 1.75rem;
-  border-radius: 10px;
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-.ctaButton:hover {
-  background: #FFFFFF;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(232, 232, 234, 0.2);
-  text-decoration: none;
-  color: #08080A;
-}
-
-.ctaButton svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* Responsive */
+/* Responsive: tablet */
 @media screen and (max-width: 996px) {
-  .quickStart {
-    padding: 4rem 1.5rem;
+  .section {
+    padding: 4rem 0;
+  }
+
+  .container {
+    flex-direction: column;
+    gap: 3rem;
+    padding: 0 1.5rem;
+  }
+
+  .left {
+    flex: none;
+    text-align: center;
   }
 
   .title {
     font-size: 2rem;
   }
 
-  .stepsGrid {
-    grid-template-columns: 1fr;
-    max-width: 400px;
+  .terminal {
+    max-width: 100%;
   }
 }
 
+/* Responsive: mobile */
 @media screen and (max-width: 600px) {
-  .quickStart {
-    padding: 3rem 1rem;
-  }
-
   .container {
-    padding: 0 1rem;
+    padding: 0 1.25rem;
   }
 
   .title {
     font-size: 1.75rem;
   }
 
-  .subtitle {
-    font-size: 1rem;
-    white-space: normal;
+  .terminalBody {
+    padding: 1rem;
+    font-size: 0.7rem;
   }
 
-  .step {
-    padding: 1.5rem;
+  .cmd {
+    font-size: 0.65rem;
   }
 }
