@@ -14,8 +14,12 @@ function getMarkdownUrl(pathname: string): string {
     return '/index.md';
   }
 
-  // Append .md to any path
-  const clean = pathname.replace(/\/$/, '');
+  // Sanitize: reject path traversal and non-path characters
+  const clean = pathname
+    .replace(/\/$/, '')
+    .replace(/\.{2,}/g, '')       // strip ".." sequences
+    .replace(/[^a-zA-Z0-9/_-]/g, ''); // allow only safe path chars
+  if (!clean) return '/index.md';
   return `${clean}.md`;
 }
 
@@ -157,7 +161,7 @@ export default function AIToggle(): React.ReactElement {
     if (mode === 'ai') {
       fetchMarkdown();
     }
-  }, [location.pathname]);
+  }, [location.pathname, fetchMarkdown]);
 
   return (
     <>

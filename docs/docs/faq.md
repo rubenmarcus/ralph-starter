@@ -260,7 +260,7 @@ ralph-starter skill browse
 
 ### How much does ralph-starter cost to run?
 
-ralph-starter itself is free. Costs depend on the AI agent you use and how many iterations your task requires. A typical feature implementation (5-15 iterations with Claude Sonnet) costs $0.10-$1.00. See the [Cost Tracking](/docs/guides/cost-tracking) guide.
+ralph-starter itself is free. Costs depend on the AI agent you use and how many iterations your task requires. A typical feature implementation (5-15 iterations with Claude Sonnet) costs approximately $0.10-$1.00 (as of Feb 2026). See the [Cost Tracking](/docs/guides/cost-tracking) guide.
 
 ### How do I limit API costs?
 

@@ -12,10 +12,14 @@ export default function HeroSection(): React.ReactElement {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText('npx ralph-starter');
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText('npx ralph-starter');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable (e.g. non-HTTPS context)
+    }
   }, []);
 
   return (

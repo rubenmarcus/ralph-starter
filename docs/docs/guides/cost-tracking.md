@@ -106,7 +106,7 @@ Token counts use shorthand notation:
 - Values above 1,000,000 use `M` suffix (e.g., `1.23M`)
 
 Cost values are formatted for readability:
-- Costs under $0.01 are shown in cents (e.g., `$0.50c`)
+- Costs under $0.01 are shown with cent symbol (e.g., `0.50¢`)
 - Costs from $0.01 to $0.99 show three decimal places (e.g., `$0.221`)
 - Costs $1.00 and above show two decimal places (e.g., `$12.50`)
 

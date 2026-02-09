@@ -7,19 +7,20 @@ export default function AutoMode(): React.ReactElement {
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
+          observer.unobserve(el);
         }
       },
       { threshold: 0.2 }
     );
 
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
+    observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
@@ -68,7 +69,7 @@ export default function AutoMode(): React.ReactElement {
 
           <Link
             className={`${styles.link} ${styles.animateIn} ${styles.delay3}`}
-            to="/docs/cli/run">
+            to="/docs/cli/auto">
             Learn about auto mode →
           </Link>
         </div>
