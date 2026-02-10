@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -84,11 +84,9 @@ function scanSkillsDir(dir: string, source: ClaudeSkill['source']): ClaudeSkill[
     for (const entry of entries) {
       const fullPath = join(dir, entry);
 
-      try {
-        const stats = statSync(fullPath);
-
-        if (stats.isFile() && entry.endsWith('.md')) {
-          // Flat .md skill file
+      if (entry.endsWith('.md')) {
+        // Try reading as a flat .md skill file
+        try {
           const content = readFileSync(fullPath, 'utf-8');
           skills.push({
             name: extractName(content, entry.replace('.md', '')),
@@ -96,23 +94,23 @@ function scanSkillsDir(dir: string, source: ClaudeSkill['source']): ClaudeSkill[
             description: extractDescription(content),
             source,
           });
-        } else if (stats.isDirectory()) {
-          // Try reading SKILL.md inside subdirectory
-          const skillMdPath = join(fullPath, 'SKILL.md');
-          try {
-            const content = readFileSync(skillMdPath, 'utf-8');
-            skills.push({
-              name: extractName(content, entry),
-              path: skillMdPath,
-              description: extractDescription(content),
-              source,
-            });
-          } catch {
-            // SKILL.md not found or unreadable, skip
-          }
+        } catch {
+          // File unreadable, skip
         }
-      } catch {
-        // Skip unreadable entries
+      } else {
+        // Try reading SKILL.md inside subdirectory
+        const skillMdPath = join(fullPath, 'SKILL.md');
+        try {
+          const content = readFileSync(skillMdPath, 'utf-8');
+          skills.push({
+            name: extractName(content, entry),
+            path: skillMdPath,
+            description: extractDescription(content),
+            source,
+          });
+        } catch {
+          // Not a skill directory or unreadable, skip
+        }
       }
     }
   } catch {
