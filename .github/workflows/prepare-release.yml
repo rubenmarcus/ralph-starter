@@ -12,13 +12,13 @@ permissions:
 
 jobs:
   # NOTE: Auto-labeling (including candidate-release) is handled by auto-label.yml
-  # This workflow aggregates ALL merged candidate-release/stable-release PRs since the last release
+  # This workflow aggregates ALL merged candidate-release/release PRs since the last release
   #
   # Labels:
   #   candidate-release → beta bump (0.1.1-beta.16 → 0.1.1-beta.17)
-  #   stable-release    → stable bump (0.1.1-beta.16 → 0.2.0)
+  #   release    → stable bump (0.1.1-beta.16 → 0.2.0)
 
-  # Create/update release PR when a PR with candidate-release or stable-release label is merged
+  # Create/update release PR when a PR with candidate-release or release label is merged
   create-release-pr:
     name: Create Release PR
     if: |
@@ -26,7 +26,7 @@ jobs:
       github.event.pull_request.merged == true &&
       (
         contains(github.event.pull_request.labels.*.name, 'candidate-release') ||
-        contains(github.event.pull_request.labels.*.name, 'stable-release')
+        contains(github.event.pull_request.labels.*.name, 'release')
       ) &&
       !startsWith(github.event.pull_request.head.ref, 'release/')
     runs-on: ubuntu-latest
@@ -64,7 +64,7 @@ jobs:
             echo "No release tags found, collecting all candidate-release PRs"
           fi
 
-          # Query all merged PRs with candidate-release or stable-release label since the tag date
+          # Query all merged PRs with candidate-release or release label since the tag date
           # Exclude release branch PRs
           CANDIDATE_JSON=$(gh pr list \
             --state merged \
@@ -76,7 +76,7 @@ jobs:
           )
           STABLE_JSON=$(gh pr list \
             --state merged \
-            --label "stable-release" \
+            --label "release" \
             --base main \
             --json number,title,mergedAt,headRefName \
             --limit 100 \
@@ -146,7 +146,7 @@ jobs:
         if: steps.collect.outputs.skip != 'true'
         id: stable
         run: |
-          IS_STABLE="${{ contains(github.event.pull_request.labels.*.name, 'stable-release') }}"
+          IS_STABLE="${{ contains(github.event.pull_request.labels.*.name, 'release') }}"
           echo "is_stable=$IS_STABLE" >> $GITHUB_OUTPUT
           echo "Stable release: $IS_STABLE"
 
