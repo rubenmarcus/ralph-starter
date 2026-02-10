@@ -97,9 +97,9 @@ function scanSkillsDir(dir: string, source: ClaudeSkill['source']): ClaudeSkill[
             source,
           });
         } else if (stats.isDirectory()) {
-          // Check for SKILL.md inside subdirectory
+          // Try reading SKILL.md inside subdirectory
           const skillMdPath = join(fullPath, 'SKILL.md');
-          if (existsSync(skillMdPath)) {
+          try {
             const content = readFileSync(skillMdPath, 'utf-8');
             skills.push({
               name: extractName(content, entry),
@@ -107,6 +107,8 @@ function scanSkillsDir(dir: string, source: ClaudeSkill['source']): ClaudeSkill[
               description: extractDescription(content),
               source,
             });
+          } catch {
+            // SKILL.md not found or unreadable, skip
           }
         }
       } catch {

@@ -81,16 +81,24 @@ function getSourceIcon(source?: string): string {
  * Strip markdown and list formatting from task names
  */
 function cleanTaskName(name: string): string {
-  return name
+  let cleaned = name
     .replace(/\*\*/g, '') // Remove bold **
     .replace(/\*/g, '') // Remove italic *
     .replace(/`/g, '') // Remove code backticks
-    .replace(/<[^>]+>/g, '') // Remove HTML tags
     .replace(/^\d+\.\s+/, '') // Remove numbered list prefix (1. )
     .replace(/^[-*]\s+/, '') // Remove bullet list prefix (- or * )
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert [text](url) to text
     .replace(/\s+/g, ' ') // Collapse whitespace
     .trim();
+
+  // Loop HTML tag removal to handle nested/incomplete tags like <scr<script>ipt>
+  let prev: string;
+  do {
+    prev = cleaned;
+    cleaned = cleaned.replace(/<[^>]+>/g, '');
+  } while (cleaned !== prev);
+
+  return cleaned;
 }
 
 /**

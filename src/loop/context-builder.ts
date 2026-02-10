@@ -129,7 +129,7 @@ export function buildTrimmedPlanContext(currentTask: PlanTask, taskInfo: TaskCou
  */
 export function buildIterationContext(opts: ContextBuildOptions): BuiltContext {
   const {
-    fullTask,
+    fullTask: _fullTask,
     taskWithSkills,
     currentTask,
     taskInfo,
