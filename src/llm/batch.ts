@@ -60,6 +60,10 @@ const DEFAULT_MODEL = 'claude-sonnet-4-20250514';
  * Returns the batch ID for polling.
  */
 export async function submitBatch(apiKey: string, requests: BatchRequest[]): Promise<string> {
+  if (requests.length === 0) {
+    throw new Error('Cannot submit an empty batch — at least one request is required.');
+  }
+
   const client = new Anthropic({ apiKey });
 
   const batchRequests = requests.map((req) => ({
@@ -175,8 +179,26 @@ export async function waitForBatch(
   const startTime = Date.now();
   let intervalMs = initialIntervalMs;
 
+  let consecutiveErrors = 0;
+  const maxRetries = 3;
+
   while (Date.now() - startTime < maxWaitMs) {
-    const status = await getBatchStatus(apiKey, batchId);
+    let status: BatchStatus;
+    try {
+      status = await getBatchStatus(apiKey, batchId);
+      consecutiveErrors = 0;
+    } catch (err) {
+      consecutiveErrors++;
+      if (consecutiveErrors >= maxRetries) {
+        throw new Error(
+          `Batch polling failed after ${maxRetries} consecutive errors: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+      intervalMs = Math.min(intervalMs * 1.5, maxIntervalMs);
+      continue;
+    }
+
     options?.onProgress?.(status);
 
     if (status.status === 'ended') {

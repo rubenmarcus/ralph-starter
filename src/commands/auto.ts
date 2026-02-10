@@ -20,6 +20,10 @@ import { detectBestAgent } from '../loop/agents.js';
 import { type BatchTask, completeTask, fetchBatchTasks } from '../loop/batch-fetcher.js';
 import { executeTaskBatch } from '../loop/task-executor.js';
 
+function taskCustomId(task: BatchTask): string {
+  return `${task.source}-${task.id}`;
+}
+
 export interface AutoModeOptions {
   /** Source to fetch tasks from */
   source: 'github' | 'linear';
@@ -254,7 +258,7 @@ async function executeBatchApi(tasks: BatchTask[], options: AutoModeOptions): Pr
 
   // Build batch requests
   const batchRequests: BatchRequest[] = tasks.map((task) => ({
-    customId: `${task.source}-${task.id}`,
+    customId: taskCustomId(task),
     system:
       'You are an expert software engineer. Analyze the task and provide a detailed implementation plan with code snippets. Do NOT use tools — provide all code inline.',
     prompt: buildBatchTaskPrompt(task),
@@ -317,7 +321,7 @@ async function executeBatchApi(tasks: BatchTask[], options: AutoModeOptions): Pr
     let totalOutputTokens = 0;
 
     for (const result of results) {
-      const task = tasks.find((t) => `${t.source}-${t.id}` === result.customId);
+      const task = tasks.find((t) => taskCustomId(t) === result.customId);
       const taskTitle = task?.title || result.customId;
 
       if (result.success) {
@@ -352,6 +356,7 @@ async function executeBatchApi(tasks: BatchTask[], options: AutoModeOptions): Pr
 
     if (totalInputTokens > 0 || totalOutputTokens > 0) {
       // Approximate cost at Sonnet pricing with 50% batch discount
+      // Note: actual cost varies by model (Haiku is ~10x cheaper, Opus ~5x more)
       const inputCost = (totalInputTokens / 1_000_000) * 3 * 0.5;
       const outputCost = (totalOutputTokens / 1_000_000) * 15 * 0.5;
       const totalCost = inputCost + outputCost;
@@ -359,7 +364,7 @@ async function executeBatchApi(tasks: BatchTask[], options: AutoModeOptions): Pr
 
       console.log(`  ${chalk.dim('Tokens:')} ${totalInputTokens} in / ${totalOutputTokens} out`);
       console.log(
-        `  ${chalk.dim('Cost:')} $${totalCost.toFixed(4)} (saved $${(fullPriceCost - totalCost).toFixed(4)} vs standard pricing)`
+        `  ${chalk.dim('Est. cost (Sonnet):')} $${totalCost.toFixed(4)} (saved $${(fullPriceCost - totalCost).toFixed(4)} vs standard pricing)`
       );
     }
 
