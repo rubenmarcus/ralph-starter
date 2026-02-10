@@ -8,6 +8,14 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import { hasUncommittedChanges, isGitRepo } from '../automation/git.js';
+import {
+  type BatchRequest,
+  type BatchResult,
+  getBatchResults,
+  submitBatch,
+  waitForBatch,
+} from '../llm/batch.js';
+import { getProviderKeyFromEnv } from '../llm/providers.js';
 import { detectBestAgent } from '../loop/agents.js';
 import { type BatchTask, completeTask, fetchBatchTasks } from '../loop/batch-fetcher.js';
 import { executeTaskBatch } from '../loop/task-executor.js';
@@ -31,6 +39,10 @@ export interface AutoModeOptions {
   validate?: boolean;
   /** Max iterations per task */
   maxIterations?: number;
+  /** Use Anthropic Batch API for 50% cost reduction (no tool use) */
+  batch?: boolean;
+  /** Model to use for batch mode */
+  model?: string;
 }
 
 /**
@@ -139,7 +151,13 @@ export async function autoCommand(options: AutoModeOptions): Promise<void> {
     return;
   }
 
-  // Execute tasks
+  // Batch API mode: submit all tasks to Anthropic Batch API
+  if (options.batch) {
+    await executeBatchApi(tasks, options);
+    return;
+  }
+
+  // Execute tasks (standard agent mode)
   console.log(chalk.bold('Starting batch execution...'));
   console.log();
 
@@ -208,4 +226,185 @@ export async function autoCommand(options: AutoModeOptions): Promise<void> {
   }
 
   console.log();
+}
+
+/**
+ * Execute tasks via Anthropic Batch API for 50% cost reduction.
+ *
+ * NOTE: Batch mode uses the API directly (no tool use). Best for
+ * planning, code generation, and review — not full agent loops.
+ */
+async function executeBatchApi(tasks: BatchTask[], options: AutoModeOptions): Promise<void> {
+  const spinner = ora();
+
+  // Check for Anthropic API key
+  const apiKey = getProviderKeyFromEnv('anthropic');
+  if (!apiKey) {
+    console.log(chalk.red('Error: ANTHROPIC_API_KEY is required for batch mode'));
+    console.log(chalk.dim('Set ANTHROPIC_API_KEY environment variable'));
+    process.exit(1);
+  }
+
+  console.log(chalk.bold('Batch API mode (50% cost reduction)'));
+  console.log(
+    chalk.yellow('Note: Batch mode uses the API directly — no tool use or file editing.')
+  );
+  console.log(chalk.yellow('Best for: planning, code generation, and review tasks.'));
+  console.log();
+
+  // Build batch requests
+  const batchRequests: BatchRequest[] = tasks.map((task) => ({
+    customId: `${task.source}-${task.id}`,
+    system:
+      'You are an expert software engineer. Analyze the task and provide a detailed implementation plan with code snippets. Do NOT use tools — provide all code inline.',
+    prompt: buildBatchTaskPrompt(task),
+    model: options.model,
+    maxTokens: 4096,
+  }));
+
+  // Submit batch
+  spinner.start(`Submitting ${batchRequests.length} tasks to Anthropic Batch API...`);
+  let batchId: string;
+  try {
+    batchId = await submitBatch(apiKey, batchRequests);
+    spinner.succeed(`Batch submitted: ${chalk.cyan(batchId)}`);
+  } catch (error) {
+    spinner.fail(
+      `Failed to submit batch: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+    process.exit(1);
+  }
+
+  // Poll for completion
+  console.log();
+  console.log(chalk.dim('Waiting for batch to complete (this can take up to 24 hours)...'));
+  console.log(chalk.dim('You can safely Ctrl+C and check later with the batch ID above.'));
+  console.log();
+
+  try {
+    const finalStatus = await waitForBatch(apiKey, batchId, {
+      onProgress: (status) => {
+        const progress =
+          status.totalRequests > 0
+            ? Math.round((status.completedRequests / status.totalRequests) * 100)
+            : 0;
+        process.stdout.write(
+          `\r  ${chalk.cyan(`${progress}%`)} completed (${status.completedRequests}/${status.totalRequests} requests)  `
+        );
+      },
+      initialIntervalMs: 10000, // Batch jobs take time, no need to poll fast
+      maxIntervalMs: 120000,
+    });
+
+    console.log();
+    console.log();
+    console.log(chalk.green.bold('Batch completed!'));
+    console.log(
+      chalk.dim(
+        `Completed: ${finalStatus.completedRequests}, Failed: ${finalStatus.failedRequests}`
+      )
+    );
+    console.log();
+
+    // Retrieve results
+    spinner.start('Retrieving results...');
+    const results = await getBatchResults(apiKey, batchId);
+    spinner.succeed(`Retrieved ${results.length} results`);
+    console.log();
+
+    // Display results
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+
+    for (const result of results) {
+      const task = tasks.find((t) => `${t.source}-${t.id}` === result.customId);
+      const taskTitle = task?.title || result.customId;
+
+      if (result.success) {
+        console.log(chalk.green(`  ${taskTitle}`));
+        if (result.usage) {
+          totalInputTokens += result.usage.inputTokens;
+          totalOutputTokens += result.usage.outputTokens;
+          console.log(
+            chalk.dim(
+              `    Tokens: ${result.usage.inputTokens} in / ${result.usage.outputTokens} out`
+            )
+          );
+        }
+        // Show first 200 chars of content as preview
+        if (result.content) {
+          const preview = result.content.slice(0, 200).replace(/\n/g, ' ');
+          console.log(chalk.dim(`    Preview: ${preview}...`));
+        }
+      } else {
+        console.log(chalk.red(`  ${taskTitle}: ${result.error}`));
+      }
+    }
+
+    // Cost summary (batch API is 50% off)
+    const successful = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
+
+    console.log();
+    console.log(chalk.bold('Summary:'));
+    console.log(`  ${chalk.green('Successful:')} ${successful}`);
+    console.log(`  ${chalk.red('Failed:')} ${failed}`);
+
+    if (totalInputTokens > 0 || totalOutputTokens > 0) {
+      // Approximate cost at Sonnet pricing with 50% batch discount
+      const inputCost = (totalInputTokens / 1_000_000) * 3 * 0.5;
+      const outputCost = (totalOutputTokens / 1_000_000) * 15 * 0.5;
+      const totalCost = inputCost + outputCost;
+      const fullPriceCost = inputCost * 2 + outputCost * 2;
+
+      console.log(`  ${chalk.dim('Tokens:')} ${totalInputTokens} in / ${totalOutputTokens} out`);
+      console.log(
+        `  ${chalk.dim('Cost:')} $${totalCost.toFixed(4)} (saved $${(fullPriceCost - totalCost).toFixed(4)} vs standard pricing)`
+      );
+    }
+
+    console.log();
+  } catch (error) {
+    console.log();
+    console.log(
+      chalk.red(`Batch polling failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    );
+    console.log(
+      chalk.dim(
+        `You can check the batch status later using the Anthropic API with batch ID: ${batchId}`
+      )
+    );
+    process.exit(1);
+  }
+}
+
+/**
+ * Build a prompt for batch API mode (no tool use).
+ */
+function buildBatchTaskPrompt(task: BatchTask): string {
+  const lines: string[] = [];
+
+  lines.push(`# Task: ${task.title}`);
+  lines.push('');
+  lines.push(`Source: ${task.url}`);
+  lines.push('');
+
+  if (task.labels?.length) {
+    lines.push(`Labels: ${task.labels.join(', ')}`);
+    lines.push('');
+  }
+
+  lines.push('## Description');
+  lines.push('');
+  lines.push(task.description || '*No description provided*');
+  lines.push('');
+  lines.push('## Instructions');
+  lines.push('');
+  lines.push('Analyze the task above and provide:');
+  lines.push('1. A clear implementation plan');
+  lines.push('2. Complete code for all files that need to be created or modified');
+  lines.push('3. Any test code needed');
+  lines.push('4. Brief notes on potential edge cases');
+
+  return lines.join('\n');
 }

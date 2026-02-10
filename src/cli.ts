@@ -233,6 +233,8 @@ program
   .option('--validate', 'Run validation after each task', true)
   .option('--no-validate', 'Skip validation')
   .option('--max-iterations <n>', 'Max iterations per task (default: 15)')
+  .option('--batch', 'Use Anthropic Batch API for 50% cost reduction (no tool use)')
+  .option('--model <name>', 'Model to use in batch mode')
   .action(async (options) => {
     await autoCommand({
       source: options.source,
@@ -244,6 +246,8 @@ program
       agent: options.agent,
       validate: options.validate,
       maxIterations: options.maxIterations ? parseInt(options.maxIterations, 10) : undefined,
+      batch: options.batch,
+      model: options.model,
     });
   });
 
