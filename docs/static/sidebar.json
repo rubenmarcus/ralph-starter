@@ -1,7 +1,7 @@
 {
   "name": "ralph-starter Documentation",
   "baseUrl": "https://ralphstarter.ai",
-  "generatedAt": "2026-02-07T23:28:20.574Z",
+  "generatedAt": "2026-02-09T23:59:04.120Z",
   "navigation": [
     {
       "type": "category",
@@ -129,6 +129,30 @@
       "items": [
         {
           "type": "doc",
+          "label": "auth",
+          "path": "/docs/cli/auth",
+          "url": "https://ralphstarter.ai/docs/cli/auth",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/auth.md",
+          "description": "Browser-based OAuth authentication for integrations"
+        },
+        {
+          "type": "doc",
+          "label": "auto",
+          "path": "/docs/cli/auto",
+          "url": "https://ralphstarter.ai/docs/cli/auto",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/auto.md",
+          "description": "Autonomous batch task processing from GitHub and Linear"
+        },
+        {
+          "type": "doc",
+          "label": "check",
+          "path": "/docs/cli/check",
+          "url": "https://ralphstarter.ai/docs/cli/check",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/check.md",
+          "description": "Validate configuration and test LLM connection"
+        },
+        {
+          "type": "doc",
           "label": "config",
           "path": "/docs/cli/config",
           "url": "https://ralphstarter.ai/docs/cli/config",
@@ -145,6 +169,14 @@
         },
         {
           "type": "doc",
+          "label": "integrations",
+          "path": "/docs/cli/integrations",
+          "url": "https://ralphstarter.ai/docs/cli/integrations",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/integrations.md",
+          "description": "Manage, test, and fetch data from integrations"
+        },
+        {
+          "type": "doc",
           "label": "plan",
           "path": "/docs/cli/plan",
           "url": "https://ralphstarter.ai/docs/cli/plan",
@@ -153,11 +185,35 @@
         },
         {
           "type": "doc",
+          "label": "presets",
+          "path": "/docs/cli/presets",
+          "url": "https://ralphstarter.ai/docs/cli/presets",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/presets.md",
+          "description": "Pre-configured workflow presets for common development scenarios"
+        },
+        {
+          "type": "doc",
           "label": "run",
           "path": "/docs/cli/run",
           "url": "https://ralphstarter.ai/docs/cli/run",
           "markdownUrl": "https://ralphstarter.ai/docs/cli/run.md",
           "description": "Run an autonomous AI coding loop"
+        },
+        {
+          "type": "doc",
+          "label": "setup",
+          "path": "/docs/cli/setup",
+          "url": "https://ralphstarter.ai/docs/cli/setup",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/setup.md",
+          "description": "Interactive setup wizard to configure LLM and agents"
+        },
+        {
+          "type": "doc",
+          "label": "\"ralph-starter skill\"",
+          "path": "/docs/cli/skill",
+          "url": "https://ralphstarter.ai/docs/cli/skill",
+          "markdownUrl": "https://ralphstarter.ai/docs/cli/skill.md",
+          "description": "Manage agent skills for enhanced AI coding capabilities"
         },
         {
           "type": "doc",
@@ -183,6 +239,14 @@
       "items": [
         {
           "type": "doc",
+          "label": "\"Cost Tracking\"",
+          "path": "/docs/guides/cost-tracking",
+          "url": "https://ralphstarter.ai/docs/guides/cost-tracking",
+          "markdownUrl": "https://ralphstarter.ai/docs/guides/cost-tracking.md",
+          "description": "\"Monitor token usage and estimated costs across AI agent loop iterations\""
+        },
+        {
+          "type": "doc",
           "label": "Extending ralph-starter",
           "path": "/docs/guides/extending-ralph-starter",
           "url": "https://ralphstarter.ai/docs/guides/extending-ralph-starter",
@@ -191,11 +255,35 @@
         },
         {
           "type": "doc",
+          "label": "\"PRD Workflow\"",
+          "path": "/docs/guides/prd-workflow",
+          "url": "https://ralphstarter.ai/docs/guides/prd-workflow",
+          "markdownUrl": "https://ralphstarter.ai/docs/guides/prd-workflow.md",
+          "description": "\"Use markdown PRD files with checkbox tasks to drive autonomous multi-step implementations\""
+        },
+        {
+          "type": "doc",
+          "label": "\"Skills System\"",
+          "path": "/docs/guides/skills-system",
+          "url": "https://ralphstarter.ai/docs/guides/skills-system",
+          "markdownUrl": "https://ralphstarter.ai/docs/guides/skills-system.md",
+          "description": "\"Discover, install, and create Claude Code skills that enhance agent behavior in ralph-starter loops\""
+        },
+        {
+          "type": "doc",
           "label": "Testing Integrations",
           "path": "/docs/guides/testing-integrations",
           "url": "https://ralphstarter.ai/docs/guides/testing-integrations",
           "markdownUrl": "https://ralphstarter.ai/docs/guides/testing-integrations.md",
           "description": "How to test ralph-starter integrations and verify everything works"
+        },
+        {
+          "type": "doc",
+          "label": "\"Workflow Presets\"",
+          "path": "/docs/guides/workflow-presets",
+          "url": "https://ralphstarter.ai/docs/guides/workflow-presets",
+          "markdownUrl": "https://ralphstarter.ai/docs/guides/workflow-presets.md",
+          "description": "\"Deep guide on choosing, using, and combining workflow presets to tailor ralph-starter loops to your development scenario\""
         }
       ]
     },
@@ -203,6 +291,14 @@
       "type": "category",
       "label": "Advanced",
       "items": [
+        {
+          "type": "doc",
+          "label": "\"Circuit Breaker\"",
+          "path": "/docs/advanced/circuit-breaker",
+          "url": "https://ralphstarter.ai/docs/advanced/circuit-breaker",
+          "markdownUrl": "https://ralphstarter.ai/docs/advanced/circuit-breaker.md",
+          "description": "\"Automatically stop loops when the agent is stuck in repeated failures or hitting the same error\""
+        },
         {
           "type": "doc",
           "label": "Git Automation",
@@ -218,6 +314,14 @@
           "url": "https://ralphstarter.ai/docs/advanced/ralph-playbook",
           "markdownUrl": "https://ralphstarter.ai/docs/advanced/ralph-playbook.md",
           "description": "Understanding the Ralph Playbook methodology"
+        },
+        {
+          "type": "doc",
+          "label": "\"Rate Limiting\"",
+          "path": "/docs/advanced/rate-limiting",
+          "url": "https://ralphstarter.ai/docs/advanced/rate-limiting",
+          "markdownUrl": "https://ralphstarter.ai/docs/advanced/rate-limiting.md",
+          "description": "\"Control API call frequency with sliding-window rate limiting to prevent overuse and manage costs\""
         },
         {
           "type": "doc",
@@ -262,6 +366,12 @@
   ],
   "flatList": [
     {
+      "title": "\"Circuit Breaker\"",
+      "path": "/docs/advanced/circuit-breaker",
+      "url": "https://ralphstarter.ai/docs/advanced/circuit-breaker",
+      "category": "Advanced"
+    },
+    {
       "title": "Git Automation",
       "path": "/docs/advanced/git-automation",
       "url": "https://ralphstarter.ai/docs/advanced/git-automation",
@@ -274,10 +384,34 @@
       "category": "Advanced"
     },
     {
+      "title": "\"Rate Limiting\"",
+      "path": "/docs/advanced/rate-limiting",
+      "url": "https://ralphstarter.ai/docs/advanced/rate-limiting",
+      "category": "Advanced"
+    },
+    {
       "title": "Validation",
       "path": "/docs/advanced/validation",
       "url": "https://ralphstarter.ai/docs/advanced/validation",
       "category": "Advanced"
+    },
+    {
+      "title": "auth",
+      "path": "/docs/cli/auth",
+      "url": "https://ralphstarter.ai/docs/cli/auth",
+      "category": "Cli"
+    },
+    {
+      "title": "auto",
+      "path": "/docs/cli/auto",
+      "url": "https://ralphstarter.ai/docs/cli/auto",
+      "category": "Cli"
+    },
+    {
+      "title": "check",
+      "path": "/docs/cli/check",
+      "url": "https://ralphstarter.ai/docs/cli/check",
+      "category": "Cli"
     },
     {
       "title": "config",
@@ -292,15 +426,39 @@
       "category": "Cli"
     },
     {
+      "title": "integrations",
+      "path": "/docs/cli/integrations",
+      "url": "https://ralphstarter.ai/docs/cli/integrations",
+      "category": "Cli"
+    },
+    {
       "title": "plan",
       "path": "/docs/cli/plan",
       "url": "https://ralphstarter.ai/docs/cli/plan",
       "category": "Cli"
     },
     {
+      "title": "presets",
+      "path": "/docs/cli/presets",
+      "url": "https://ralphstarter.ai/docs/cli/presets",
+      "category": "Cli"
+    },
+    {
       "title": "run",
       "path": "/docs/cli/run",
       "url": "https://ralphstarter.ai/docs/cli/run",
+      "category": "Cli"
+    },
+    {
+      "title": "setup",
+      "path": "/docs/cli/setup",
+      "url": "https://ralphstarter.ai/docs/cli/setup",
+      "category": "Cli"
+    },
+    {
+      "title": "\"ralph-starter skill\"",
+      "path": "/docs/cli/skill",
+      "url": "https://ralphstarter.ai/docs/cli/skill",
       "category": "Cli"
     },
     {
@@ -340,15 +498,39 @@
       "category": "General"
     },
     {
+      "title": "\"Cost Tracking\"",
+      "path": "/docs/guides/cost-tracking",
+      "url": "https://ralphstarter.ai/docs/guides/cost-tracking",
+      "category": "Guides"
+    },
+    {
       "title": "Extending ralph-starter",
       "path": "/docs/guides/extending-ralph-starter",
       "url": "https://ralphstarter.ai/docs/guides/extending-ralph-starter",
       "category": "Guides"
     },
     {
+      "title": "\"PRD Workflow\"",
+      "path": "/docs/guides/prd-workflow",
+      "url": "https://ralphstarter.ai/docs/guides/prd-workflow",
+      "category": "Guides"
+    },
+    {
+      "title": "\"Skills System\"",
+      "path": "/docs/guides/skills-system",
+      "url": "https://ralphstarter.ai/docs/guides/skills-system",
+      "category": "Guides"
+    },
+    {
       "title": "Testing Integrations",
       "path": "/docs/guides/testing-integrations",
       "url": "https://ralphstarter.ai/docs/guides/testing-integrations",
+      "category": "Guides"
+    },
+    {
+      "title": "\"Workflow Presets\"",
+      "path": "/docs/guides/workflow-presets",
+      "url": "https://ralphstarter.ai/docs/guides/workflow-presets",
       "category": "Guides"
     },
     {

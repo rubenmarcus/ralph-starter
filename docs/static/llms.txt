@@ -6,21 +6,34 @@ This file contains links to documentation sections following the llmstxt.org sta
 
 ## Table of Contents
 
+- [Circuit Breaker](https://ralphstarter.ai/docs/advanced/circuit-breaker): Automatically stop loops when the agent is stuck in repeated failures or hitting the same error
 - [Git Automation](https://ralphstarter.ai/docs/advanced/git-automation): Auto-commit, push, and create pull requests
 - [Ralph Playbook](https://ralphstarter.ai/docs/advanced/ralph-playbook): Understanding the Ralph Playbook methodology
+- [Rate Limiting](https://ralphstarter.ai/docs/advanced/rate-limiting): Control API call frequency with sliding-window rate limiting to prevent overuse and manage costs
 - [Validation](https://ralphstarter.ai/docs/advanced/validation): Running tests, lint, and build validation
+- [auth](https://ralphstarter.ai/docs/cli/auth): Browser-based OAuth authentication for integrations
+- [auto](https://ralphstarter.ai/docs/cli/auto): Autonomous batch task processing from GitHub and Linear
+- [check](https://ralphstarter.ai/docs/cli/check): Validate configuration and test LLM connection
 - [config](https://ralphstarter.ai/docs/cli/config): Manage source configuration and credentials
 - [init](https://ralphstarter.ai/docs/cli/init): Initialize Ralph Playbook in a project
+- [integrations](https://ralphstarter.ai/docs/cli/integrations): Manage, test, and fetch data from integrations
 - [plan](https://ralphstarter.ai/docs/cli/plan): Create implementation plan from specs
+- [presets](https://ralphstarter.ai/docs/cli/presets): Pre-configured workflow presets for common development scenarios
 - [run](https://ralphstarter.ai/docs/cli/run): Run an autonomous AI coding loop
+- [setup](https://ralphstarter.ai/docs/cli/setup): Interactive setup wizard to configure LLM and agents
+- [ralph-starter skill](https://ralphstarter.ai/docs/cli/skill): Manage agent skills for enhanced AI coding capabilities
 - [source](https://ralphstarter.ai/docs/cli/source): Manage input sources
 - [template](https://ralphstarter.ai/docs/cli/template): Browse and use project templates
 - [Changelog](https://ralphstarter.ai/docs/community/changelog): Release notes and version history for ralph-starter
 - [Contributing](https://ralphstarter.ai/docs/community/contributing): How to contribute to ralph-starter
 - [Ideas & Roadmap](https://ralphstarter.ai/docs/community/ideas): Feature ideas and development roadmap for ralph-starter
 - [FAQ](https://ralphstarter.ai/docs/faq): Frequently asked questions about ralph-starter - AI-powered autonomous coding
+- [Cost Tracking](https://ralphstarter.ai/docs/guides/cost-tracking): Monitor token usage and estimated costs across AI agent loop iterations
 - [Extending ralph-starter](https://ralphstarter.ai/docs/guides/extending-ralph-starter): Developer guide for extending ralph-starter with custom sources, agents, and integrations
+- [PRD Workflow](https://ralphstarter.ai/docs/guides/prd-workflow): Use markdown PRD files with checkbox tasks to drive autonomous multi-step implementations
+- [Skills System](https://ralphstarter.ai/docs/guides/skills-system): Discover, install, and create Claude Code skills that enhance agent behavior in ralph-starter loops
 - [Testing Integrations](https://ralphstarter.ai/docs/guides/testing-integrations): How to test ralph-starter integrations and verify everything works
+- [Workflow Presets](https://ralphstarter.ai/docs/guides/workflow-presets): Deep guide on choosing, using, and combining workflow presets to tailor ralph-starter loops to your development scenario
 - [Installation](https://ralphstarter.ai/docs/installation): How to install ralph-starter and get started
 - [Introduction](https://ralphstarter.ai/docs/intro): ralph-starter - Ralph Wiggum made easy. One command to run autonomous AI coding loops.
 - [Claude Desktop](https://ralphstarter.ai/docs/mcp/claude-desktop): Configure Claude Desktop to use ralph-starter

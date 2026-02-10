@@ -2,14 +2,31 @@
   "name": "ralph-starter - AI-Powered Autonomous Coding from Specs to Production",
   "description": "Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically with autonomous loops.",
   "baseUrl": "https://ralphstarter.ai",
-  "generatedAt": "2026-02-07T23:28:20.569Z",
-  "totalDocs": 26,
+  "generatedAt": "2026-02-09T23:59:04.119Z",
+  "totalDocs": 39,
   "access": {
     "llmsTxt": "https://ralphstarter.ai/llms.txt",
     "llmsFullTxt": "https://ralphstarter.ai/llms-full.txt",
-    "rawMarkdown": "Add .md to any docs URL"
+    "rawMarkdown": "Add .md to any URL for raw markdown"
   },
   "docs": [
+    {
+      "title": "\"Circuit Breaker\"",
+      "description": "\"Automatically stop loops when the agent is stuck in repeated failures or hitting the same error\"",
+      "path": "/docs/advanced/circuit-breaker",
+      "markdownUrl": "https://ralphstarter.ai/docs/advanced/circuit-breaker.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/advanced/circuit-breaker",
+      "category": "Advanced",
+      "keywords": [
+        "circuit-breaker",
+        "failures",
+        "errors",
+        "cooldown",
+        "error-hashing",
+        "deduplication",
+        "stuck-detection"
+      ]
+    },
     {
       "title": "Git Automation",
       "description": "Auto-commit, push, and create pull requests",
@@ -40,6 +57,22 @@
       ]
     },
     {
+      "title": "\"Rate Limiting\"",
+      "description": "\"Control API call frequency with sliding-window rate limiting to prevent overuse and manage costs\"",
+      "path": "/docs/advanced/rate-limiting",
+      "markdownUrl": "https://ralphstarter.ai/docs/advanced/rate-limiting.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/advanced/rate-limiting",
+      "category": "Advanced",
+      "keywords": [
+        "rate-limit",
+        "throttle",
+        "api-calls",
+        "sliding-window",
+        "calls-per-hour",
+        "calls-per-minute"
+      ]
+    },
+    {
       "title": "Validation",
       "description": "Running tests, lint, and build validation",
       "path": "/docs/advanced/validation",
@@ -52,6 +85,60 @@
         "lint",
         "build",
         "backpressure"
+      ]
+    },
+    {
+      "title": "auth",
+      "description": "Browser-based OAuth authentication for integrations",
+      "path": "/docs/cli/auth",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/auth.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/auth",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "auth",
+        "command",
+        "oauth",
+        "authentication",
+        "linear",
+        "notion",
+        "github",
+        "todoist"
+      ]
+    },
+    {
+      "title": "auto",
+      "description": "Autonomous batch task processing from GitHub and Linear",
+      "path": "/docs/cli/auto",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/auto.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/auto",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "auto",
+        "command",
+        "batch",
+        "autonomous",
+        "github",
+        "linear",
+        "pull request"
+      ]
+    },
+    {
+      "title": "check",
+      "description": "Validate configuration and test LLM connection",
+      "path": "/docs/cli/check",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/check.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/check",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "check",
+        "command",
+        "configuration",
+        "validation",
+        "connection",
+        "test"
       ]
     },
     {
@@ -83,6 +170,24 @@
       ]
     },
     {
+      "title": "integrations",
+      "description": "Manage, test, and fetch data from integrations",
+      "path": "/docs/cli/integrations",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/integrations.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/integrations",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "integrations",
+        "command",
+        "github",
+        "linear",
+        "notion",
+        "fetch",
+        "test"
+      ]
+    },
+    {
       "title": "plan",
       "description": "Create implementation plan from specs",
       "path": "/docs/cli/plan",
@@ -97,6 +202,25 @@
       ]
     },
     {
+      "title": "presets",
+      "description": "Pre-configured workflow presets for common development scenarios",
+      "path": "/docs/cli/presets",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/presets.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/presets",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "presets",
+        "command",
+        "workflow",
+        "tdd",
+        "debug",
+        "review",
+        "documentation",
+        "feature"
+      ]
+    },
+    {
       "title": "run",
       "description": "Run an autonomous AI coding loop",
       "path": "/docs/cli/run",
@@ -108,6 +232,40 @@
         "run",
         "command",
         "coding loop"
+      ]
+    },
+    {
+      "title": "setup",
+      "description": "Interactive setup wizard to configure LLM and agents",
+      "path": "/docs/cli/setup",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/setup.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/setup",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "setup",
+        "command",
+        "wizard",
+        "configuration",
+        "llm",
+        "agents"
+      ]
+    },
+    {
+      "title": "\"ralph-starter skill\"",
+      "description": "Manage agent skills for enhanced AI coding capabilities",
+      "path": "/docs/cli/skill",
+      "markdownUrl": "https://ralphstarter.ai/docs/cli/skill.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/cli/skill",
+      "category": "Cli",
+      "keywords": [
+        "cli",
+        "skill",
+        "command",
+        "skills",
+        "agent",
+        "add-skill",
+        "claude code"
       ]
     },
     {
@@ -146,7 +304,12 @@
       "markdownUrl": "https://ralphstarter.ai/docs/community/changelog.md",
       "htmlUrl": "https://ralphstarter.ai/docs/community/changelog",
       "category": "Community",
-      "keywords": []
+      "keywords": [
+        "changelog",
+        "releases",
+        "version history",
+        "updates"
+      ]
     },
     {
       "title": "Contributing",
@@ -182,6 +345,23 @@
       ]
     },
     {
+      "title": "\"Cost Tracking\"",
+      "description": "\"Monitor token usage and estimated costs across AI agent loop iterations\"",
+      "path": "/docs/guides/cost-tracking",
+      "markdownUrl": "https://ralphstarter.ai/docs/guides/cost-tracking.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/guides/cost-tracking",
+      "category": "Guides",
+      "keywords": [
+        "cost",
+        "tokens",
+        "pricing",
+        "budget",
+        "cost-tracker",
+        "model-pricing",
+        "estimation"
+      ]
+    },
+    {
       "title": "Extending ralph-starter",
       "description": "Developer guide for extending ralph-starter with custom sources, agents, and integrations",
       "path": "/docs/guides/extending-ralph-starter",
@@ -198,6 +378,40 @@
       ]
     },
     {
+      "title": "\"PRD Workflow\"",
+      "description": "\"Use markdown PRD files with checkbox tasks to drive autonomous multi-step implementations\"",
+      "path": "/docs/guides/prd-workflow",
+      "markdownUrl": "https://ralphstarter.ai/docs/guides/prd-workflow.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/guides/prd-workflow",
+      "category": "Guides",
+      "keywords": [
+        "prd",
+        "tasks",
+        "checklist",
+        "markdown",
+        "batch",
+        "implementation-plan",
+        "task-executor"
+      ]
+    },
+    {
+      "title": "\"Skills System\"",
+      "description": "\"Discover, install, and create Claude Code skills that enhance agent behavior in ralph-starter loops\"",
+      "path": "/docs/guides/skills-system",
+      "markdownUrl": "https://ralphstarter.ai/docs/guides/skills-system.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/guides/skills-system",
+      "category": "Guides",
+      "keywords": [
+        "skills",
+        "claude-code",
+        "agent-skills",
+        "add-skill",
+        "global-skills",
+        "project-skills",
+        "tech-stack"
+      ]
+    },
+    {
       "title": "Testing Integrations",
       "description": "How to test ralph-starter integrations and verify everything works",
       "path": "/docs/guides/testing-integrations",
@@ -211,6 +425,26 @@
         "setup",
         "verification",
         "environment variables"
+      ]
+    },
+    {
+      "title": "\"Workflow Presets\"",
+      "description": "\"Deep guide on choosing, using, and combining workflow presets to tailor ralph-starter loops to your development scenario\"",
+      "path": "/docs/guides/workflow-presets",
+      "markdownUrl": "https://ralphstarter.ai/docs/guides/workflow-presets.md",
+      "htmlUrl": "https://ralphstarter.ai/docs/guides/workflow-presets",
+      "category": "Guides",
+      "keywords": [
+        "presets",
+        "workflow",
+        "tdd",
+        "feature",
+        "debug",
+        "review",
+        "docs",
+        "incident-response",
+        "refactor",
+        "adversarial-review"
       ]
     },
     {

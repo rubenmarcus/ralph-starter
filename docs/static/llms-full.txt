@@ -4,6 +4,262 @@
 
 This file contains all documentation content in a single document following the llmstxt.org standard.
 
+## Circuit Breaker
+
+
+The circuit breaker monitors agent loop iterations for failure patterns and automatically stops the loop when the agent appears stuck. Without it, an agent that keeps failing on the same error would burn through all its iterations (and your budget) without making progress.
+
+## How It Works
+
+The circuit breaker tracks two failure signals:
+
+1. **Consecutive failures**: How many iterations in a row have failed without a success in between.
+2. **Same-error repetition**: How many times the exact same error (after normalization) has occurred across all iterations.
+
+If either signal exceeds its threshold, the circuit "trips" (opens) and the loop stops.
+
+```
+Iteration 1: Success     -> consecutiveFailures = 0
+Iteration 2: Fail (err A) -> consecutiveFailures = 1, errA count = 1
+Iteration 3: Fail (err A) -> consecutiveFailures = 2, errA count = 2
+Iteration 4: Fail (err A) -> consecutiveFailures = 3, errA count = 3
+                           -> CIRCUIT TRIPS (3 consecutive failures)
+```
+
+## Default Thresholds
+
+The default circuit breaker configuration:
+
+| Setting | Default Value | Description |
+|---|---|---|
+| `maxConsecutiveFailures` | **3** | Trip after N failures in a row |
+| `maxSameErrorCount` | **5** | Trip after the same error occurs N times total |
+| `cooldownMs` | **30,000** (30 seconds) | How long the circuit stays open before allowing a retry |
+
+With defaults: 3 failures in a row trips the breaker, or seeing the same error 5 times total (even if interspersed with different errors or successes) also trips it.
+
+## CLI Flags
+
+### `--circuit-breaker-failures`
+
+Set the maximum consecutive failures before tripping:
+
+```bash
+# Trip after 5 consecutive failures instead of 3
+ralph-starter run "add feature" --circuit-breaker-failures 5
+```
+
+### `--circuit-breaker-errors`
+
+Set the maximum same-error repetitions before tripping:
+
+```bash
+# Trip after the same error occurs 3 times instead of 5
+ralph-starter run "add feature" --circuit-breaker-errors 3
+```
+
+### Combining Both
+
+```bash
+ralph-starter run "add feature" \
+  --circuit-breaker-failures 2 \
+  --circuit-breaker-errors 3
+```
+
+This is a tight configuration: 2 consecutive failures OR 3 same-error occurrences will stop the loop.
+
+## Error Hashing and Deduplication
+
+Errors rarely have identical text across iterations. A stack trace might include different line numbers, timestamps, or memory addresses. The circuit breaker normalizes errors before comparing them:
+
+### Normalization Steps
+
+1. **Numbers replaced**: All digit sequences become `N` (e.g., `line 42` becomes `line N`).
+2. **Hex values replaced**: Patterns like `0x7f3a` become `HEX`.
+3. **Stack traces replaced**: Patterns like `at Function (/path:42:10)` become `STACK`.
+4. **Lowercased**: The entire string is converted to lowercase.
+5. **Trimmed and truncated**: Whitespace is trimmed and the string is capped at 500 characters.
+
+### Hash Generation
+
+After normalization, the error string is hashed with MD5 and truncated to 8 hex characters. This 8-character hash becomes the error's identity for deduplication.
+
+**Example**:
+
+```
+Original:  "TypeError: Cannot read property 'id' of undefined at UserController (/src/controllers/user.ts:42:15)"
+Normalized: "typeerror: cannot read property 'id' of undefined STACK"
+Hash:       "a3f1b2c4"
+
+Original:  "TypeError: Cannot read property 'id' of undefined at UserController (/src/controllers/user.ts:87:22)"
+Normalized: "typeerror: cannot read property 'id' of undefined STACK"
+Hash:       "a3f1b2c4"  <- Same hash! Counted as the same error.
+```
+
+This means the circuit breaker correctly identifies that both errors are fundamentally the same problem (accessing `id` on `undefined`), even though the stack trace line numbers differ.
+
+## Cooldown Period
+
+When the circuit trips, it enters a cooldown period (default: 30 seconds). During cooldown:
+
+- `isTripped()` returns `true`.
+- The loop is halted.
+
+After the cooldown expires:
+
+- `isTripped()` returns `false` (the circuit "half-opens").
+- One retry attempt is allowed.
+- If the retry succeeds, the circuit stays closed (normal operation resumes).
+- If the retry fails, the circuit trips again and the cooldown restarts.
+
+In practice, when used within ralph-starter's loop executor, a tripped circuit breaker typically causes the loop to exit immediately with `exitReason: 'circuit_breaker'` rather than waiting for the cooldown. The cooldown mechanism is more relevant for long-running or restarted loops.
+
+## Success Resets Consecutive Failures
+
+A successful iteration resets the consecutive failure counter to zero but does **not** clear the error history. This means:
+
+- If the agent fails twice, succeeds once, then fails twice more, the consecutive count is 2 (not 4).
+- But if those four failures all had the same error hash, the same-error count is 4 -- and one more would trip the breaker at the default threshold of 5.
+
+This design catches both "the agent is completely stuck right now" (consecutive) and "the agent keeps circling back to the same problem" (same-error).
+
+## Preset-Specific Circuit Breaker Configs
+
+Several presets override the default circuit breaker thresholds to match their use case:
+
+| Preset | Consecutive Failures | Same-Error Max | Rationale |
+|---|---|---|---|
+| `feature` | 3 | 5 | Standard defaults -- balanced tolerance |
+| `tdd-red-green` | 5 | 3 | More consecutive tolerance (red-green cycling can look like failures), but less same-error tolerance |
+| `refactor` | 2 | 3 | Tight guardrails -- refactoring should not produce repeated failures |
+| `incident-response` | 2 | 2 | Very tight -- production fixes need to work fast or escalate |
+| `migration-safety` | 1 | 2 | Strictest of all -- a single consecutive failure trips the breaker, because broken migrations risk data loss |
+
+Presets that do not specify a circuit breaker (like `debug`, `review`, `docs`) use whatever default is set in the loop executor, which is the standard 3/5 configuration.
+
+### Using Preset Configs
+
+When you use a preset, its circuit breaker config is applied automatically:
+
+```bash
+# Uses migration-safety's 1/2 circuit breaker
+ralph-starter run "add email column" --preset migration-safety
+
+# Override the preset's circuit breaker
+ralph-starter run "add email column" --preset migration-safety --circuit-breaker-failures 3
+```
+
+CLI flags always take precedence over preset values.
+
+## Trip Reason Reporting
+
+When the circuit trips, ralph-starter reports exactly why:
+
+**Consecutive failures:**
+```
+Circuit breaker tripped: 3 consecutive failures (threshold: 3)
+```
+
+**Same error repeated:**
+```
+Circuit breaker tripped: Same error repeated 5 times (threshold: 5)
+```
+
+The `getTripReason()` method returns a human-readable string, and the loop exits with:
+
+```typescript
+{
+  success: false,
+  exitReason: 'circuit_breaker',
+  stats: {
+    circuitBreakerStats: {
+      consecutiveFailures: 3,
+      totalFailures: 5,
+      uniqueErrors: 2
+    }
+  }
+}
+```
+
+The `uniqueErrors` count tells you how many distinct error patterns were seen, which helps diagnose whether the agent hit one problem repeatedly or multiple different problems.
+
+## Practical Examples
+
+### Tight Breaker for Critical Code
+
+When working on payment processing or authentication, use aggressive thresholds:
+
+```bash
+ralph-starter run "update payment webhook handler" \
+  --circuit-breaker-failures 1 \
+  --circuit-breaker-errors 2 \
+  --validate \
+  --commit
+```
+
+One failure stops the loop. You review the error manually before restarting.
+
+### Loose Breaker for Exploratory Work
+
+When the agent is expected to try multiple approaches, loosen the thresholds:
+
+```bash
+ralph-starter run "find the best caching strategy" \
+  --preset scientific-method \
+  --circuit-breaker-failures 8 \
+  --circuit-breaker-errors 10
+```
+
+The agent has room to experiment and fail without tripping the breaker.
+
+### Monitoring Circuit Breaker State
+
+The circuit breaker's state is included in the loop result stats:
+
+```typescript
+const result = await runLoop(options);
+
+if (result.exitReason === 'circuit_breaker') {
+  console.log('Loop stopped by circuit breaker');
+  console.log(`Consecutive failures: ${result.stats.circuitBreakerStats.consecutiveFailures}`);
+  console.log(`Total failures: ${result.stats.circuitBreakerStats.totalFailures}`);
+  console.log(`Unique errors: ${result.stats.circuitBreakerStats.uniqueErrors}`);
+}
+```
+
+### Combined with Rate Limiting
+
+Circuit breakers and rate limiters address different failure modes:
+
+| Mechanism | Protects Against |
+|---|---|
+| Circuit breaker | Agent stuck on the same error, wasting iterations |
+| Rate limiter | Agent running too fast, burning through API quotas |
+
+Use both together for comprehensive protection:
+
+```bash
+ralph-starter run "implement feature" \
+  --rate-limit 50 \
+  --circuit-breaker-failures 3 \
+  --circuit-breaker-errors 5 \
+  --preset feature
+```
+
+## Architecture Notes
+
+The `CircuitBreaker` class is stateful and tracks:
+
+- **`consecutiveFailures`**: Counter incremented on failure, reset to 0 on success.
+- **`errorHistory`**: A `Map<string, number>` mapping error hashes to occurrence counts. This map is never cleared by a success -- it accumulates across the entire loop lifetime.
+- **`isOpen`**: Boolean flag indicating whether the circuit is currently tripped.
+- **`lastFailure`**: Timestamp of the most recent failure, used for cooldown calculation.
+- **`totalFailures`**: Running total of all failures (never reset by success).
+
+The `reset()` method clears all state, returning the circuit breaker to its initial condition. This is called when restarting a loop from scratch.
+
+---
+
 ## Git Automation
 
 
@@ -444,6 +700,196 @@ Bad task breakdown:
 
 ---
 
+## Rate Limiting
+
+
+The rate limiter controls how fast ralph-starter's loop can call AI agents. It prevents you from accidentally burning through API quotas or running up costs by enforcing both per-minute and per-hour call limits using a sliding window algorithm.
+
+## Default Limits
+
+The rate limiter ships with these default thresholds:
+
+| Setting | Default Value | Description |
+|---|---|---|
+| `maxCallsPerHour` | **100** | Maximum API calls allowed in any rolling 60-minute window |
+| `maxCallsPerMinute` | **10** | Maximum API calls allowed in any rolling 60-second window |
+| `warningThreshold` | **0.8** (80%) | Percentage of either limit that triggers a warning |
+
+With defaults, the agent can make at most 10 calls in any given minute and 100 calls in any given hour. These limits apply independently -- hitting the minute limit blocks calls even if the hour limit has room, and vice versa.
+
+## CLI Configuration
+
+### Set a Custom Hourly Limit
+
+Use the `--rate-limit` flag to set the maximum calls per hour:
+
+```bash
+# Allow only 30 API calls per hour
+ralph-starter run "add feature" --rate-limit 30
+```
+
+This overrides the default of 100 calls per hour. The per-minute limit remains at 10 unless changed programmatically.
+
+### Combine with Other Flags
+
+Rate limiting works alongside all other loop options:
+
+```bash
+ralph-starter run "implement auth" \
+  --preset feature \
+  --rate-limit 50 \
+  --max-iterations 30 \
+  --validate \
+  --commit
+```
+
+## Sliding Window Behavior
+
+The rate limiter uses a **sliding window** algorithm rather than fixed time buckets. This means:
+
+- It tracks the exact timestamp of every API call.
+- At any moment, it counts how many calls occurred in the last 60 seconds (minute window) and the last 3,600 seconds (hour window).
+- Old timestamps outside the 1-hour window are automatically cleaned up.
+
+### Why Sliding Windows Matter
+
+With fixed buckets (e.g., resetting at the top of each hour), you could make 100 calls at 12:59 and 100 more at 1:01 -- 200 calls in 2 minutes. Sliding windows prevent this by always looking backward from the current moment.
+
+**Example timeline with 10 calls/minute limit:**
+
+```
+Time    Calls in last 60s    Allowed?
+12:00   0                    Yes (call recorded)
+12:05   1                    Yes (call recorded)
+12:10   2                    Yes (call recorded)
+...
+12:50   10                   No (minute limit hit)
+12:55   10                   No (still 10 in window)
+13:01   9                    Yes (12:00 call expired from window)
+```
+
+## Warning vs. Blocking
+
+The rate limiter has two escalation levels:
+
+### Warning State
+
+When usage reaches 80% (the `warningThreshold`) of either limit, the rate limiter enters a warning state. During the warning state:
+
+- The loop continues to execute.
+- A warning message is displayed: `Warning: Approaching rate limit`.
+- The current usage percentages are shown.
+
+For example, with default settings:
+- **Minute warning**: Triggers at 8 out of 10 calls in the last minute.
+- **Hour warning**: Triggers at 80 out of 100 calls in the last hour.
+
+### Blocked State
+
+When either limit is fully reached, the rate limiter blocks further calls:
+
+- New calls are denied until capacity frees up.
+- The display shows: `Blocked - retry in Ns` with a countdown.
+- The loop waits automatically using the `waitAndAcquire` method.
+
+The wait time is calculated precisely: it finds the oldest call in the saturated window and computes how long until that call expires from the window (plus a 100ms buffer).
+
+## Automatic Wait and Retry
+
+When the rate limiter blocks a call, the loop does not immediately fail. Instead, it uses `waitAndAcquire` to pause and retry:
+
+1. The loop checks if a call is allowed (`tryAcquire`).
+2. If blocked, it calculates the wait time until the next slot opens.
+3. It sleeps for that duration (capped at 5-second polling intervals).
+4. It retries the acquisition.
+5. If still blocked after 5 minutes (default timeout), the acquisition fails and the loop exits with `rate_limit` as the exit reason.
+
+This means the loop gracefully slows down rather than crashing when limits are hit.
+
+## Reading Rate Limiter Stats
+
+During execution, rate limiter statistics are displayed in a compact format:
+
+```
+Minute: 7/10 (70%) | Hour: 45/100 (45%)
+```
+
+When approaching limits:
+
+```
+Minute: 9/10 (90%) | Hour: 82/100 (82%) | Warning: Approaching rate limit
+```
+
+When blocked:
+
+```
+Minute: 10/10 (100%) | Hour: 85/100 (85%) | Blocked - retry in 12s
+```
+
+## Practical Examples
+
+### Conservative Rate for Expensive Models
+
+When using expensive models like GPT-4 or Claude 3 Opus, limit the rate to control costs:
+
+```bash
+# Only 20 calls per hour with an expensive model
+ralph-starter run "implement feature" \
+  --preset feature \
+  --rate-limit 20 \
+  --model claude-3-opus
+```
+
+At Claude 3 Opus pricing, 20 iterations might cost $1-5 depending on context size. See the [Cost Tracking](/docs/guides/cost-tracking) guide for details.
+
+### High-Throughput Batch Processing
+
+For batch processing with a cheaper model, you might want a higher limit:
+
+```bash
+ralph-starter run "process all pending issues" \
+  --rate-limit 200 \
+  --model claude-3-haiku
+```
+
+### Combined with Circuit Breaker
+
+Rate limiting and circuit breaking complement each other. Rate limiting controls speed; circuit breaking controls failure tolerance.
+
+```bash
+ralph-starter run "add feature" \
+  --rate-limit 50 \
+  --circuit-breaker-failures 3 \
+  --circuit-breaker-errors 5
+```
+
+If the agent hits errors, the circuit breaker stops the loop before the rate limiter even becomes relevant. If the agent is succeeding but making many calls, the rate limiter slows it down.
+
+## Loop Exit Behavior
+
+When the rate limiter blocks a call and the wait timeout (5 minutes) expires without a slot opening, the loop exits with:
+
+```typescript
+{
+  success: false,
+  exitReason: 'rate_limit',
+  error: 'Rate limit exceeded'
+}
+```
+
+This is distinct from other exit reasons like `max_iterations`, `circuit_breaker`, or `completed`. You can check the `exitReason` field to determine why the loop stopped.
+
+## Architecture Notes
+
+The `RateLimiter` class maintains an in-memory array of call timestamps. Key implementation details:
+
+- **Cleanup**: Old timestamps (older than 1 hour) are pruned on every operation to prevent memory growth.
+- **Thread safety**: The rate limiter is designed for single-threaded Node.js execution. It does not use locks.
+- **Reset**: Calling `reset()` clears all timestamps, immediately restoring full capacity.
+- **Config updates**: You can update limits mid-run with `updateConfig()`, though this is not exposed via CLI.
+
+---
+
 ## Validation
 
 # Validation (Backpressure)
@@ -614,6 +1060,466 @@ ralph-starter run "quick fix" --commit
 
 - [Git Automation](/docs/advanced/git-automation)
 - [Ralph Playbook](/docs/advanced/ralph-playbook)
+
+---
+
+## auth
+
+# ralph-starter auth
+
+Browser-based OAuth authentication for integrations. Supports OAuth PKCE flows for services like Linear, and manages manual API key configuration for services like Notion, Todoist, and GitHub.
+
+## Synopsis
+
+```bash
+ralph-starter auth [service]
+ralph-starter auth --list
+ralph-starter auth --logout <service>
+```
+
+## Description
+
+The `auth` command manages authentication credentials for ralph-starter's integrations. It operates in three modes:
+
+1. **OAuth Flow** -- Start a browser-based OAuth PKCE flow for a supported service (e.g., Linear).
+2. **Status Listing** -- Show authentication status for all services.
+3. **Logout** -- Remove stored credentials for a service.
+
+Credentials are stored locally in the ralph-starter sources configuration file.
+
+## Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `service` | The service to authenticate with (e.g., `linear`, `notion`, `todoist`, `github`) |
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `--list` | Show authentication status for all services |
+| `--logout <service>` | Remove credentials for the specified service |
+
+## Supported Services
+
+| Service | Auth Method | Details |
+|---------|-------------|---------|
+| `linear` | Browser OAuth (PKCE) | Seamless browser-based flow. Requires `RALPH_LINEAR_CLIENT_ID` env var. |
+| `notion` | Manual API key | Set via `ralph-starter config set notion.apiKey <key>`. Get key at [notion.so/my-integrations](https://www.notion.so/my-integrations). |
+| `todoist` | Manual API key | Set via `ralph-starter config set todoist.apiKey <key>`. Get key at [todoist.com/prefs/integrations](https://todoist.com/prefs/integrations). |
+| `github` | Manual API key | Set via `ralph-starter config set github.apiKey <key>`. Get token at [github.com/settings/tokens](https://github.com/settings/tokens). |
+
+## Examples
+
+### Start OAuth Flow (Linear)
+
+```bash
+# Authenticate with Linear via browser OAuth
+ralph-starter auth linear
+```
+
+This opens your browser, completes the PKCE authorization flow, and stores the token locally. The flow uses a local callback server with a 5-minute timeout.
+
+### Check Authentication Status
+
+```bash
+ralph-starter auth --list
+```
+
+Output:
+
+```
+Authentication Status
+Credentials stored in: /home/user/.config/ralph-starter/sources.json
+
+  ✓ Linear - Authenticated
+  ○ Notion - Manual API key
+      Run: ralph-starter config set notion.apiKey <your-key>
+  ○ Todoist - Manual API key
+      Run: ralph-starter config set todoist.apiKey <your-key>
+  ○ GitHub - Manual API key
+      Run: ralph-starter config set github.apiKey <your-key>
+```
+
+### Logout from a Service
+
+```bash
+# Remove stored credentials for Linear
+ralph-starter auth --logout linear
+```
+
+### Configure Manual API Keys
+
+For services that do not support OAuth PKCE, configure API keys manually:
+
+```bash
+# Notion
+ralph-starter config set notion.apiKey ntn_your_api_key_here
+
+# Todoist
+ralph-starter config set todoist.apiKey your_todoist_api_key
+
+# GitHub
+ralph-starter config set github.apiKey ghp_your_github_token
+```
+
+### Show Help
+
+```bash
+# Run auth with no arguments to see help
+ralph-starter auth
+```
+
+## OAuth PKCE Flow
+
+For services that support PKCE (currently Linear), the authentication process works as follows:
+
+1. A local callback server starts on a random port.
+2. A PKCE challenge and CSRF state token are generated.
+3. Your browser opens to the service's authorization URL.
+4. After you authorize, the callback server receives the authorization code.
+5. The code is exchanged for access (and optionally refresh) tokens using the PKCE verifier.
+6. Tokens are stored locally.
+
+If the browser cannot be opened automatically, the authorization URL is printed for manual use.
+
+### Setting Up Linear OAuth
+
+```bash
+# 1. Set your Linear OAuth client ID
+export RALPH_LINEAR_CLIENT_ID=your_client_id
+
+# 2. Run the auth flow
+ralph-starter auth linear
+
+# 3. Verify
+ralph-starter auth --list
+```
+
+Get a Linear client ID from [linear.app/settings/api/applications](https://linear.app/settings/api/applications).
+
+## Exit Codes
+
+| Code | Description |
+|------|-------------|
+| 0 | Success |
+| 1 | Unknown service, OAuth not configured, or authentication failed |
+
+## See Also
+
+- [ralph-starter config](/docs/cli/config) - Manage configuration including API keys
+- [ralph-starter integrations](/docs/cli/integrations) - List and test integrations
+- [ralph-starter auto](/docs/cli/auto) - Use authenticated sources for batch processing
+
+---
+
+## auto
+
+# ralph-starter auto
+
+Autonomous batch task processing. Fetches multiple tasks from GitHub or Linear, creates branches, implements each task, commits changes, and creates pull requests -- all without human intervention.
+
+## Synopsis
+
+```bash
+ralph-starter auto --source <source> [options]
+```
+
+## Description
+
+The `auto` command runs ralph-starter in fully autonomous mode. It fetches a batch of tasks from an external source (GitHub issues or Linear tickets), then processes each one sequentially:
+
+1. **Fetch** -- Retrieves open tasks matching your filters from GitHub or Linear.
+2. **Branch** -- Creates a dedicated branch for each task (e.g., `auto/<task-id>`).
+3. **Implement** -- Invokes the best available coding agent to work on the task.
+4. **Validate** -- Runs tests, lint, and build to verify the implementation (enabled by default).
+5. **Commit & Push** -- Commits changes and pushes to the remote repository.
+6. **Pull Request** -- Opens a PR for the completed work.
+7. **Mark Complete** -- Updates the task status in the source system.
+
+The command must be run inside a git repository. It will warn you if there are uncommitted changes before starting.
+
+## Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--source <source>` | **Required.** Source to fetch tasks from (`github` or `linear`) | - |
+| `--project <name>` | Project identifier. Required for GitHub (`owner/repo`), optional for Linear. | - |
+| `--label <name>` | Filter tasks by label (e.g., `"auto-ready"`, `"bug"`) | - |
+| `--limit <n>` | Maximum number of tasks to process | `10` |
+| `--dry-run` | Preview mode -- show tasks without executing any changes | `false` |
+| `--skip-pr` | Skip pull request creation (commit and push only) | `false` |
+| `--agent <name>` | Specify which coding agent to use (e.g., `claude-code`, `cursor`) | auto-detect |
+| `--validate` | Run validation (tests/lint/build) after each task | `true` |
+| `--no-validate` | Skip validation after each task | - |
+| `--max-iterations <n>` | Maximum iterations the agent can run per task | `15` |
+
+## Examples
+
+### Basic Usage
+
+```bash
+# Process GitHub issues labeled "auto-ready"
+ralph-starter auto --source github --project myorg/myrepo --label "auto-ready"
+
+# Process Linear tickets
+ralph-starter auto --source linear --project "My Project"
+```
+
+### Preview Before Running
+
+```bash
+# Dry run to see which tasks would be processed
+ralph-starter auto --source github --project myorg/myrepo --label "bug" --dry-run
+```
+
+Output:
+
+```
+ralph-starter auto
+Autonomous batch task processing
+
+✓ Using agent: Claude Code
+✓ Found 3 tasks
+
+Tasks to process:
+
+  1. Fix login redirect loop [bug, auto-ready]
+     https://github.com/myorg/myrepo/issues/42
+  2. Handle null user in profile page [bug, auto-ready]
+     https://github.com/myorg/myrepo/issues/45
+  3. Fix timezone conversion error [bug, auto-ready]
+     https://github.com/myorg/myrepo/issues/51
+
+Dry run mode - no changes will be made
+
+Would execute:
+  - Create branch: auto/42
+  - Run agent with task: "Fix login redirect loop"
+  - Commit changes
+  - Create PR
+  ...
+```
+
+### Limit Task Count
+
+```bash
+# Only process the first 3 tasks
+ralph-starter auto --source github --project myorg/myrepo --limit 3
+```
+
+### Skip PR Creation
+
+```bash
+# Commit and push, but don't create pull requests
+ralph-starter auto --source github --project myorg/myrepo --skip-pr
+```
+
+### Disable Validation
+
+```bash
+# Skip tests/lint/build validation for faster execution
+ralph-starter auto --source linear --no-validate
+```
+
+### Full Example with All Options
+
+```bash
+ralph-starter auto \
+  --source github \
+  --project myorg/myrepo \
+  --label "auto-ready" \
+  --limit 5 \
+  --agent claude-code \
+  --max-iterations 20 \
+  --validate
+```
+
+## Behavior
+
+1. **Git Repository Check** -- The command verifies it is running inside a git repository and warns about uncommitted changes.
+
+2. **Agent Detection** -- Automatically detects the best available coding agent. If no agent is found, the command exits with an error and suggests installing Claude Code.
+
+3. **Task Fetching** -- Retrieves tasks from the specified source using your configured authentication credentials. For GitHub, `--project` is required. For Linear, it is optional.
+
+4. **Batch Execution** -- Tasks are processed sequentially. For each task:
+   - A branch is created (`auto/<task-id>`)
+   - The agent implements the task
+   - Validation runs if enabled
+   - Changes are committed and pushed
+   - A PR is created (unless `--skip-pr` is set)
+   - The task is marked complete in the source system
+
+5. **Summary** -- After all tasks are processed, a summary is printed showing the number of successful and failed tasks, along with links to any created pull requests.
+
+## Prerequisites
+
+- Must be run inside a git repository
+- Authentication must be configured for the chosen source (`ralph-starter auth`)
+- At least one coding agent must be installed
+
+## Exit Codes
+
+| Code | Description |
+|------|-------------|
+| 0 | All tasks processed (some may have failed) |
+| 1 | Fatal error (not a git repo, no agent found, task fetch failed) |
+
+## See Also
+
+- [ralph-starter run](/docs/cli/run) - Run a single task
+- [ralph-starter auth](/docs/cli/auth) - Configure authentication for sources
+- [ralph-starter integrations](/docs/cli/integrations) - Manage and test integrations
+
+---
+
+## check
+
+# ralph-starter check
+
+Validate your ralph-starter configuration and test the LLM connection.
+
+## Synopsis
+
+```bash
+ralph-starter check [--verbose]
+```
+
+## Description
+
+The `check` command verifies that ralph-starter is properly configured and can communicate with an LLM provider. It runs through a series of checks:
+
+1. **Claude Code CLI Detection** -- Checks if the Claude Code CLI is installed and available on your system. Displays the version and path when found.
+
+2. **API Key Configuration** -- Checks whether an LLM API key is configured, either from an environment variable or the config file. Displays the provider name and a masked version of the key.
+
+3. **Connection Test** -- Sends a test request to the configured LLM (either via Claude Code CLI or the API provider) and measures the response time.
+
+4. **Summary** -- Reports overall status and which provider is being used.
+
+If no LLM is available (neither Claude Code CLI nor an API key), the command prints instructions on how to get started and exits with code 1.
+
+## Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--verbose` | Show detailed output, including executable paths | `false` |
+
+## Examples
+
+### Basic Check
+
+```bash
+ralph-starter check
+```
+
+Output (with Claude Code):
+
+```
+Checking ralph-starter configuration...
+
+  Detecting LLM...
+  ✓ Claude Code CLI found v1.2.3
+
+  ✓ Response received (245ms)
+
+  All checks passed! You're ready to go.
+
+  Using: Claude Code CLI (no API key needed)
+  Run 'ralph-starter' to launch the wizard.
+```
+
+### Verbose Output
+
+```bash
+ralph-starter check --verbose
+```
+
+Output:
+
+```
+Checking ralph-starter configuration...
+
+  Detecting LLM...
+  ✓ Claude Code CLI found v1.2.3
+    Path: /usr/local/bin/claude
+  ✓ API Key configured (Anthropic)
+    Key: sk-a****xyz1 (from environment)
+
+  ✓ Response received (312ms)
+
+  All checks passed! You're ready to go.
+
+  Using: Claude Code CLI (no API key needed)
+  Run 'ralph-starter' to launch the wizard.
+```
+
+### When No LLM Is Configured
+
+```bash
+ralph-starter check
+```
+
+Output:
+
+```
+Checking ralph-starter configuration...
+
+  Detecting LLM...
+  ✗ Claude Code CLI not found
+  ✗ No API key configured
+
+  No LLM available!
+
+  To get started, either:
+    1. Install Claude Code: https://claude.ai/code
+    2. Run setup wizard: ralph-starter setup
+    3. Set API key: export ANTHROPIC_API_KEY=your-key
+```
+
+### After Failed Connection
+
+```bash
+ralph-starter check
+```
+
+Output:
+
+```
+Checking ralph-starter configuration...
+
+  Detecting LLM...
+  ✓ API Key configured (Anthropic)
+    Key: sk-a****xyz1 (from environment)
+
+  ✗ Connection failed: 401 Unauthorized
+
+  The connection test failed. This could mean:
+    • API key is invalid or expired
+    • Network connectivity issues
+    • Claude Code is not authenticated
+
+  Try running: ralph-starter setup
+```
+
+## Behavior
+
+- The check command prioritizes Claude Code CLI. If both Claude Code and an API key are available, Claude Code is used for the connection test.
+- API keys are displayed in a masked format (first 4 and last 4 characters visible).
+- The source of the API key is identified (environment variable or config file).
+
+## Exit Codes
+
+| Code | Description |
+|------|-------------|
+| 0 | All checks passed |
+| 1 | No LLM available or connection test failed |
+
+## See Also
+
+- [ralph-starter setup](/docs/cli/setup) - Interactive setup wizard
+- [ralph-starter config](/docs/cli/config) - Manage configuration manually
 
 ---
 
@@ -874,6 +1780,182 @@ After initialization:
 
 ---
 
+## integrations
+
+# ralph-starter integrations
+
+Manage integrations -- list available integrations, view setup instructions, test connectivity, and fetch data previews.
+
+## Synopsis
+
+```bash
+ralph-starter integrations [action] [args...]
+```
+
+## Description
+
+The `integrations` command provides tools for managing ralph-starter's integration layer. Integrations connect ralph-starter to external services like GitHub, Linear, and Notion, allowing you to fetch tasks, issues, and specifications for your coding loops.
+
+If no action is provided, the command defaults to `list`.
+
+## Actions
+
+| Action | Aliases | Description |
+|--------|---------|-------------|
+| `list` | `ls` | List all integrations with their availability status and auth methods |
+| `help <name>` | - | Show detailed setup instructions for a specific integration |
+| `test <name>` | - | Test connectivity for a configured integration |
+| `fetch <name> <identifier>` | `preview` | Fetch and preview data from an integration |
+
+## Fetch Options
+
+These options apply when using the `fetch` action:
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--project <name>` | Project or repository name | - |
+| `--label <name>` | Filter results by label | - |
+| `--status <status>` | Filter results by status (e.g., `open`, `closed`) | - |
+| `--limit <n>` | Maximum number of items to fetch | `10` |
+
+## Available Integrations
+
+| Integration | Description | Auth Methods |
+|-------------|-------------|--------------|
+| `github` | GitHub issues and pull requests | CLI, API Key |
+| `linear` | Linear issues and projects | OAuth, API Key |
+| `notion` | Notion pages (public and private) | API Key |
+
+## Examples
+
+### List All Integrations
+
+```bash
+ralph-starter integrations list
+```
+
+Output:
+
+```
+Available Integrations
+────────────────────────────────────────────────────────
+
+  ✓ GitHub (github)
+    GitHub issues and PRs
+    Auth: CLI, API Key
+
+  ✓ Linear (linear)
+    Linear issues
+    Auth: OAuth, API Key
+
+  ○ Notion (notion)
+    Notion pages (public and private)
+    Auth: API Key
+    → Run: ralph-starter integrations help notion
+
+────────────────────────────────────────────────────────
+Use "ralph-starter integrations help <name>" for setup instructions
+```
+
+### View Setup Help
+
+```bash
+# Show setup instructions for Notion
+ralph-starter integrations help notion
+
+# Show setup instructions for GitHub
+ralph-starter integrations help github
+```
+
+### Test Connectivity
+
+```bash
+# Test GitHub integration
+ralph-starter integrations test github
+```
+
+Output (success):
+
+```
+✓ GitHub: Connected via CLI
+```
+
+Output (not configured):
+
+```
+✗ GitHub: Not configured
+
+Run the following for setup instructions:
+  ralph-starter integrations help github
+```
+
+### Fetch and Preview Data
+
+```bash
+# Fetch GitHub issues from a repository
+ralph-starter integrations fetch github owner/repo
+
+# Fetch with filters
+ralph-starter integrations fetch github owner/repo --label "bug" --status open --limit 5
+
+# Fetch a Notion page
+ralph-starter integrations fetch notion "https://notion.so/Page-abc123"
+
+# Fetch Linear issues for a project
+ralph-starter integrations fetch linear my-project --status "In Progress"
+```
+
+Output:
+
+```
+✓ Content fetched
+
+Source: github
+Title: Fix authentication redirect loop
+Metadata: {
+  "number": 42,
+  "state": "open",
+  "labels": ["bug", "auth"]
+}
+
+Preview:
+────────────────────────────────────────────────────────
+## Description
+
+Users are experiencing an infinite redirect loop when...
+
+## Steps to Reproduce
+
+1. Navigate to /login
+2. Enter valid credentials
+3. Observe redirect loop
+────────────────────────────────────────────────────────
+```
+
+The preview displays up to the first 50 lines of content. If the content is longer, a count of remaining lines is shown.
+
+## Behavior
+
+- **Default action** -- Running `ralph-starter integrations` with no action defaults to `list`.
+- **Auth methods** -- Each integration supports one or more authentication methods (CLI authentication, API keys, or OAuth). The `list` action shows which methods are available and which are configured.
+- **Fetch previews** -- The `fetch` action retrieves real data from the integration and displays a preview including source, title, metadata, and content.
+
+## Exit Codes
+
+| Code | Description |
+|------|-------------|
+| 0 | Success |
+| 1 | Unknown integration, not configured, or fetch failed |
+
+## See Also
+
+- [ralph-starter auth](/docs/cli/auth) - Configure OAuth authentication for integrations
+- [ralph-starter config](/docs/cli/config) - Set API keys for integrations
+- [ralph-starter run](/docs/cli/run) - Use integrations as task sources with `--from`
+- [ralph-starter auto](/docs/cli/auto) - Batch process tasks from integrations
+
+---
+
 ## plan
 
 # ralph-starter plan
@@ -1010,6 +2092,386 @@ ralph-starter run
 - [ralph-starter init](/docs/cli/init)
 - [ralph-starter run](/docs/cli/run)
 - [Ralph Playbook](/docs/advanced/ralph-playbook)
+
+---
+
+## presets
+
+# ralph-starter presets
+
+List and use pre-configured workflow presets for common development scenarios.
+
+## Synopsis
+
+```bash
+# List all available presets
+ralph-starter presets
+
+# Use a preset with the run command
+ralph-starter run --preset <name> [task]
+```
+
+## Description
+
+Presets are pre-configured workflow settings that tune ralph-starter's behavior for specific development scenarios. Each preset adjusts parameters like maximum iterations, validation behavior, auto-commit settings, and provides a specialized prompt prefix that guides the agent's approach.
+
+Running `ralph-starter presets` lists all available presets grouped by category. To use a preset, pass `--preset <name>` to the `ralph-starter run` command.
+
+## Preset Reference
+
+### Development
+
+#### `feature`
+
+Standard feature implementation with validation and commits.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 30 |
+| Validate | Yes |
+| Commit | Yes |
+| Circuit Breaker | 3 consecutive failures, 5 same errors |
+
+```bash
+ralph-starter run --preset feature "add user authentication"
+```
+
+#### `feature-minimal`
+
+Quick feature implementation without validation. Useful for rapid prototyping.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 20 |
+| Validate | No |
+| Commit | Yes |
+
+```bash
+ralph-starter run --preset feature-minimal "scaffold dashboard layout"
+```
+
+#### `tdd-red-green`
+
+Test-driven development workflow. The agent writes a failing test first, then implements the minimum code to make it pass, then refactors.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 50 |
+| Validate | Yes |
+| Commit | Yes |
+| Circuit Breaker | 5 consecutive failures, 3 same errors |
+
+Agent instructions: Follow strict TDD -- write a failing test first, run tests to confirm failure, implement minimum code to pass, refactor if needed. Commit after each green test.
+
+```bash
+ralph-starter run --preset tdd-red-green "implement shopping cart service"
+```
+
+#### `spec-driven`
+
+Implementation driven by specification files. The agent reads specs from a `specs/` directory and tracks progress in `IMPLEMENTATION_PLAN.md`.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 40 |
+| Validate | Yes |
+| Commit | Yes |
+
+Agent instructions: Read the specification files in the `specs/` directory. Implement according to the requirements. Mark tasks complete in `IMPLEMENTATION_PLAN.md` as you finish them.
+
+```bash
+ralph-starter run --preset spec-driven
+```
+
+#### `refactor`
+
+Safe refactoring with continuous test validation. The agent makes small, incremental changes and commits after each successful refactoring step.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 40 |
+| Validate | Yes |
+| Commit | Yes |
+| Circuit Breaker | 2 consecutive failures, 3 same errors |
+
+```bash
+ralph-starter run --preset refactor "extract auth logic into separate module"
+```
+
+---
+
+### Debugging
+
+#### `debug`
+
+Open-ended debugging session without auto-commits. The agent adds logging, analyzes outputs, and identifies root causes.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 20 |
+| Validate | No |
+| Commit | No |
+
+Agent instructions: Debug the issue step by step. Add logging, analyze outputs, identify root cause. Document findings.
+
+```bash
+ralph-starter run --preset debug "users report 500 errors on /api/orders"
+```
+
+#### `incident-response`
+
+Quick fix for production incidents. The agent focuses on the minimal fix and avoids refactoring.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 15 |
+| Validate | Yes |
+| Commit | Yes |
+| Circuit Breaker | 2 consecutive failures, 2 same errors |
+
+Agent instructions: This is a production incident. Focus on the minimal fix. Avoid refactoring. Document the issue and solution.
+
+```bash
+ralph-starter run --preset incident-response "fix: payments webhook returning 503"
+```
+
+#### `code-archaeology`
+
+Investigate and document legacy code. The agent explores the codebase to understand how it works and adds documentation.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 30 |
+| Validate | No |
+| Commit | No |
+
+Agent instructions: Investigate the codebase to understand how it works. Add documentation and comments. Create diagrams if helpful.
+
+```bash
+ralph-starter run --preset code-archaeology "document the billing system architecture"
+```
+
+---
+
+### Review
+
+#### `review`
+
+General code review and suggestions. The agent reviews for bugs, security issues, performance problems, and code quality without implementing changes.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 10 |
+| Validate | Yes |
+| Commit | No |
+
+Agent instructions: Review the code for bugs, security issues, performance problems, and code quality. Suggest improvements but do not implement.
+
+```bash
+ralph-starter run --preset review "review the authentication module"
+```
+
+#### `pr-review`
+
+Pull request review. The agent checks for correctness, test coverage, documentation, and breaking changes.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 10 |
+| Validate | Yes |
+| Commit | No |
+
+Agent instructions: Review the changes in this PR. Check for correctness, test coverage, documentation, and breaking changes. Provide actionable feedback.
+
+```bash
+ralph-starter run --preset pr-review "review changes in feature/auth branch"
+```
+
+#### `adversarial-review`
+
+Security-focused adversarial review. The agent looks for injection vulnerabilities, authentication bypasses, authorization issues, data leaks, and OWASP Top 10 concerns.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 15 |
+| Validate | No |
+| Commit | No |
+
+```bash
+ralph-starter run --preset adversarial-review "security audit of the API layer"
+```
+
+---
+
+### Documentation
+
+#### `docs`
+
+Generate comprehensive documentation including API docs, usage examples, and architecture overviews.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 20 |
+| Validate | No |
+| Commit | Yes |
+
+```bash
+ralph-starter run --preset docs "generate API documentation for the payments module"
+```
+
+#### `documentation-first`
+
+Write documentation before implementation. The agent documents purpose, API, usage examples, and edge cases first, then implements to match the documentation.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 30 |
+| Validate | No |
+| Commit | Yes |
+
+```bash
+ralph-starter run --preset documentation-first "design and document the notification service API"
+```
+
+---
+
+### Specialized
+
+#### `api-design`
+
+API design and implementation following REST best practices, including proper HTTP methods, status codes, error handling, validation, and documentation.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 35 |
+| Validate | Yes |
+| Commit | Yes |
+
+```bash
+ralph-starter run --preset api-design "design REST API for user management"
+```
+
+#### `migration-safety`
+
+Safe database and data migrations with a focus on reversibility, zero data loss, backward compatibility, and rollback scripts. Has a strict circuit breaker to stop early on failures.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 25 |
+| Validate | Yes |
+| Commit | Yes |
+| Circuit Breaker | 1 consecutive failure, 2 same errors |
+
+```bash
+ralph-starter run --preset migration-safety "migrate users table to add role column"
+```
+
+#### `performance-optimization`
+
+Performance analysis and optimization. The agent profiles first, identifies bottlenecks, makes targeted improvements, and documents performance gains.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 30 |
+| Validate | Yes |
+| Commit | Yes |
+
+```bash
+ralph-starter run --preset performance-optimization "optimize database queries in the dashboard"
+```
+
+#### `scientific-method`
+
+Hypothesis-driven development. The agent follows the scientific method: observe the problem, form a hypothesis, design an experiment (test), implement and test, analyze results, and iterate.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 40 |
+| Validate | Yes |
+| Commit | Yes |
+
+```bash
+ralph-starter run --preset scientific-method "investigate and fix flaky test in auth.spec.ts"
+```
+
+#### `research`
+
+Research and exploration without code changes. The agent explores options, compares alternatives, and documents findings in a summary report.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 25 |
+| Validate | No |
+| Commit | No |
+
+```bash
+ralph-starter run --preset research "evaluate state management solutions for the frontend"
+```
+
+#### `gap-analysis`
+
+Compare a specification to the current implementation. The agent identifies gaps, missing features, and discrepancies, then creates a prioritized TODO list.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 20 |
+| Validate | Yes |
+| Commit | No |
+
+```bash
+ralph-starter run --preset gap-analysis "compare API spec to current implementation"
+```
+
+## Preset Settings Reference
+
+Every preset configures the following settings:
+
+| Setting | Description |
+|---------|-------------|
+| `maxIterations` | Maximum number of loop iterations the agent can run |
+| `validate` | Whether to run tests/lint/build after each iteration |
+| `commit` | Whether to auto-commit after successful iterations |
+| `promptPrefix` | Instructions prepended to the agent's task prompt |
+| `completionPromise` | String the agent outputs to signal task completion |
+| `circuitBreaker` | Automatic stop conditions to prevent infinite loops |
+
+### Circuit Breaker
+
+Some presets include a circuit breaker that stops execution early when the agent is stuck:
+
+- **`maxConsecutiveFailures`** -- Stop after N consecutive failed iterations.
+- **`maxSameErrorCount`** -- Stop after seeing the same error N times.
+
+Presets with strict circuit breakers (like `migration-safety`) stop quickly to prevent cascading damage. Presets for exploration (like `debug`, `research`) omit circuit breakers to allow more freedom.
+
+## Quick Reference Table
+
+| Preset | Iterations | Validate | Commit | Category |
+|--------|-----------|----------|--------|----------|
+| `feature` | 30 | Yes | Yes | Development |
+| `feature-minimal` | 20 | No | Yes | Development |
+| `tdd-red-green` | 50 | Yes | Yes | Development |
+| `spec-driven` | 40 | Yes | Yes | Development |
+| `refactor` | 40 | Yes | Yes | Development |
+| `debug` | 20 | No | No | Debugging |
+| `incident-response` | 15 | Yes | Yes | Debugging |
+| `code-archaeology` | 30 | No | No | Debugging |
+| `review` | 10 | Yes | No | Review |
+| `pr-review` | 10 | Yes | No | Review |
+| `adversarial-review` | 15 | No | No | Review |
+| `docs` | 20 | No | Yes | Documentation |
+| `documentation-first` | 30 | No | Yes | Documentation |
+| `api-design` | 35 | Yes | Yes | Specialized |
+| `migration-safety` | 25 | Yes | Yes | Specialized |
+| `performance-optimization` | 30 | Yes | Yes | Specialized |
+| `scientific-method` | 40 | Yes | Yes | Specialized |
+| `research` | 25 | No | No | Specialized |
+| `gap-analysis` | 20 | Yes | No | Specialized |
+
+## See Also
+
+- [ralph-starter run](/docs/cli/run) - Use presets with the `--preset` flag
+- [ralph-starter auto](/docs/cli/auto) - Combine presets with batch processing
 
 ---
 
@@ -1211,6 +2673,291 @@ ralph-starter run --auto --commit --validate --max-iterations 30
 - [ralph-starter init](/docs/cli/init)
 - [ralph-starter plan](/docs/cli/plan)
 - [Input Sources](/docs/sources/overview)
+
+---
+
+## setup
+
+# ralph-starter setup
+
+Interactive setup wizard to configure your LLM provider and coding agents.
+
+## Synopsis
+
+```bash
+ralph-starter setup [--force]
+```
+
+## Description
+
+The `setup` command launches a step-by-step wizard that walks you through configuring ralph-starter. It detects installed agents, helps you choose an LLM provider, tests the connection, and saves your configuration.
+
+The wizard runs through four steps:
+
+1. **Detect Installed Agents** -- Scans your system for available AI coding agents (Claude Code, Cursor, Codex, OpenCode, etc.) and displays which are available.
+
+2. **Configure LLM Provider** -- Determines how ralph-starter communicates with an LLM:
+   - If Claude Code CLI is detected, offers to use it directly (no API key needed).
+   - Checks for existing API keys in environment variables (e.g., `ANTHROPIC_API_KEY`).
+   - Checks for previously saved configuration.
+   - If nothing is found, prompts you to select a provider and enter an API key.
+
+3. **Test Connection** -- Sends a test request to verify the configured LLM is reachable and responding.
+
+4. **Save Configuration** -- Writes your preferences to the ralph-starter config file, including agent selection, LLM provider, and optionally your API key.
+
+If setup has already been completed, the wizard notifies you and asks for confirmation before proceeding. Use `--force` to skip this check.
+
+## Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--force` | Force re-run setup even if already configured | `false` |
+
+## Examples
+
+### First-Time Setup
+
+```bash
+ralph-starter setup
+```
+
+Output:
+
+```
+  ╭─────────────────────────────────────────╮
+  │  ralph-starter Setup Wizard             │
+  │  Let's get you configured!              │
+  ╰─────────────────────────────────────────╯
+
+Step 1: Detecting Installed Agents
+
+  ✓ Claude Code v1.2.3
+    /usr/local/bin/claude
+  ✗ Cursor not found
+  ✗ Codex not found
+
+Step 2: Configure LLM Provider
+
+  ✓ Claude Code CLI detected!
+    No API key needed - uses your Claude Code authentication.
+
+? Use Claude Code CLI? (recommended - no API key needed) Yes
+
+Step 3: Testing Connection
+
+✓ Connection successful (245ms)
+
+Step 4: Saving Configuration
+
+  ✓ Configuration saved
+
+  ╭─────────────────────────────────────────╮
+  │  Setup Complete!                        │
+  │                                         │
+  │  Using: Claude Code CLI                 │
+  │  No API key needed                      │
+  │                                         │
+  ╰─────────────────────────────────────────╯
+
+  Next steps:
+    • ralph-starter           Launch wizard to build a project
+    • ralph-starter ideas     Brainstorm project ideas
+    • ralph-starter check     Verify configuration
+```
+
+### Re-Run Setup
+
+```bash
+# Force re-run even if already configured
+ralph-starter setup --force
+```
+
+### With API Key Provider
+
+If Claude Code is not installed, the wizard prompts you to choose an LLM provider:
+
+```bash
+ralph-starter setup
+```
+
+```
+Step 2: Configure LLM Provider
+
+? Choose your LLM provider:
+  ❯ Anthropic
+    OpenAI
+    OpenRouter
+
+Get your API key at: https://console.anthropic.com
+
+? Enter your Anthropic API key: ****
+
+Step 3: Testing Connection
+
+✓ Connection successful (312ms)
+
+? Save API key to config file? Yes
+```
+
+## Behavior
+
+- **Cancellation** -- You can press `Ctrl+C` at any time to cancel the wizard. The process exits cleanly.
+- **Connection Failure** -- If the connection test fails, you are offered the option to save the configuration anyway and retry later with `ralph-starter check`.
+- **Existing Config** -- If setup was previously completed and `--force` is not set, you are prompted whether to continue or exit.
+
+## Exit Codes
+
+| Code | Description |
+|------|-------------|
+| 0 | Setup completed successfully, or cancelled by user |
+| 1 | Setup failed (connection error and user chose not to save) |
+
+## See Also
+
+- [ralph-starter check](/docs/cli/check) - Verify configuration and test LLM connection
+- [ralph-starter config](/docs/cli/config) - Manage configuration manually
+- [ralph-starter auth](/docs/cli/auth) - Configure authentication for integrations
+
+---
+
+## ralph-starter skill
+
+Manage agent skills — reusable instructions and best practices
+that enhance your AI coding agent's capabilities.
+
+## Synopsis
+
+```bash
+ralph-starter skill <action> [name]
+```
+
+## Description
+
+The `skill` command manages agent skills for ralph-starter.
+Skills are markdown files containing specialized instructions,
+best practices, and domain knowledge that are injected into
+your coding agent's context. They help the agent write better
+code by following established patterns for specific frameworks
+and tools.
+
+Skills are installed using the
+[`add-skill`](https://github.com/xpander-ai/agent-skills-ts)
+CLI and stored as markdown files in either a global directory
+(`~/.claude/skills/`) or a project-level directory
+(`.claude/skills/`).
+
+## Actions
+
+| Action          | Aliases        | Description                              |
+| --------------- | -------------- | ---------------------------------------- |
+| `add <repo>`    | `install`, `i` | Install a skill from a git repository    |
+| `list`          | `ls`           | List popular skills from the registry    |
+| `search <term>` | -              | Search for skills by keyword             |
+| `browse`        | -              | Interactive skill browser with selection |
+
+## Options
+
+| Option         | Description                                     | Default |
+| -------------- | ----------------------------------------------- | ------- |
+| `-g, --global` | Install the skill globally (all projects)       | `false` |
+
+## Examples
+
+### Install a Skill
+
+```bash
+# Install a skill repository
+ralph-starter skill add vercel-labs/agent-skills
+
+# Short alias
+ralph-starter skill i vercel-labs/agent-skills
+
+# Install globally
+ralph-starter skill add vercel-labs/agent-skills --global
+```
+
+### List Popular Skills
+
+```bash
+ralph-starter skill list
+```
+
+Output:
+
+```text
+Popular Skills
+
+  vercel-labs/agent-skills
+  React, Next.js, and Vercel best practices
+  Skills: react-best-practices, nextjs-best-practices,
+          vercel-best-practices, web-design-review
+
+Install with: ralph-starter skill add <repo>
+Browse more: https://github.com/topics/agent-skills
+```
+
+### Search for Skills
+
+```bash
+ralph-starter skill search react
+```
+
+Output:
+
+```text
+Searching for: react
+
+  vercel-labs/agent-skills
+  React, Next.js, and Vercel best practices
+```
+
+### Interactive Browse
+
+```bash
+ralph-starter skill browse
+```
+
+This opens an interactive menu where you can select a skill
+to install from the curated registry.
+
+```text
+? Select a skill to install:
+  > vercel-labs/agent-skills - React, Next.js, Vercel
+    ──────────────
+    Cancel
+```
+
+## Skill Detection
+
+When ralph-starter runs a task, it automatically detects
+installed skills from three locations:
+
+1. **Global skills** — `~/.claude/skills/*.md`
+2. **Project skills** — `.claude/skills/*.md` in the project
+3. **Skills script** — `skills.sh` files in the project or
+   global Claude directory
+
+Detected skills are matched against the project's tech stack
+and included in the agent's prompt context when relevant.
+
+## Behavior
+
+- The `add` action uses `npx add-skill` under the hood.
+  If `add-skill` is not installed, it runs via `npx`.
+- The `list` action shows a curated registry of popular
+  skill repositories. It does not scan local installations.
+- The `search` action filters the curated registry by
+  matching repository names, descriptions, and skill names.
+- The `browse` action presents an interactive list using
+  Inquirer prompts.
+
+## See Also
+
+- [ralph-starter run](/docs/cli/run) — Skills are
+  auto-detected and used during task execution
+- [Agent Skills on GitHub](https://github.com/topics/agent-skills)
+  — Community skill repositories
 
 ---
 
@@ -1536,68 +3283,198 @@ To contribute templates, see the [ralph-templates repository](https://github.com
 ## Changelog
 
 
-All notable changes to ralph-starter are documented here.
-
-## [Unreleased]
-
-### Planned
-- Interactive wizard mode improvements
-- Additional input source integrations
-- Template marketplace
+All notable changes to ralph-starter are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [0.1.x] - Initial Release
+## [0.1.1-beta.16] - 2026-02-07
 
 ### Added
-- Core CLI with `run`, `init`, `plan`, `config`, and `source` commands
-- GitHub integration for fetching issues and PRs
-- Linear integration for fetching issues
-- Notion integration for fetching pages
-- Interactive wizard with idea mode
-- MCP server integration for Claude Desktop
-- Ralph Playbook support for custom configurations
-- Git automation for commits and PRs
-- Validation system for specs
+- SEO category for template filters
+- Enforce pnpm, vitest v4, esbuild v0.27
+- Security scanning and code quality tools
 
-### Features
-- **Multi-source support**: Fetch specs from GitHub, Linear, or Notion
-- **Autonomous coding loops**: Let AI agents build from specs
-- **Interactive wizard**: Step-by-step project setup
-- **MCP integration**: Use with Claude Desktop
+### Fixed
+- CodeQL action SHA and hardened workflow patterns
+- Release workflow for pnpm compatibility
+- Changelog script renamed to `.cjs` for ESM compatibility
+- GitHub Actions pinned to SHA hashes
+
+### Security
+- Added LICENSE file
+- Pinned all GitHub Actions to commit SHAs
 
 ---
 
-## Version History
+## [0.1.1-beta.15] - 2026-02-06
 
-For the complete version history and release notes, see:
+### Added
+- **Auto mode improvements**: semantic PR titles, AUTO label, PR body formatter with issue linking
+- **Figma content extraction mode**: pull design content directly from Figma files
+
+### Fixed
+- Auto mode cascading branches and PRs
+
+### Changed
+- Landing page improvements and new standalone pages (Use Cases, Integrations, Templates)
+- README structure improvements
+
+---
+
+## [0.1.1-beta.14] - 2026-02-05
+
+### Changed
+- Updated and cleaned up root markdown files
+
+---
+
+## [0.1.1-beta.13] - 2026-02-05
+
+### Changed
+- Updated README with Figma integration, expanded agent list, and LLM provider docs
+
+---
+
+## [0.1.1-beta.12] - 2026-02-05
+
+### Added
+- **Figma integration** for design-to-code workflows — fetch designs, tokens, components, and assets
+
+---
+
+## [0.1.1-beta.11] - 2026-02-03
+
+### Changed
+- Replaced Discussions links with [Templates](https://github.com/rubenmarcus/ralph-templates)
+
+---
+
+## [0.1.1-beta.10] - 2026-02-03
+
+### Added
+- [ralph-ideas](https://github.com/rubenmarcus/ralph-ideas) and [ralph-templates](https://github.com/rubenmarcus/ralph-templates) repository references
+
+### Security
+- Prevent path traversal attacks in file operations
+- Secure credential storage with proper file permissions
+
+---
+
+## [0.1.1-beta.9] - 2026-02-03
+
+### Fixed
+- Removed broken docs and coverage badges
+
+---
+
+## [0.1.1-beta.8] - 2026-02-03
+
+### Added
+- **`--prd` flag** for working through PRD task lists with checkbox tracking
+- GitHub Sponsors funding configuration
+
+---
+
+## [0.1.1-beta.7] - 2026-02-03
+
+### Changed
+- Dependency updates: commander, eslint, @types/node
+
+### Fixed
+- Full pagination support for Notion integration
+
+---
+
+## [0.1.1-beta.6] - 2026-01-30
+
+### Fixed
+- Task progression and iteration-specific instructions
+
+---
+
+## [0.1.1-beta.5] - 2026-01-30
+
+### Fixed
+- Extract tasks from spec to enable dynamic loop headers
+- CI: added missing permissions to release workflow
+
+---
+
+## [0.1.1-beta.4] - 2026-01-30
+
+### Fixed
+- Always use smart iteration calculation instead of hardcoded default
+- CI: create release PR after source PR is merged
+- CI: trigger auto-label on PR open/sync events
+
+### Changed
+- Removed unused ASCII art and functions
+
+---
+
+## [0.1.1-beta.3] - 2026-01-30
+
+### Changed
+- Dependency updates: ora, lint-staged, eslint, react-dom
+
+---
+
+## [0.1.1-beta.2] - 2026-01-29
+
+### Added
+- Dependabot configuration for automated dependency updates
+
+---
+
+## [0.1.1-beta.1] - 2026-01-28
+
+### Added
+- Full Ralph ASCII art in CLI output
+- Commitizen for conventional commits
+
+---
+
+## [0.1.1-beta.0] - 2026-01-28
+
+### Fixed
+- Rate limit feedback improvements for users
+
+### Changed
+- Migrated from ESLint/Prettier to Biome
+- Added commitlint and npm release workflow
+
+---
+
+## [0.1.0] - Initial Release
+
+### Added
+- Core CLI with `run`, `init`, `plan`, `config`, `source`, and `auto` commands
+- **Input sources**: GitHub Issues & PRs, Linear tickets, Notion pages, Figma designs, URLs, PDFs, local files
+- **AI agent support**: Claude Code, Cursor, OpenCode, Codex, Copilot, Gemini CLI, Amp, Openclaw
+- **Autonomous coding loops** with configurable iterations, validation, and circuit breaker
+- **19 workflow presets** across 5 categories (development, debugging, review, documentation, specialized)
+- **Agent skills system** with global and per-project skill detection
+- **Interactive wizard** with idea mode for brainstorming
+- **MCP server** integration for Claude Desktop
+- **Git automation**: auto-commit, push, and PR creation
+- **Cost tracking** with token estimation per model
+- **Rate limiting** with sliding window algorithm
+- **Ralph Playbook** support for custom configurations
+- **[Template marketplace](https://github.com/rubenmarcus/ralph-templates)** with community templates
+
+---
+
+## Links
 
 - [GitHub Releases](https://github.com/rubenmarcus/ralph-starter/releases)
 - [npm Package History](https://www.npmjs.com/package/ralph-starter?activeTab=versions)
 
-## Upgrade Guide
-
-### Upgrading to latest
+## Upgrade
 
 ```bash
 npm install -g ralph-starter@latest
-# or
-pnpm add -g ralph-starter@latest
-```
-
-### Check current version
-
-```bash
 ralph-starter --version
 ```
-
-## Contributing
-
-Found a bug or want to contribute?
-
-- [Report Issues](https://github.com/rubenmarcus/ralph-starter/issues)
-- [Submit Ideas](https://github.com/rubenmarcus/ralph-ideas/issues)
-- [View Source](https://github.com/rubenmarcus/ralph-starter)
 
 ---
 
@@ -2081,6 +3958,72 @@ Credentials are stored in `~/.ralph-starter/sources.json`. This file has user-on
 
 ---
 
+## Workflow Presets
+
+### What are workflow presets?
+
+Presets are pre-configured sets of loop options for common workflows. Instead of remembering flags like `--max-iterations 30 --validate --commit --circuit-breaker-failures 3`, you can just use `--preset feature`:
+
+```bash
+ralph-starter run "add auth" --preset feature
+```
+
+ralph-starter ships with 19 built-in presets across 5 categories: development, debugging, review, documentation, and specialized.
+
+### How do I see all available presets?
+
+```bash
+ralph-starter presets
+```
+
+### Can I create custom presets?
+
+Not yet — presets are currently built-in. Custom user presets are on the roadmap.
+
+---
+
+## Skills
+
+### What are agent skills?
+
+Skills are markdown files that provide domain-specific knowledge to AI agents. For example, a "react-best-practices" skill teaches the agent React patterns. Skills are auto-matched to your project's tech stack.
+
+### How do I install skills?
+
+```bash
+ralph-starter skill add vercel-labs/agent-skills
+```
+
+Skills are installed to `~/.claude/skills/` (global) or `.claude/skills/` (per-project).
+
+### Where can I find community skills?
+
+```bash
+ralph-starter skill browse
+```
+
+---
+
+## Cost & Rate Limiting
+
+### How much does ralph-starter cost to run?
+
+ralph-starter itself is free. Costs depend on the AI agent you use and how many iterations your task requires. A typical feature implementation (5-15 iterations with Claude Sonnet) costs approximately $0.10-$1.00 (as of Feb 2026). See the [Cost Tracking](/docs/guides/cost-tracking) guide.
+
+### How do I limit API costs?
+
+Use rate limiting and iteration caps:
+
+```bash
+ralph-starter run "add feature" --rate-limit 30 --max-iterations 10
+```
+
+### What is the circuit breaker?
+
+The circuit breaker automatically stops the loop when the agent is stuck on the same error. By default it trips after 3 consecutive failures or 5 occurrences of the same error. See [Circuit Breaker](/docs/advanced/circuit-breaker).
+
+---
+
 ## Contributing
 
 ### How can I contribute to ralph-starter?
@@ -2103,6 +4046,174 @@ Open an issue on GitHub: [github.com/rubenmarcus/ralph-starter/issues](https://g
 - Check the [full documentation](/docs/intro)
 - Browse [Templates](https://github.com/rubenmarcus/ralph-templates)
 - Open an [issue](https://github.com/rubenmarcus/ralph-starter/issues)
+
+---
+
+## Cost Tracking
+
+
+Running autonomous AI loops consumes tokens, and tokens cost money. Ralph-starter includes a built-in cost tracker that estimates token usage and calculates costs per iteration, giving you visibility into how much each loop run is spending.
+
+## Enabling Cost Tracking
+
+Cost tracking is **enabled by default**. You can explicitly control it with CLI flags:
+
+```bash
+# Enabled by default -- these are equivalent:
+ralph-starter run "add user dashboard" --preset feature
+ralph-starter run "add user dashboard" --preset feature --track-cost
+
+# Disable cost tracking:
+ralph-starter run "add user dashboard" --preset feature --no-track-cost
+```
+
+## Token Estimation
+
+Ralph-starter estimates token counts from the raw text of each agent interaction rather than relying on the provider's token counter. The estimation uses different ratios depending on content type:
+
+| Content Type | Characters per Token | Example |
+|---|---|---|
+| Prose (English text, docs, explanations) | ~4 chars/token | A 2,000-character paragraph is ~500 tokens |
+| Code (source files, config, commands) | ~3.5 chars/token | A 2,000-character code block is ~571 tokens |
+
+The tracker detects code content by checking for common patterns like ` ``` `, `function`, `const`, `import`, `export`, `class`, `def`, `async`, and `await`. If any of these patterns are found, the lower 3.5 chars/token ratio is applied.
+
+These are approximations. Actual token counts may vary by 10-20% depending on the model's tokenizer, language, and content structure.
+
+## Model Pricing
+
+The cost tracker uses the following pricing table to convert token estimates into dollar costs. Prices are per 1 million tokens.
+
+| Model | Input (per 1M tokens) | Output (per 1M tokens) |
+|---|---|---|
+| Claude 3 Opus | $15.00 | $75.00 |
+| Claude 3.5 Sonnet | $3.00 | $15.00 |
+| Claude 3.5 Haiku | $0.25 | $1.25 |
+| GPT-4 | $30.00 | $60.00 |
+| GPT-4 Turbo | $10.00 | $30.00 |
+| Default (unknown models) | $3.00 | $15.00 |
+
+If the model you are using is not in the table, the tracker falls back to the **Default** pricing (Claude 3.5 Sonnet-equivalent rates), which provides a conservative middle-ground estimate.
+
+You can specify the model for more accurate pricing:
+
+```bash
+ralph-starter run "add feature" --preset feature --model claude-3-opus
+```
+
+## Per-Iteration Cost Breakdown
+
+When cost tracking is enabled and progress tracking is active, ralph-starter writes a cost summary to the `activity.md` file in your project directory. This summary is updated after each iteration.
+
+The summary looks like this:
+
+```markdown
+## Cost Summary
+
+| Metric | Value |
+|--------|-------|
+| Total Iterations | 12 |
+| Total Tokens | 45.2K |
+| Input Tokens | 38.1K |
+| Output Tokens | 7.1K |
+| Total Cost | $0.221 |
+| Avg Cost/Iteration | $0.018 |
+| Projected Max Cost | $0.552 |
+```
+
+### Understanding the Metrics
+
+| Metric | Description |
+|---|---|
+| **Total Iterations** | Number of agent loop iterations completed so far |
+| **Total Tokens** | Combined input and output tokens across all iterations |
+| **Input Tokens** | Tokens sent to the model (prompts, context, code) |
+| **Output Tokens** | Tokens generated by the model (responses, code output) |
+| **Total Cost** | Estimated cumulative cost in USD |
+| **Avg Cost/Iteration** | Total cost divided by number of iterations |
+| **Projected Max Cost** | Extrapolated cost if the loop runs to its `maxIterations` limit |
+
+The **Projected Max Cost** is only shown after 3 or more iterations, since earlier projections would be unreliable. It multiplies the average cost per iteration by the remaining iteration budget and adds the cost already incurred.
+
+## CLI Display
+
+During loop execution, cost statistics are displayed in the terminal:
+
+```
+Tokens: 45.2K (38.1K in / 7.1K out)
+Cost: $0.221 ($0.018/iteration avg)
+Projected max cost: $0.552
+```
+
+Token counts use shorthand notation:
+- Values under 1,000 are shown as-is (e.g., `847`)
+- Values from 1,000 to 999,999 use `K` suffix (e.g., `45.2K`)
+- Values above 1,000,000 use `M` suffix (e.g., `1.23M`)
+
+Cost values are formatted for readability:
+- Costs under $0.01 are shown with cent symbol (e.g., `0.50¢`)
+- Costs from $0.01 to $0.99 show three decimal places (e.g., `$0.221`)
+- Costs $1.00 and above show two decimal places (e.g., `$12.50`)
+
+## Tips for Controlling Costs
+
+### Choose the Right Preset
+
+Presets with lower `maxIterations` naturally cap spending:
+
+| Preset | Max Iterations | Typical Use |
+|---|---|---|
+| `review` | 10 | Read-only analysis |
+| `incident-response` | 15 | Quick focused fix |
+| `feature-minimal` | 20 | Simple implementation |
+| `debug` | 20 | Investigation |
+| `feature` | 30 | Standard development |
+| `tdd-red-green` | 50 | Full TDD cycle |
+
+### Use `--max-iterations` to Set Hard Limits
+
+Override any preset's iteration cap:
+
+```bash
+# Cap at 10 iterations regardless of preset
+ralph-starter run "add feature" --preset feature --max-iterations 10
+```
+
+### Enable Circuit Breakers
+
+Circuit breakers stop the loop when the agent is stuck, preventing token waste on repeated failures. See the [Circuit Breaker](/docs/advanced/circuit-breaker) documentation for details.
+
+```bash
+ralph-starter run "add feature" --circuit-breaker-failures 2 --circuit-breaker-errors 3
+```
+
+### Use Cheaper Models
+
+If your task does not require the most capable model, using a cheaper model reduces cost per iteration significantly. Claude 3.5 Haiku at $0.25/$1.25 per million tokens is 60x cheaper on input and 60x cheaper on output compared to Claude 3 Opus.
+
+### Use Rate Limiting
+
+Rate limiting caps how fast the loop calls the API, giving you a natural spending brake. See the [Rate Limiting](/docs/advanced/rate-limiting) documentation.
+
+```bash
+ralph-starter run "add feature" --rate-limit 30  # Max 30 calls/hour
+```
+
+### Monitor the Projected Cost
+
+Watch the **Projected Max Cost** in the `activity.md` file. If the projection exceeds your budget, you can stop the loop early (Ctrl+C) and restart with a lower `--max-iterations` or a different approach.
+
+## Cost Tracking Architecture
+
+The cost tracker records each iteration independently:
+
+1. **Input text** (the prompt sent to the agent) is measured and converted to estimated input tokens.
+2. **Output text** (the agent's response) is measured and converted to estimated output tokens.
+3. Both are combined into a `TokenEstimate` (inputTokens, outputTokens, totalTokens).
+4. The estimate is multiplied by the model's pricing to produce a `CostEstimate` (inputCost, outputCost, totalCost).
+5. Each iteration's data is stored and used to compute running averages and projections.
+
+The tracker instance is created when the loop starts (if `trackCost` is true) and is available throughout the loop's lifetime. At the end of the loop, the final statistics are included in the `LoopResult.stats.costStats` object.
 
 ---
 
@@ -2622,6 +4733,645 @@ interface PlanOptions {
 
 ---
 
+## PRD Workflow
+
+
+A PRD (Product Requirements Document) workflow lets you define a structured list of tasks in a markdown file and have ralph-starter execute them one by one. Instead of describing a single open-ended task, you break the work into discrete checkboxes. The agent works through each checkbox, marking them complete as it goes.
+
+## What Is a PRD File?
+
+A PRD file is a standard markdown file with checkbox-formatted tasks. Ralph-starter parses the file, identifies incomplete tasks, and feeds them to the AI agent in order.
+
+```bash
+ralph-starter run --prd ./PRD.md
+```
+
+## PRD File Format
+
+A PRD file follows this structure:
+
+```markdown
+# Project Title
+
+Optional description paragraph that explains the overall goal.
+This text is captured as the PRD description and included in the agent prompt.
+
+## Section Name
+
+- [ ] First task in this section
+- [ ] Second task in this section
+- [x] Already completed task (will be skipped)
+
+## Another Section
+
+- [ ] Task in another section
+- [ ] Another task
+```
+
+### Format Rules
+
+| Element | Syntax | Purpose |
+|---|---|---|
+| Title | `# Heading` | First `#` heading becomes the PRD title |
+| Description | Plain text after title, before first task | Context for the agent |
+| Section headers | `##` or `###` headings | Group related tasks |
+| Incomplete task | `- [ ] Task description` | Work to be done |
+| Completed task | `- [x] Task description` | Already done (skipped) |
+
+Both `-` and `*` list markers are supported. The checkbox can use `x` or `X` for completed tasks.
+
+## How Tasks Are Parsed
+
+The PRD parser (`parsePrdFile`) processes your file as follows:
+
+1. **Security check**: The file path is resolved and verified to be within the current working directory. Path traversal attempts (e.g., `../../etc/passwd`) are rejected.
+
+2. **Title extraction**: The first `# Heading` in the file becomes the PRD title. If no heading is found, the title defaults to "Untitled PRD".
+
+3. **Description extraction**: All non-heading text between the title and the first checkbox task is captured as the description.
+
+4. **Section tracking**: `##` and `###` headings are tracked as section names. Each task inherits the section it appears under.
+
+5. **Task parsing**: Lines matching `- [ ] text` or `- [x] text` are extracted as tasks, each with:
+   - `name`: The task description text
+   - `completed`: Whether the checkbox is checked
+   - `index`: The task's position (0-based)
+   - `section`: The section header it belongs to (if any)
+
+## How Tasks Are Executed
+
+When you run `ralph-starter run --prd ./PRD.md`, the following happens:
+
+### Step 1: Parse and Filter
+
+The parser reads the file and filters to only **incomplete** tasks (`- [ ]`). Already completed tasks (`- [x]`) are counted for progress display but skipped.
+
+### Step 2: Build the Agent Prompt
+
+Ralph-starter generates a structured prompt for the agent that includes:
+
+```markdown
+# Project Title
+
+Description from the PRD...
+
+## Task Progress
+
+- Completed: 3/10
+- Remaining: 7
+
+## Tasks to Complete
+
+### Section Name
+
+- [ ] First task
+- [ ] Second task
+
+### Another Section
+
+- [ ] Third task
+
+## Instructions
+
+Work through the tasks above one by one. Focus on completing each task
+fully before moving to the next.
+After completing a task, mark it as done by changing `- [ ]` to `- [x]`
+in the original PRD file.
+```
+
+If tasks span multiple sections, they are grouped under their section headers. If all tasks are in a single section (or have no section), they are shown as a flat list.
+
+### Step 3: Agent Loop
+
+The agent receives this prompt and begins working. After completing each task, it is instructed to check off the corresponding checkbox in the original PRD file by changing `- [ ]` to `- [x]`.
+
+### Step 4: Progress Tracking
+
+Each time the agent modifies the PRD file, ralph-starter can re-parse it to see updated progress. The `getPrdStats` function returns:
+
+```typescript
+{
+  total: 10,        // Total tasks
+  completed: 5,     // Checked off
+  pending: 5,       // Remaining
+  percentComplete: 50  // Percentage
+}
+```
+
+## Combining with Loop Flags
+
+The PRD workflow works with all standard loop flags:
+
+### With `--commit`
+
+Auto-commit after each successful iteration. This creates a git history where each commit corresponds to progress on the PRD.
+
+```bash
+ralph-starter run --prd ./PRD.md --commit
+```
+
+### With `--validate`
+
+Run tests, lint, and build after each iteration. If validation fails, the agent gets the error output and fixes the issue before moving to the next task.
+
+```bash
+ralph-starter run --prd ./PRD.md --validate --commit
+```
+
+### With `--push` and `--pr`
+
+Push changes and create a pull request when the loop completes.
+
+```bash
+ralph-starter run --prd ./PRD.md --commit --push --pr
+```
+
+### With a Preset
+
+Combine PRD-driven execution with a preset's configuration:
+
+```bash
+ralph-starter run --prd ./PRD.md --preset feature
+```
+
+This gives you the `feature` preset's settings (30 max iterations, validation, commits, circuit breaker) while using the PRD file for task structure.
+
+### With `--max-iterations`
+
+Set an iteration limit to prevent runaway execution:
+
+```bash
+ralph-starter run --prd ./PRD.md --max-iterations 20
+```
+
+## Example PRD Files
+
+### Example: New Feature
+
+```markdown
+# User Authentication System
+
+Implement a complete authentication system with email/password login,
+registration, and session management.
+
+## Database
+
+- [ ] Create users table migration with email, password_hash, created_at
+- [ ] Create sessions table migration with user_id, token, expires_at
+- [ ] Add database indexes for email and session token lookups
+
+## API Endpoints
+
+- [ ] POST /api/auth/register - Create new user account
+- [ ] POST /api/auth/login - Authenticate and return session token
+- [ ] POST /api/auth/logout - Invalidate current session
+- [ ] GET /api/auth/me - Return current user profile
+
+## Middleware
+
+- [ ] Create authentication middleware that validates session tokens
+- [ ] Add rate limiting to auth endpoints (5 attempts per minute)
+
+## Validation
+
+- [ ] Validate email format on registration
+- [ ] Enforce password minimum length (8 characters)
+- [ ] Return proper error messages for duplicate emails
+
+## Tests
+
+- [ ] Unit tests for password hashing
+- [ ] Integration tests for registration flow
+- [ ] Integration tests for login flow
+- [ ] Test session expiration behavior
+```
+
+### Example: Bug Fix Checklist
+
+```markdown
+# Fix: Shopping Cart Race Condition
+
+Users report items disappearing from their cart during concurrent updates.
+
+## Investigation
+
+- [ ] Add logging to cart update endpoint to capture request timing
+- [ ] Reproduce the race condition with concurrent API calls
+- [ ] Document the exact sequence that causes the bug
+
+## Fix
+
+- [ ] Add optimistic locking to cart_items table (version column)
+- [ ] Update cart update endpoint to use compare-and-swap
+- [ ] Handle version conflict with retry logic (max 3 retries)
+
+## Verification
+
+- [ ] Write test that simulates concurrent cart updates
+- [ ] Verify no data loss under concurrent modification
+- [ ] Remove temporary debug logging
+```
+
+### Example: Refactoring Plan
+
+```markdown
+# Refactor: Extract Payment Processing Module
+
+The payment logic is scattered across multiple controllers. Extract it
+into a dedicated module with a clean interface.
+
+## Preparation
+
+- [x] Map all files that contain payment-related code
+- [x] Document the current payment flow
+
+## Extraction
+
+- [ ] Create src/payments/types.ts with payment interfaces
+- [ ] Create src/payments/processor.ts with core payment logic
+- [ ] Create src/payments/validators.ts for payment validation
+- [ ] Move Stripe integration code to src/payments/providers/stripe.ts
+
+## Migration
+
+- [ ] Update OrderController to use new payment module
+- [ ] Update SubscriptionController to use new payment module
+- [ ] Update WebhookHandler to use new payment module
+- [ ] Remove duplicate payment code from old locations
+
+## Cleanup
+
+- [ ] Update imports across the codebase
+- [ ] Run full test suite and fix any failures
+- [ ] Update API documentation to reflect new module structure
+```
+
+## Tips
+
+### Keep Tasks Atomic
+
+Each checkbox should be a single, well-defined unit of work. Avoid tasks like "implement the entire backend" -- break that into specific endpoints, models, and tests.
+
+### Order Tasks by Dependency
+
+Put foundational tasks first (database migrations before API endpoints, interfaces before implementations). The agent works through tasks in order, so dependencies should be resolved before dependent tasks.
+
+### Use Sections for Organization
+
+Group related tasks under `##` headers. This makes the PRD easier to read and helps the agent understand the logical structure of the work.
+
+### Pre-Check Completed Work
+
+If some tasks are already done, mark them with `[x]` before starting. The agent will see the progress ratio and skip completed items.
+
+### Combine with `--validate`
+
+For best results, always use `--validate` with PRD workflows. This ensures each task produces code that passes your test suite before the agent moves on to the next task.
+
+---
+
+## Skills System
+
+
+Skills are markdown files that provide domain-specific knowledge to AI agents during ralph-starter loops. A skill might teach the agent React best practices, Next.js patterns, or your team's coding conventions. When skills are detected, their content is injected into the agent's prompt, giving it specialized knowledge it would not otherwise have.
+
+## Three Skill Sources
+
+Ralph-starter detects skills from three locations, checked in order:
+
+### 1. Global Skills (`~/.claude/skills/`)
+
+Skills installed in your home directory's `.claude/skills/` folder are available to every project on your machine.
+
+```
+~/.claude/skills/
+  react-best-practices.md
+  typescript-patterns.md
+  testing-strategies.md
+```
+
+Each `.md` file in this directory is treated as a skill. The filename (without extension) becomes the skill name.
+
+### 2. Project Skills (`.claude/skills/`)
+
+Skills placed in your project's `.claude/skills/` directory are specific to that project. These override or supplement global skills and can encode project-specific conventions.
+
+```
+your-project/
+  .claude/
+    skills/
+      api-conventions.md
+      database-patterns.md
+```
+
+### 3. Skills from `skills.sh`
+
+Ralph-starter also checks for a `skills.sh` script in three locations:
+
+1. `./skills.sh` (project root)
+2. `./.claude/skills.sh` (project's .claude directory)
+3. `~/.claude/skills.sh` (global)
+
+The `skills.sh` file is parsed for skill declarations using the comment format `# Skill: SkillName`. This is a common pattern used by skill installation tools.
+
+```bash
+#!/bin/bash
+# Skill: react-best-practices
+# Skill: nextjs-app-router
+# Skill: vercel-deployment
+
+# Installation logic below...
+npx add-skill vercel-labs/agent-skills
+```
+
+## Skill File Format
+
+A skill file is a standard markdown document. The first heading becomes the display name, and the first paragraph after the heading becomes the description.
+
+```markdown
+# React Best Practices
+
+Guidelines for writing clean, performant React components.
+
+## Component Structure
+
+- Use functional components with hooks
+- Keep components small and focused (under 200 lines)
+- Extract custom hooks for shared logic
+
+## State Management
+
+- Use `useState` for local component state
+- Use `useReducer` for complex state logic
+- Lift state up only when needed by sibling components
+
+## Performance
+
+- Wrap expensive computations in `useMemo`
+- Use `useCallback` for event handlers passed as props
+- Avoid creating new objects/arrays in render
+```
+
+The description extraction takes the first non-empty, non-heading line after the title and truncates it to 100 characters. In the example above, the description would be: "Guidelines for writing clean, performant React components."
+
+## Tech-Stack Filtering
+
+Not all skills are relevant to every task. Ralph-starter can filter skills based on your project's tech stack using the `getRelevantSkills` function. This function matches skill names and descriptions against keywords derived from your stack.
+
+The tech stack is expressed as:
+
+```typescript
+{
+  frontend?: string;   // e.g., "react", "vue", "svelte"
+  backend?: string;    // e.g., "express", "fastify", "nodejs"
+  database?: string;   // e.g., "postgres", "mongodb"
+  styling?: string;    // e.g., "tailwind"
+  language?: string;   // e.g., "typescript"
+}
+```
+
+### Keyword Expansion
+
+To improve matching, tech-stack keywords are automatically expanded with related terms:
+
+| Keyword | Expanded To |
+|---|---|
+| `react` | jsx, component, hook |
+| `nextjs` | react, ssr, app-router |
+| `astro` | static, island |
+| `vue` | composition, template |
+| `svelte` | component, reactive |
+| `nodejs` | node, npm, javascript |
+| `express` | api, rest, middleware |
+| `fastify` | api, rest |
+| `postgres` | sql, database, pg |
+| `mongodb` | nosql, document, mongo |
+| `tailwind` | css, utility, style |
+| `typescript` | ts, type, typed |
+
+For example, if your project uses `react` and `typescript`, the filter checks skill names and descriptions for: `react`, `jsx`, `component`, `hook`, `typescript`, `ts`, `type`, and `typed`.
+
+A skill named `react-best-practices` matches on `react`. A skill named `typed-api-patterns` matches on `typed` (expanded from `typescript`).
+
+## How Skills Are Injected into Agent Prompts
+
+When skills are detected, ralph-starter formats them into a prompt section using `formatSkillsForPrompt`:
+
+```markdown
+## Available Claude Code Skills
+
+- **react-best-practices**: Guidelines for writing clean, performant React components.
+- **typescript-patterns**: TypeScript patterns and idioms for large codebases.
+- **api-conventions**: REST API conventions for this project.
+
+Use these skills when appropriate by invoking them with /skill-name.
+```
+
+This block is included in the agent's system context, making the agent aware of the available skills and their purposes.
+
+## Installing Skills with the CLI
+
+Ralph-starter provides a `skill` command for managing skills:
+
+### Install a Skill
+
+```bash
+# Install from a GitHub repository
+ralph-starter skill add vercel-labs/agent-skills
+
+# Install globally (available to all projects)
+ralph-starter skill add vercel-labs/agent-skills --global
+```
+
+This uses the `add-skill` CLI tool under the hood (`npx add-skill <repo>`). If `add-skill` is not installed, it runs via `npx` automatically.
+
+### List Popular Skills
+
+```bash
+ralph-starter skill list
+```
+
+This shows curated skill repositories:
+
+```
+Popular Skills
+
+  vercel-labs/agent-skills
+  React, Next.js, and Vercel best practices
+  Skills: react-best-practices, nextjs-best-practices, vercel-best-practices, web-design-review
+```
+
+### Search for Skills
+
+```bash
+ralph-starter skill search react
+```
+
+Searches the curated skill registry by name, description, and skill names.
+
+### Browse Interactively
+
+```bash
+ralph-starter skill browse
+```
+
+Opens an interactive menu where you can select a skill to install.
+
+## Creating Your Own Skills
+
+### Step 1: Create the Directory
+
+For project-specific skills:
+
+```bash
+mkdir -p .claude/skills
+```
+
+For global skills:
+
+```bash
+mkdir -p ~/.claude/skills
+```
+
+### Step 2: Write the Skill File
+
+Create a markdown file with your domain knowledge:
+
+```markdown
+# Our API Conventions
+
+REST API patterns and conventions for the Acme project.
+
+## URL Structure
+
+- Use kebab-case for URL segments: `/api/user-profiles`
+- Version the API in the URL: `/api/v1/users`
+- Use plural nouns for collections: `/api/v1/orders`
+
+## Request/Response Format
+
+- Always return JSON with a consistent envelope:
+  ```json
+  {
+    "data": {},
+    "meta": { "requestId": "..." },
+    "errors": []
+  }
+  ```
+
+## Error Handling
+
+- Use standard HTTP status codes
+- Include error code, message, and field for validation errors
+- Log all 5xx errors with request context
+
+## Authentication
+
+- Use Bearer tokens in the Authorization header
+- Tokens expire after 24 hours
+- Refresh tokens are issued alongside access tokens
+
+## Database Queries
+
+- Always use parameterized queries
+- Include pagination for list endpoints (default: 20, max: 100)
+- Use cursor-based pagination for large datasets
+```
+
+Save this as `.claude/skills/api-conventions.md` in your project.
+
+### Step 3: Verify Detection
+
+You can verify skills are detected by checking the `hasSkills` function or running a loop with verbose output. The detected skills will show their name, source, and description:
+
+```
+Detected skills:
+- api-conventions (project): REST API patterns and conventions for the Acme project.
+- react-best-practices (global): Guidelines for writing clean, performant React components.
+```
+
+## Practical Examples
+
+### Example: Team Coding Standards
+
+Create `.claude/skills/team-standards.md`:
+
+```markdown
+# Team Coding Standards
+
+Coding standards for the engineering team.
+
+## General Rules
+
+- Maximum file length: 300 lines
+- Maximum function length: 50 lines
+- All public functions must have JSDoc comments
+- No `any` types in TypeScript -- use `unknown` and narrow
+
+## Naming Conventions
+
+- Components: PascalCase (e.g., `UserProfile`)
+- Hooks: camelCase with `use` prefix (e.g., `useUserData`)
+- Utils: camelCase (e.g., `formatCurrency`)
+- Constants: SCREAMING_SNAKE_CASE (e.g., `MAX_RETRY_COUNT`)
+- Files: kebab-case (e.g., `user-profile.tsx`)
+
+## Testing
+
+- Every new function needs at least one test
+- Use `describe` blocks to group related tests
+- Test file naming: `*.test.ts` or `*.spec.ts`
+- Mock external dependencies, never mock internal modules
+```
+
+### Example: Database Patterns
+
+Create `.claude/skills/database-patterns.md`:
+
+```markdown
+# Database Patterns
+
+Database access patterns for our PostgreSQL setup.
+
+## Migrations
+
+- Use sequential numbering: `001_create_users.sql`
+- Always include a down migration
+- Never modify a migration that has been applied to production
+
+## Queries
+
+- Use the query builder, not raw SQL
+- Always include `WHERE` clauses on UPDATE and DELETE
+- Use transactions for multi-table operations
+
+## Indexing
+
+- Add indexes for all foreign keys
+- Add indexes for columns used in WHERE clauses
+- Use partial indexes for soft-deleted records
+```
+
+### Example: Using Skills with Presets
+
+Skills are automatically detected and injected regardless of which preset you use:
+
+```bash
+# Skills are injected into the agent prompt automatically
+ralph-starter run "add user profile endpoint" --preset api-design
+
+# The agent will see both the api-design preset instructions AND
+# any relevant skills (like api-conventions.md and database-patterns.md)
+```
+
+## Skill Precedence
+
+When skills from multiple sources have the same name, all of them are included. They are listed in discovery order: global first, then project, then `skills.sh`. This means project skills appear after global skills in the prompt, giving them a "last word" effect -- the agent tends to weight later instructions more heavily.
+
+For explicit overrides, use a project skill with the same name as a global skill and include a note like "This overrides the global skill" at the top.
+
+---
+
 ## Testing Integrations
 
 # Testing ralph-starter Integrations
@@ -2969,6 +5719,549 @@ ralph-starter
 
 ---
 
+## Workflow Presets
+
+
+Presets are pre-configured bundles of loop settings designed for common development scenarios. Instead of manually specifying `--max-iterations`, `--validate`, `--commit`, and other flags every time, you select a preset and ralph-starter applies the right combination automatically.
+
+```bash
+ralph-starter run "implement user authentication" --preset feature
+```
+
+## How Presets Work
+
+A preset configures up to seven dimensions of loop behavior:
+
+| Setting | Purpose |
+|---------|---------|
+| `maxIterations` | Hard cap on how many agent iterations the loop can run |
+| `validate` | Whether to run tests/lint/build after each iteration |
+| `commit` | Whether to auto-commit passing changes |
+| `completionPromise` | A specific string the agent must output to signal completion |
+| `promptPrefix` | Instructions injected at the start of the agent prompt |
+| `rateLimit` | Maximum API calls per hour (optional) |
+| `circuitBreaker` | Custom failure thresholds for the circuit breaker (optional) |
+
+When you pass `--preset feature`, ralph-starter looks up the preset by name and merges its configuration into the loop options. Any flag you pass explicitly on the command line takes precedence over the preset value.
+
+## Preset Categories
+
+Presets are organized into five categories: Development, Debugging, Review, Documentation, and Specialized.
+
+---
+
+### Development Presets
+
+These presets are for building and modifying code.
+
+#### `feature`
+
+The workhorse preset for standard feature implementation.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 30 |
+| Validate | Yes |
+| Commit | Yes |
+| Completion Promise | `FEATURE_COMPLETE` |
+| Circuit Breaker | 3 consecutive failures, 5 same-error max |
+
+The agent codes, validates, and commits in a tight loop. It stops when it outputs the string `FEATURE_COMPLETE` or hits 30 iterations. The circuit breaker prevents infinite loops if the agent keeps hitting the same error.
+
+```bash
+ralph-starter run "add pagination to the users API endpoint" --preset feature
+```
+
+#### `feature-minimal`
+
+A lighter version of `feature` for quick tasks that do not need validation.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 20 |
+| Validate | No |
+| Commit | Yes |
+
+Use this when you trust the agent to produce correct code without a test/lint/build check, such as small config changes or straightforward boilerplate.
+
+```bash
+ralph-starter run "add .env.example file with all required vars" --preset feature-minimal
+```
+
+#### `tdd-red-green`
+
+Strict test-driven development: write a failing test, implement minimum code to pass, refactor.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 50 |
+| Validate | Yes |
+| Commit | Yes |
+| Prompt Prefix | Follow strict TDD: write failing test, confirm failure, implement minimum code, refactor. Commit after each green test. |
+| Circuit Breaker | 5 consecutive failures, 3 same-error max |
+
+The higher iteration limit (50) accommodates the red-green-refactor cycle, which naturally takes more turns. The prompt prefix forces the agent to follow TDD discipline.
+
+```bash
+ralph-starter run "add email validation to signup form" --preset tdd-red-green
+```
+
+#### `spec-driven`
+
+Implementation driven by specification files in a `specs/` directory.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 40 |
+| Validate | Yes |
+| Commit | Yes |
+| Prompt Prefix | Read specification files in specs/ directory. Implement according to requirements. Mark tasks complete in IMPLEMENTATION_PLAN.md. |
+| Completion Promise | `<promise>COMPLETE</promise>` |
+
+The agent reads your spec files, implements them, and tracks progress in an `IMPLEMENTATION_PLAN.md` file. It signals completion with the `<promise>COMPLETE</promise>` tag.
+
+```bash
+ralph-starter run "implement the payment module" --preset spec-driven
+```
+
+#### `refactor`
+
+Safe refactoring with continuous test validation.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 40 |
+| Validate | Yes |
+| Commit | Yes |
+| Prompt Prefix | Refactor while maintaining all tests passing. Make small, incremental changes. Commit after each successful refactoring step. |
+| Circuit Breaker | 2 consecutive failures, 3 same-error max |
+
+The tight circuit breaker (2 consecutive failures) catches regressions fast. The prompt forces small, incremental changes so each commit is safe to revert individually.
+
+```bash
+ralph-starter run "extract shared utilities from controllers" --preset refactor
+```
+
+---
+
+### Debugging Presets
+
+These presets are for investigating and fixing issues.
+
+#### `debug`
+
+General debugging session without auto-commits.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 20 |
+| Validate | No |
+| Commit | No |
+| Prompt Prefix | Debug step by step. Add logging, analyze outputs, identify root cause. Document findings. |
+
+No commits and no validation -- the agent is free to add temporary logging, experiment, and explore without polluting your git history.
+
+```bash
+ralph-starter run "figure out why WebSocket connections drop after 30 seconds" --preset debug
+```
+
+#### `incident-response`
+
+Quick fix for production incidents with tight guardrails.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 15 |
+| Validate | Yes |
+| Commit | Yes |
+| Prompt Prefix | This is a production incident. Focus on the minimal fix. Avoid refactoring. Document the issue and solution. |
+| Circuit Breaker | 2 consecutive failures, 2 same-error max |
+
+Low iteration cap (15) and aggressive circuit breaker (2/2) keep the agent focused. The prompt explicitly discourages refactoring -- you want the smallest safe fix, not a rewrite.
+
+```bash
+ralph-starter run "fix: users getting 500 on /api/checkout" --preset incident-response
+```
+
+#### `code-archaeology`
+
+Investigate and document legacy code without changing anything.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 30 |
+| Validate | No |
+| Commit | No |
+| Prompt Prefix | Investigate the codebase to understand how it works. Add documentation and comments. Create diagrams if helpful. |
+
+```bash
+ralph-starter run "document the payment processing pipeline" --preset code-archaeology
+```
+
+---
+
+### Review Presets
+
+These presets produce analysis and feedback without implementing changes.
+
+#### `review`
+
+General code review and suggestions.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 10 |
+| Validate | Yes |
+| Commit | No |
+| Prompt Prefix | Review the code for: bugs, security issues, performance problems, code quality. Suggest improvements but do not implement. |
+
+```bash
+ralph-starter run "review the authentication middleware" --preset review
+```
+
+#### `pr-review`
+
+Pull request review.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 10 |
+| Validate | Yes |
+| Commit | No |
+| Prompt Prefix | Review changes in this PR. Check for: correctness, test coverage, documentation, breaking changes. Provide actionable feedback. |
+
+```bash
+ralph-starter run "review PR #42" --preset pr-review --source github
+```
+
+#### `adversarial-review`
+
+Security-focused adversarial review.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 15 |
+| Validate | No |
+| Commit | No |
+| Prompt Prefix | Perform an adversarial security review. Look for: injection vulnerabilities, authentication bypasses, authorization issues, data leaks, OWASP Top 10. |
+
+No validation is needed because the agent is reading, not writing. The higher iteration count (15 vs 10 for normal review) gives the agent more room to explore attack surfaces.
+
+```bash
+ralph-starter run "security audit the API endpoints" --preset adversarial-review
+```
+
+---
+
+### Documentation Presets
+
+These presets focus on generating or organizing documentation.
+
+#### `docs`
+
+Generate comprehensive documentation.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 20 |
+| Validate | No |
+| Commit | Yes |
+| Prompt Prefix | Generate comprehensive documentation. Include: API docs, usage examples, architecture overview. Use clear language. |
+
+```bash
+ralph-starter run "document the REST API" --preset docs
+```
+
+#### `documentation-first`
+
+Write documentation before implementation.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 30 |
+| Validate | No |
+| Commit | Yes |
+| Prompt Prefix | Write documentation first, then implement. Document: purpose, API, usage examples, edge cases. Implementation must match documentation. |
+
+```bash
+ralph-starter run "design and implement the notification service" --preset documentation-first
+```
+
+---
+
+### Specialized Presets
+
+These presets address specific engineering workflows.
+
+#### `api-design`
+
+API design and implementation following REST best practices.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 35 |
+| Validate | Yes |
+| Commit | Yes |
+| Prompt Prefix | Design and implement the API following REST best practices. Include: proper HTTP methods, status codes, error handling, validation, documentation. |
+
+```bash
+ralph-starter run "create CRUD endpoints for products" --preset api-design
+```
+
+#### `migration-safety`
+
+Safe database and data migrations with rollback support.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 25 |
+| Validate | Yes |
+| Commit | Yes |
+| Prompt Prefix | Create safe migrations. Ensure: reversibility, no data loss, backward compatibility, proper testing. Create rollback scripts. |
+| Circuit Breaker | 1 consecutive failure, 2 same-error max |
+
+The most aggressive circuit breaker of any preset (1 failure trips it) because a broken migration can cause data loss.
+
+```bash
+ralph-starter run "add email column to users table" --preset migration-safety
+```
+
+#### `performance-optimization`
+
+Performance analysis and targeted optimization.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 30 |
+| Validate | Yes |
+| Commit | Yes |
+| Prompt Prefix | Analyze and optimize performance. Profile first, identify bottlenecks, make targeted improvements. Document performance gains. |
+
+```bash
+ralph-starter run "optimize the search query that times out on large datasets" --preset performance-optimization
+```
+
+#### `scientific-method`
+
+Hypothesis-driven development.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 40 |
+| Validate | Yes |
+| Commit | Yes |
+| Prompt Prefix | Follow the scientific method: 1) Observe the problem, 2) Form a hypothesis, 3) Design an experiment (test), 4) Implement and test, 5) Analyze results, 6) Iterate. |
+
+Use this when you are unsure what the right approach is and want the agent to systematically explore options.
+
+```bash
+ralph-starter run "reduce memory usage in the data processing pipeline" --preset scientific-method
+```
+
+#### `research`
+
+Research and exploration without code changes.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 25 |
+| Validate | No |
+| Commit | No |
+| Prompt Prefix | Research the topic thoroughly. Explore options, compare alternatives, document findings. Create a summary report. |
+
+```bash
+ralph-starter run "evaluate ORMs for our Node.js backend" --preset research
+```
+
+#### `gap-analysis`
+
+Compare specification to implementation and identify discrepancies.
+
+| Setting | Value |
+|---------|-------|
+| Max Iterations | 20 |
+| Validate | Yes |
+| Commit | No |
+| Prompt Prefix | Compare the specification to the current implementation. Identify gaps, missing features, and discrepancies. Create a prioritized TODO list. |
+
+```bash
+ralph-starter run "compare our API to the OpenAPI spec" --preset gap-analysis
+```
+
+---
+
+## How `promptPrefix` Shapes Agent Behavior
+
+The `promptPrefix` is injected at the beginning of the prompt sent to the agent on every iteration. It acts as a persistent system instruction that steers the agent's approach throughout the entire loop.
+
+For example, the `tdd-red-green` preset injects:
+
+> Follow strict TDD: 1) Write a failing test first, 2) Run tests to confirm failure, 3) Implement minimum code to pass, 4) Refactor if needed. Commit after each green test.
+
+This means even if the agent's natural inclination is to implement first, the prefix overrides that behavior on every turn.
+
+## How `completionPromise` Controls Stopping
+
+The `completionPromise` is a specific string the agent must output for the loop to detect task completion. This is more reliable than heuristic-based completion detection.
+
+- `feature` uses `FEATURE_COMPLETE` -- the agent must explicitly say this string.
+- `spec-driven` uses `<promise>COMPLETE</promise>` -- a structured tag that is harder to trigger accidentally.
+- Presets without a `completionPromise` rely on ralph-starter's built-in semantic completion detection and standard markers like `<TASK_DONE>` or `All tasks completed`.
+
+## Combining Presets with CLI Flags
+
+CLI flags always override preset values. This lets you use a preset as a starting point and customize specific settings.
+
+```bash
+# Use feature preset but increase iterations
+ralph-starter run "implement complex auth flow" --preset feature --max-iterations 50
+
+# Use tdd-red-green but skip commits
+ralph-starter run "add unit tests" --preset tdd-red-green --no-commit
+
+# Use debug preset but enable validation
+ralph-starter run "fix the flaky test" --preset debug --validate
+
+# Use review preset with a specific agent
+ralph-starter run "review the auth module" --preset review --agent cursor
+```
+
+## Example Workflows
+
+### Workflow: TDD Feature Development
+
+```bash
+# Start with TDD preset
+ralph-starter run "add password reset functionality" \
+  --preset tdd-red-green \
+  --validate \
+  --commit
+
+# Agent will:
+# 1. Write a failing test for password reset
+# 2. Run tests to confirm failure
+# 3. Implement the minimum code to make the test pass
+# 4. Commit
+# 5. Repeat for the next test case
+```
+
+### Workflow: Incident Response
+
+```bash
+# Production is down -- use incident-response preset
+ralph-starter run "fix: 500 errors on /api/orders after deploy" \
+  --preset incident-response \
+  --push \
+  --pr
+
+# Agent will:
+# 1. Identify the root cause (limited to 15 iterations)
+# 2. Apply the minimal fix
+# 3. Validate that tests pass
+# 4. Commit, push, and create a PR
+# Circuit breaker trips fast (2 failures) to avoid wasting time
+```
+
+### Workflow: Adversarial Security Review
+
+```bash
+# Run a security audit
+ralph-starter run "audit all API endpoints for OWASP Top 10" \
+  --preset adversarial-review
+
+# Agent will:
+# 1. Enumerate all API endpoints
+# 2. Check for injection vulnerabilities
+# 3. Test authentication and authorization
+# 4. Look for data leaks
+# 5. Produce a security report (no code changes, no commits)
+```
+
+### Workflow: Spec-Driven Implementation
+
+```bash
+# Place your spec files in specs/ and an IMPLEMENTATION_PLAN.md
+ralph-starter run "implement the payment module per spec" \
+  --preset spec-driven \
+  --validate \
+  --commit
+
+# Agent will:
+# 1. Read specs/ directory
+# 2. Implement each requirement
+# 3. Check off tasks in IMPLEMENTATION_PLAN.md
+# 4. Output <promise>COMPLETE</promise> when done
+```
+
+## Listing Available Presets
+
+To see all available presets from the command line:
+
+```bash
+ralph-starter run --help
+```
+
+The help output groups presets by category with their descriptions:
+
+```
+Available presets:
+
+  Development:
+    feature                Standard feature implementation with validation and commits
+    feature-minimal        Quick feature implementation without validation
+    tdd-red-green          Test-driven development: write failing test, then implement
+    spec-driven            Implementation driven by specification files
+    refactor               Safe refactoring with continuous test validation
+
+  Debugging:
+    debug                  Debugging session without auto-commits
+    incident-response      Quick fix for production incidents
+    code-archaeology       Investigate and document legacy code
+
+  Review:
+    review                 Code review and suggestions
+    pr-review              Pull request review
+    adversarial-review     Security-focused adversarial review
+
+  Documentation:
+    docs                   Generate documentation
+    documentation-first    Write docs before implementation
+
+  Specialized:
+    api-design             API design and implementation
+    migration-safety       Safe database/data migrations
+    performance-optimization  Performance analysis and optimization
+    scientific-method      Hypothesis-driven development
+    research               Research and exploration
+    gap-analysis           Compare spec to implementation
+```
+
+## Choosing the Right Preset
+
+| Situation | Recommended Preset |
+|---|---|
+| Building a new feature | `feature` |
+| Quick scaffolding or config changes | `feature-minimal` |
+| Test-first development | `tdd-red-green` |
+| Working from a detailed spec | `spec-driven` |
+| Cleaning up code | `refactor` |
+| Investigating a bug | `debug` |
+| Production is down | `incident-response` |
+| Understanding legacy code | `code-archaeology` |
+| Reviewing code quality | `review` |
+| Reviewing a pull request | `pr-review` |
+| Security audit | `adversarial-review` |
+| Writing documentation | `docs` |
+| Design-first approach | `documentation-first` |
+| Building REST APIs | `api-design` |
+| Database migrations | `migration-safety` |
+| Performance tuning | `performance-optimization` |
+| Exploring solutions | `scientific-method` |
+| Comparing options | `research` |
+| Checking spec compliance | `gap-analysis` |
+
+---
+
 ## Installation
 
 
@@ -3072,13 +6365,38 @@ ralph-starter config set llm.provider openrouter
 
 Without an API key configured, ralph-starter falls back to using your installed coding agent for LLM tasks.
 
+## Post-Install Setup
+
+After installing, run the interactive setup wizard to configure your environment:
+
+```bash
+ralph-starter setup
+```
+
+This guides you through:
+- Selecting your preferred coding agent
+- Configuring LLM API keys
+- Setting up integration sources (GitHub, Linear, etc.)
+- Choosing default workflow presets
+
+### Verify Your Setup
+
+Check that everything is configured correctly:
+
+```bash
+ralph-starter check
+```
+
+This validates your configuration, tests LLM connectivity, and verifies agent availability.
+
 ## Next Steps
 
 After installation:
 
-1. Run `ralph-starter` to launch the interactive wizard
-2. Or run `ralph-starter ideas` if you need help brainstorming
-3. Check out the [Interactive Wizard](/docs/wizard/overview) guide
+1. Run `ralph-starter setup` to configure your environment
+2. Run `ralph-starter` to launch the interactive wizard
+3. Or run `ralph-starter ideas` if you need help brainstorming
+4. Check out the [Interactive Wizard](/docs/wizard/overview) guide
 
 ---
 
@@ -4279,6 +7597,7 @@ ralph-starter run --from linear --label "in-progress" --limit 5
 
 # From Notion
 ralph-starter run --from notion --project "Product Specs"
+
 ```
 
 ## Configuration
