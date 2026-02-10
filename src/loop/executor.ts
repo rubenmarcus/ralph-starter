@@ -12,6 +12,7 @@ import {
   type IssueRef,
   type SemanticPrType,
 } from '../automation/git.js';
+import { drawBox, getTerminalWidth } from '../ui/box.js';
 import { ProgressRenderer } from '../ui/progress-renderer.js';
 import { type Agent, type AgentRunOptions, runAgent } from './agents.js';
 import { CircuitBreaker, type CircuitBreakerConfig } from './circuit-breaker.js';
@@ -35,13 +36,6 @@ import {
  */
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Get terminal width with a sensible fallback
- */
-function getTerminalWidth(): number {
-  return process.stdout.columns || 80;
 }
 
 /**
@@ -297,7 +291,7 @@ function detectCompletion(
  * Get human-readable reason for completion (UX 3)
  */
 function getCompletionReason(output: string, options: CompletionOptions): string {
-  const { completionPromise, requireExitSignal } = options;
+  const { completionPromise } = options;
 
   // Check explicit completion promise first
   if (completionPromise && output.includes(completionPromise)) {
@@ -429,43 +423,47 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
   // Get initial task count for estimates
   const initialTaskCount = parsePlanTasks(options.cwd);
 
+  // Show startup summary box
+  const startupLines: string[] = [];
+  startupLines.push(chalk.cyan.bold('  Ralph-Starter'));
+  startupLines.push(`  Agent:       ${chalk.white(options.agent.name)}`);
+  startupLines.push(`  Max loops:   ${chalk.white(String(maxIterations))}`);
+  if (validationCommands.length > 0) {
+    startupLines.push(
+      `  Validation:  ${chalk.white(validationCommands.map((c) => c.name).join(', '))}`
+    );
+  }
+  if (options.commit) {
+    startupLines.push(`  Auto-commit: ${chalk.green('enabled')}`);
+  }
+  if (detectedSkills.length > 0) {
+    startupLines.push(`  Skills:      ${chalk.white(`${detectedSkills.length} detected`)}`);
+  }
+  if (rateLimiter) {
+    startupLines.push(`  Rate limit:  ${chalk.white(`${options.rateLimit}/hour`)}`);
+  }
+
   console.log();
-  console.log(chalk.cyan.bold('Starting Ralph Wiggum Loop'));
-  console.log(chalk.dim(`Agent: ${options.agent.name}`));
+  console.log(drawBox(startupLines, { color: chalk.cyan }));
 
   // Show task count and estimates if we have tasks
   if (initialTaskCount.total > 0) {
     console.log(
       chalk.dim(
-        `Tasks: ${initialTaskCount.pending} pending, ${initialTaskCount.completed} completed`
+        `  Tasks: ${initialTaskCount.pending} pending, ${initialTaskCount.completed} completed`
       )
     );
 
     // Show estimate
     const estimate = estimateLoop(initialTaskCount);
     console.log();
-    console.log(chalk.yellow.bold('📋 Estimate:'));
     for (const line of formatEstimateDetailed(estimate)) {
-      console.log(chalk.yellow(`   ${line}`));
+      console.log(chalk.dim(`  ${line}`));
     }
   } else {
     console.log(
-      chalk.dim(`Task: ${options.task.slice(0, 60)}${options.task.length > 60 ? '...' : ''}`)
+      chalk.dim(`  Task: ${options.task.slice(0, 60)}${options.task.length > 60 ? '...' : ''}`)
     );
-  }
-
-  console.log();
-  if (validationCommands.length > 0) {
-    console.log(chalk.dim(`Validation: ${validationCommands.map((c) => c.name).join(', ')}`));
-  }
-  if (detectedSkills.length > 0) {
-    console.log(chalk.dim(`Skills: ${detectedSkills.map((s) => s.name).join(', ')}`));
-  }
-  if (options.completionPromise) {
-    console.log(chalk.dim(`Completion promise: ${options.completionPromise}`));
-  }
-  if (rateLimiter) {
-    console.log(chalk.dim(`Rate limit: ${options.rateLimit}/hour`));
   }
   console.log();
 
@@ -569,29 +567,32 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     previousCompletedTasks = completedTasks;
 
     // Show loop header with task info
-    const termWidth = getTerminalWidth();
-    const headerWidth = Math.min(63, termWidth - 2);
-    const headerLine = '═'.repeat(headerWidth);
-    console.log(chalk.cyan(`\n${headerLine}`));
     const sourceIcon = getSourceIcon(options.sourceType);
+    const headerLines: string[] = [];
     if (currentTask && totalTasks > 0) {
       const taskNum = completedTasks + 1;
-      const prefix = `  ${sourceIcon} Task ${taskNum}/${totalTasks} │ `;
-      const maxTaskWidth = Math.max(20, headerWidth - prefix.length - 2);
-      const taskName = truncateToFit(cleanTaskName(currentTask.name), maxTaskWidth);
-      console.log(chalk.cyan.bold(`${prefix}${taskName}`));
+      const cleanName = cleanTaskName(currentTask.name);
+      const tw = getTerminalWidth();
+      const maxNameLen = Math.max(20, tw - 30);
+      const taskName =
+        cleanName.length > maxNameLen ? `${cleanName.slice(0, maxNameLen - 3)}...` : cleanName;
+      headerLines.push(
+        `  ${sourceIcon} Task ${taskNum}/${totalTasks} │ ${chalk.white.bold(taskName)}`
+      );
+      headerLines.push(chalk.dim(`  ${options.agent.name} │ Iter ${i}/${maxIterations}`));
     } else {
-      console.log(
-        chalk.cyan.bold(
-          `  ${sourceIcon} Loop ${i}/${maxIterations} │ Running ${options.agent.name}`
-        )
+      headerLines.push(
+        `  ${sourceIcon} Loop ${i}/${maxIterations} │ ${chalk.white.bold(`Running ${options.agent.name}`)}`
       );
     }
-    console.log(chalk.cyan(`${headerLine}\n`));
+    console.log();
+    console.log(drawBox(headerLines, { color: chalk.cyan }));
+    console.log();
 
     // Create progress renderer for this iteration
     const iterProgress = new ProgressRenderer();
     iterProgress.start('Working...');
+    iterProgress.updateProgress(i, maxIterations, costTracker?.getStats()?.totalCost?.totalCost);
 
     // Build iteration-specific task with current task context
     let iterationTask: string;
@@ -775,23 +776,23 @@ Complete these subtasks, then mark them done in IMPLEMENTATION_PLAN.md by changi
         const feedback = formatValidationFeedback(validationResults);
         spinner.fail(chalk.red(`Loop ${i}: Validation failed`));
 
-        // Show which validations failed (UX 4: specific validation errors)
+        // Show compact validation summary
+        const failedSummaries: string[] = [];
         for (const vr of validationResults) {
           if (!vr.success) {
-            console.log(chalk.red(`  ✗ ${vr.command}`));
-            if (vr.error) {
-              const errorLines = vr.error.split('\n').slice(0, 5);
-              for (const line of errorLines) {
-                console.log(chalk.dim(`    ${line}`));
-              }
-            } else if (vr.output) {
-              const outputLines = vr.output.split('\n').slice(0, 5);
-              for (const line of outputLines) {
-                console.log(chalk.dim(`    ${line}`));
-              }
-            }
+            const errorText = vr.error || vr.output || '';
+            const failCount = (errorText.match(/fail/gi) || []).length;
+            const errorCount = (errorText.match(/error/gi) || []).length;
+            const hint =
+              failCount > 0
+                ? `${failCount} failures`
+                : errorCount > 0
+                  ? `${errorCount} errors`
+                  : 'failed';
+            failedSummaries.push(`${vr.command} (${hint})`);
           }
         }
+        console.log(chalk.red(`  ✗ ${failedSummaries.join(' │ ')}`));
 
         // Record failure in circuit breaker
         const errorMsg = validationResults
@@ -884,33 +885,43 @@ Complete these subtasks, then mark them done in IMPLEMENTATION_PLAN.md by changi
     }
 
     if (status === 'done') {
-      console.log();
-      console.log(
-        chalk.green.bold('═══════════════════════════════════════════════════════════════')
-      );
-      console.log(chalk.green.bold('  ✓ Task completed successfully!'));
-      console.log(
-        chalk.green.bold('═══════════════════════════════════════════════════════════════')
-      );
-
-      // Show completion reason (UX 3: clear completion signals)
       const completionReason = getCompletionReason(result.output, completionOptions);
-      console.log(chalk.dim(`  Reason: ${completionReason}`));
-      console.log(chalk.dim(`  Iterations: ${i}`));
-      if (costTracker) {
-        const stats = costTracker.getStats();
-        console.log(chalk.dim(`  Total cost: ${formatCost(stats.totalCost.totalCost)}`));
-      }
       const duration = Date.now() - startTime;
       const minutes = Math.floor(duration / 60000);
       const seconds = Math.floor((duration % 60000) / 1000);
-      console.log(chalk.dim(`  Time: ${minutes}m ${seconds}s`));
+
+      const completionLines: string[] = [];
+      completionLines.push(chalk.green.bold('  ✓ Task completed successfully'));
+      const details: string[] = [`Iterations: ${i}`, `Time: ${minutes}m ${seconds}s`];
+      if (costTracker) {
+        const stats = costTracker.getStats();
+        details.push(`Cost: ${formatCost(stats.totalCost.totalCost)}`);
+      }
+      completionLines.push(chalk.dim(`  ${details.join(' │ ')}`));
+      completionLines.push(chalk.dim(`  Reason: ${completionReason}`));
+
+      console.log();
+      console.log(drawBox(completionLines, { color: chalk.green }));
       console.log();
 
       finalIteration = i;
       exitReason = 'completed';
       break;
     }
+
+    // Status separator between iterations
+    const elapsed = Date.now() - startTime;
+    const elapsedMin = Math.floor(elapsed / 60000);
+    const elapsedSec = Math.floor((elapsed % 60000) / 1000);
+    const costLabel = costTracker
+      ? ` │ ${formatCost(costTracker.getStats().totalCost.totalCost)}`
+      : '';
+    const taskLabel = completedTasks > 0 ? ` │ Tasks: ${completedTasks}/${totalTasks}` : '';
+    console.log(
+      drawSeparator(
+        `Iter ${i}/${maxIterations}${taskLabel}${costLabel} │ ${elapsedMin}m ${elapsedSec}s`
+      )
+    );
 
     // Small delay between iterations
     await new Promise((resolve) => setTimeout(resolve, 1000));
