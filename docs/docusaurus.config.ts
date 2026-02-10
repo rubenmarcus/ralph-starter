@@ -275,7 +275,7 @@ const config: Config = {
       { name: 'twitter:site', content: '@ralphstarter' },
     ],
     navbar: {
-      title: '',
+      title: 'ralph starter',
       logo: {
         alt: 'ralph-starter',
         src: 'img/favicon-96x96.png',

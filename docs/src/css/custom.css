@@ -140,7 +140,7 @@ body::before {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 50;
   opacity: 0.02;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
 }
@@ -202,9 +202,11 @@ body::before {
   opacity: 0.8;
 }
 
-/* Homepage: hide navbar */
-.homepage .navbar {
-  display: none !important;
+/* Homepage: hide navbar on desktop only */
+@media screen and (min-width: 997px) {
+  .homepage .navbar {
+    display: none !important;
+  }
 }
 
 /* Navbar alignment - Vercel style */
@@ -236,7 +238,23 @@ body::before {
   display: block;
 }
 
-/* Navbar brand title */
+/* Navbar brand title - native title styling (visible on mobile only) */
+.navbar__title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--quantum-white);
+  letter-spacing: -0.01em;
+}
+
+/* On desktop, hide native title since HTML brand-stack handles it */
+@media screen and (min-width: 997px) {
+  .navbar__title {
+    display: none;
+  }
+}
+
+/* Navbar brand title - HTML item (desktop only, hidden on mobile to avoid duplicate) */
 .navbar__brand-stack {
   display: inline-flex;
   align-items: center;
@@ -256,6 +274,13 @@ body::before {
   color: var(--quantum-white);
   letter-spacing: -0.01em;
   line-height: 25px;
+}
+
+/* On mobile, hide the duplicate HTML brand item; native title is enough */
+@media screen and (max-width: 996px) {
+  .navbar__brand-stack {
+    display: none;
+  }
 }
 
 /* Ensure HTML navbar items align properly */
@@ -1054,6 +1079,102 @@ code {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   MOBILE NAVBAR SIDEBAR (hamburger menu)
+   ============================================ */
+
+/* The <nav> element gets .navbar-sidebar--show when the hamburger is toggled.
+   Problem: backdrop-filter on .navbar creates a containing block that traps
+   position:fixed children (.navbar-sidebar, .navbar-sidebar__backdrop) inside
+   the nav's 3.75rem-tall box instead of the viewport.
+   Fix: expand the nav to cover the full viewport when the sidebar is open,
+   and override the constrained height so children can render full-screen. */
+.navbar-sidebar--show {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: 100% !important;
+  z-index: 200 !important;
+  overflow: visible !important;
+}
+
+.navbar-sidebar {
+  background: var(--quantum-void) !important;
+  border-right: 1px solid var(--quantum-tungsten);
+  z-index: 200 !important;
+}
+
+.navbar-sidebar__brand {
+  background: var(--quantum-void) !important;
+  border-bottom: 1px solid var(--quantum-tungsten);
+  padding: 0.75rem 1rem;
+}
+
+.navbar-sidebar__items {
+  background: var(--quantum-void) !important;
+  /* Do NOT set overflow-y here — it implicitly sets overflow-x: auto,
+     which clips the second panel used by Docusaurus' sliding mechanism
+     for the docs sidebar secondary menu. */
+}
+
+.navbar-sidebar__item {
+  overflow-y: auto;
+}
+
+.navbar-sidebar__item.menu {
+  padding: 0.5rem;
+}
+
+.navbar-sidebar .menu__list {
+  padding-left: 0;
+}
+
+.navbar-sidebar .menu__link {
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: var(--quantum-silver) !important;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  display: flex;
+}
+
+.navbar-sidebar .menu__link:hover {
+  color: var(--quantum-white) !important;
+  background: rgba(152, 152, 159, 0.08);
+}
+
+.navbar-sidebar .menu__link--active {
+  color: var(--quantum-white) !important;
+  font-weight: 600;
+}
+
+/* Hide badge HTML items in mobile sidebar (they overflow) */
+.navbar-sidebar .navbar__badge-link {
+  display: none;
+}
+
+/* Backdrop overlay when sidebar is open */
+.navbar-sidebar__backdrop {
+  background: rgba(0, 0, 0, 0.6) !important;
+  z-index: 199 !important;
+}
+
+/* ============================================
+   MOBILE DOCS SIDEBAR
+   ============================================ */
+@media screen and (max-width: 996px) {
+  /* Remove border-radius and border on mobile so sidebar toggle works */
+  div[class*="docsWrapper"] {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    margin: 0 auto;
+    width: 100%;
   }
 }
 

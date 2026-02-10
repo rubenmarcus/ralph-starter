@@ -472,8 +472,16 @@
     justify-content: center;
   }
 
+  .ralphContainer {
+    justify-content: flex-end;
+    align-items: flex-start;
+  }
+
   .ralphContainer .ralphImage {
-    width: 480px;
+    width: 380px;
+    margin-top: 4rem;
+    margin-right: -3rem;
+    opacity: 0.7;
   }
 
   .terminal {
@@ -507,7 +515,10 @@
   }
 
   .ralphContainer .ralphImage {
-    width: 320px;
+    width: 260px;
+    margin-top: 3rem;
+    margin-right: -4rem;
+    opacity: 0.55;
   }
 
   .integrationLogos {
