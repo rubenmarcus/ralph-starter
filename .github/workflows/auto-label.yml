@@ -34,7 +34,6 @@ jobs:
               - '.github/workflows/security.yml'
               - '.coderabbit.yaml'
               - 'SECURITY.md'
-              - '.gitleaks.toml'
             config:
               - 'package.json'
               - 'tsconfig.json'
