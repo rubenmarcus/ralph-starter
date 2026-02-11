@@ -123,6 +123,16 @@ installed skills from three locations:
 Detected skills are matched against the project's tech stack
 and included in the agent's prompt context when relevant.
 
+## Auto Skill Discovery
+
+When running a task, ralph-starter can also query the skills.sh
+registry to find and install relevant skills automatically.
+If you want to disable this behavior, set:
+
+```bash
+RALPH_DISABLE_SKILL_AUTO_INSTALL=1
+```
+
 ## Behavior
 
 - The `add` action uses `npx add-skill` under the hood.

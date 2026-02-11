@@ -17,6 +17,7 @@ import { type LoopOptions, runLoop } from '../loop/executor.js';
 import { formatPrdPrompt, getPrdStats, parsePrdFile } from '../loop/prd-parser.js';
 import { calculateOptimalIterations } from '../loop/task-counter.js';
 import { formatPresetsHelp, getPreset, type PresetConfig } from '../presets/index.js';
+import { autoInstallSkillsFromTask } from '../skills/auto-install.js';
 import { getSourceDefaults } from '../sources/config.js';
 import { fetchFromSource } from '../sources/index.js';
 
@@ -537,6 +538,9 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     console.log(chalk.yellow('Docker sandbox mode coming soon!'));
     return;
   }
+
+  // Auto-install relevant skills from skills.sh (if available)
+  await autoInstallSkillsFromTask(finalTask, cwd);
 
   // Apply preset if specified
   let preset: PresetConfig | undefined;

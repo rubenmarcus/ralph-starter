@@ -245,7 +245,35 @@ export function getRelevantSkills(
 /**
  * Format skills for inclusion in agent prompt
  */
-export function formatSkillsForPrompt(skills: ClaudeSkill[]): string {
+function shouldAutoApplySkill(skill: ClaudeSkill, task: string): boolean {
+  const name = skill.name.toLowerCase();
+  const desc = (skill.description || '').toLowerCase();
+  const text = `${name} ${desc}`;
+  const taskLower = task.toLowerCase();
+
+  const taskIsWeb =
+    taskLower.includes('web') ||
+    taskLower.includes('website') ||
+    taskLower.includes('landing') ||
+    taskLower.includes('frontend') ||
+    taskLower.includes('ui') ||
+    taskLower.includes('ux');
+
+  const isDesignSkill =
+    text.includes('design') ||
+    text.includes('ui') ||
+    text.includes('ux') ||
+    text.includes('frontend');
+
+  if (taskIsWeb && isDesignSkill) return true;
+  if (taskLower.includes('astro') && text.includes('astro')) return true;
+  if (taskLower.includes('tailwind') && text.includes('tailwind')) return true;
+  if (taskLower.includes('seo') && text.includes('seo')) return true;
+
+  return false;
+}
+
+export function formatSkillsForPrompt(skills: ClaudeSkill[], task?: string): string {
   if (skills.length === 0) return '';
 
   const lines = ['## Available Claude Code Skills', ''];
@@ -255,6 +283,16 @@ export function formatSkillsForPrompt(skills: ClaudeSkill[]): string {
   }
 
   lines.push('');
+
+  if (task) {
+    const autoApply = skills.filter((skill) => shouldAutoApplySkill(skill, task));
+    if (autoApply.length > 0) {
+      const skillList = autoApply.map((skill) => `/${skill.name}`).join(', ');
+      lines.push(`Auto-apply these skills: ${skillList}`);
+      lines.push('');
+    }
+  }
+
   lines.push('Use these skills when appropriate by invoking them with /skill-name.');
 
   return lines.join('\n');

@@ -426,7 +426,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
   const detectedSkills = detectClaudeSkills(options.cwd);
   let taskWithSkills = options.task;
   if (detectedSkills.length > 0) {
-    const skillsPrompt = formatSkillsForPrompt(detectedSkills);
+    const skillsPrompt = formatSkillsForPrompt(detectedSkills, options.task);
     taskWithSkills = `${options.task}\n\n${skillsPrompt}`;
   }
 
