@@ -11,10 +11,9 @@ export async function askHasIdea(options?: {
   isExistingProject?: boolean;
   isRalphProject?: boolean;
 }): Promise<'has_idea' | 'need_help' | 'improve_existing'> {
-  const choices: Array<{ name: string; value: string }> = [];
-
-  // If in an existing project, show improve option first
+  // If in an existing project, keep the multi-option list
   if (options?.isExistingProject) {
+    const choices: Array<{ name: string; value: string }> = [];
     const projectLabel = options.isRalphProject
       ? 'Improve this Ralph project'
       : 'Improve this existing project';
@@ -22,25 +21,33 @@ export async function askHasIdea(options?: {
       name: `${projectLabel} → (add features, fix issues, or get suggestions)`,
       value: 'improve_existing',
     });
+    choices.push(
+      { name: 'Yes, I know what I want to build', value: 'has_idea' },
+      { name: 'No, help me brainstorm ideas', value: 'need_help' }
+    );
+
+    const { hasIdea } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'hasIdea',
+        message: 'What would you like to do?',
+        choices,
+      },
+    ]);
+    return hasIdea;
   }
 
-  choices.push(
-    { name: 'Yes, I know what I want to build', value: 'has_idea' },
-    { name: 'No, help me brainstorm ideas', value: 'need_help' }
-  );
-
+  // New project: simple Y/N prompt
   const { hasIdea } = await inquirer.prompt([
     {
-      type: 'list',
+      type: 'confirm',
       name: 'hasIdea',
-      message: options?.isExistingProject
-        ? 'What would you like to do?'
-        : 'Do you have a project idea?',
-      choices,
+      message: 'Do you have a project idea?',
+      default: true,
     },
   ]);
 
-  return hasIdea;
+  return hasIdea ? 'has_idea' : 'need_help';
 }
 
 /**
@@ -108,6 +115,21 @@ export async function askForIdea(): Promise<string> {
   return normalizeIdeaInput(idea);
 }
 
+/**
+ * Ask if user wants to brainstorm ideas
+ */
+export async function askBrainstormConfirm(): Promise<boolean> {
+  const { brainstorm } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'brainstorm',
+      message: "Let's brainstorm some ideas?",
+      default: true,
+    },
+  ]);
+
+  return brainstorm;
+}
 function normalizeIdeaInput(input: string): string {
   let trimmed = input.trim();
 
@@ -353,13 +375,25 @@ export async function askForComplexity(suggestedComplexity?: Complexity): Promis
  * Confirm the refined plan
  */
 export async function confirmPlan(): Promise<'proceed' | 'modify' | 'restart'> {
+  const { confirmed } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'confirmed',
+      message: 'Is this the right specs?',
+      default: true,
+    },
+  ]);
+
+  if (confirmed) {
+    return 'proceed';
+  }
+
   const { action } = await inquirer.prompt([
     {
       type: 'list',
       name: 'action',
-      message: 'Is this the right specs?',
+      message: 'What would you like to do?',
       choices: [
-        { name: "Yes, let's build it!", value: 'proceed' },
         { name: 'I want to change something', value: 'modify' },
         { name: 'Start over with a different idea', value: 'restart' },
       ],
@@ -401,21 +435,10 @@ export async function askExecutionOptions(): Promise<{
 
   const { autoRun } = await inquirer.prompt([
     {
-      type: 'list',
+      type: 'confirm',
       name: 'autoRun',
-      message: 'How should we proceed?',
-      choices: [
-        {
-          name: 'Start building automatically → (AI runs immediately after setup)',
-          short: 'Build now',
-          value: true,
-        },
-        {
-          name: 'Just create the plan → (run "ralph-starter run" later)',
-          short: 'Plan only',
-          value: false,
-        },
-      ],
+      message: 'Start building automatically?',
+      default: true,
     },
   ]);
 

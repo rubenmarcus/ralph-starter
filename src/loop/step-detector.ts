@@ -54,6 +54,10 @@ export function detectStepFromOutput(line: string): string | null {
     const isReadOperation = ['read', 'glob', 'grep'].includes(toolName);
     const isWriteOperation = ['write', 'edit'].includes(toolName);
 
+    if (toolName.includes('todowrite') || toolName.includes('todo_write')) {
+      return 'Updating task checklist...';
+    }
+
     // Reading code - check this early
     if (isReadOperation) {
       return 'Reading code...';
@@ -241,6 +245,9 @@ export function detectStepFromOutput(line: string): string | null {
             }
 
             // Generic tool
+            if (blockToolName.includes('todowrite') || blockToolName.includes('todo_write')) {
+              return 'Updating task checklist...';
+            }
             return `Using ${block.name}...`;
           }
 
@@ -280,6 +287,9 @@ export function detectStepFromOutput(line: string): string | null {
         if (blockToolName === 'bash') return 'Running command...';
         if (blockToolName === 'glob') return 'Searching files...';
         if (blockToolName === 'grep') return 'Searching code...';
+        if (blockToolName.includes('todowrite') || blockToolName.includes('todo_write')) {
+          return 'Updating task checklist...';
+        }
         return `Using ${block.name}...`;
       }
     }

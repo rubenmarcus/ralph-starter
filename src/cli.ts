@@ -18,6 +18,7 @@ import { sourceCommand } from './commands/source.js';
 import { templateCommand } from './commands/template.js';
 import { startMcpServer } from './mcp/server.js';
 import { formatPresetsHelp, getPresetNames } from './presets/index.js';
+import { drawBox, getTerminalWidth } from './ui/box.js';
 import { getPackageVersion } from './utils/version.js';
 import { runIdeaMode, runWizard } from './wizard/index.js';
 
@@ -25,16 +26,20 @@ const VERSION = getPackageVersion();
 
 const program = new Command();
 
-const banner = `
-  ${chalk.cyan('╭─────────────────────────────────────────────────────────────╮')}
-  ${chalk.cyan('│')}                                                             ${chalk.cyan('│')}
-  ${chalk.cyan('│')}   ${chalk.bold.white('ralph-starter')} ${chalk.gray(`v${VERSION}`)}                                   ${chalk.cyan('│')}
-  ${chalk.cyan('│')}                                                             ${chalk.cyan('│')}
-  ${chalk.cyan('│')}   ${chalk.dim('Ralph Wiggum made easy.')}                                   ${chalk.cyan('│')}
-  ${chalk.cyan('│')}   ${chalk.dim('One command to run autonomous AI coding loops.')}            ${chalk.cyan('│')}
-  ${chalk.cyan('│')}                                                             ${chalk.cyan('│')}
-  ${chalk.cyan('╰─────────────────────────────────────────────────────────────╯')}
-`;
+function stripAnsi(text: string): string {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence detection requires control characters
+  return text.replace(/\u001b\[[0-9;]*m/g, '');
+}
+
+const bannerLines = [
+  `  ${chalk.bold.white('ralph-starter')} ${chalk.gray(`v${VERSION}`)}`,
+  `  ${chalk.dim('Ralph Wiggum made easy.')}`,
+  `  ${chalk.dim('One command to run autonomous AI coding loops.')}`,
+];
+
+const maxLineLen = Math.max(...bannerLines.map((line) => stripAnsi(line).length));
+const bannerWidth = Math.min(getTerminalWidth() - 4, Math.max(40, maxLineLen + 2));
+const banner = `\n${drawBox(bannerLines, { color: chalk.cyan, width: bannerWidth })}\n`;
 
 program
   .name('ralph-starter')

@@ -13,6 +13,7 @@ import { runSetupWizard } from '../setup/wizard.js';
 import { runIdeaMode } from './ideas.js';
 import { isLlmAvailable, refineIdea } from './llm.js';
 import {
+  askBrainstormConfirm,
   askContinueAction,
   askExecutionOptions,
   askExistingProjectAction,
@@ -46,6 +47,25 @@ import {
 
 // Global spinner reference for cleanup on exit
 let activeSpinner: Ora | null = null;
+
+function normalizeTechStackValue(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  const trimmed = String(value).trim();
+  if (!trimmed) return undefined;
+  const lower = trimmed.toLowerCase();
+  if (lower === 'null' || lower === 'none' || lower === 'undefined') return undefined;
+  return trimmed;
+}
+
+function normalizeTechStack(stack: WizardAnswers['techStack']): WizardAnswers['techStack'] {
+  return {
+    frontend: normalizeTechStackValue(stack.frontend),
+    backend: normalizeTechStackValue(stack.backend),
+    database: normalizeTechStackValue(stack.database),
+    styling: normalizeTechStackValue(stack.styling),
+    language: normalizeTechStackValue(stack.language),
+  };
+}
 
 /**
  * Handle graceful exit on Ctrl+C
@@ -280,11 +300,16 @@ Provide a prioritized list of suggestions with explanations.`;
       }
 
       if (hasIdea === 'need_help') {
-        const selectedIdea = await runIdeaMode();
-        if (selectedIdea === null) {
-          idea = await askForIdea();
+        const shouldBrainstorm = await askBrainstormConfirm();
+        if (shouldBrainstorm) {
+          const selectedIdea = await runIdeaMode();
+          if (selectedIdea === null) {
+            idea = await askForIdea();
+          } else {
+            idea = selectedIdea;
+          }
         } else {
-          idea = selectedIdea;
+          idea = await askForIdea();
         }
       } else {
         idea = await askForIdea();
@@ -294,11 +319,16 @@ Provide a prioritized list of suggestions with explanations.`;
       const hasIdea = await askHasIdea();
 
       if (hasIdea === 'need_help') {
-        const selectedIdea = await runIdeaMode();
-        if (selectedIdea === null) {
-          idea = await askForIdea();
+        const shouldBrainstorm = await askBrainstormConfirm();
+        if (shouldBrainstorm) {
+          const selectedIdea = await runIdeaMode();
+          if (selectedIdea === null) {
+            idea = await askForIdea();
+          } else {
+            idea = selectedIdea;
+          }
         } else {
-          idea = selectedIdea;
+          idea = await askForIdea();
         }
       } else {
         idea = await askForIdea();
@@ -334,7 +364,7 @@ Provide a prioritized list of suggestions with explanations.`;
     answers.projectName = refinedIdea.projectName;
     answers.projectDescription = refinedIdea.projectDescription;
     answers.projectType = refinedIdea.projectType;
-    answers.techStack = refinedIdea.suggestedStack;
+    answers.techStack = normalizeTechStack(refinedIdea.suggestedStack);
     answers.suggestedFeatures = refinedIdea.suggestedFeatures;
     answers.complexity = refinedIdea.estimatedComplexity;
 

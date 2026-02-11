@@ -36,6 +36,12 @@ export function generateSpec(answers: WizardAnswers): string {
     if (answers.techStack.database) {
       sections.push(`- **Database:** ${formatTech(answers.techStack.database)}`);
     }
+    if (answers.techStack.styling) {
+      sections.push(`- **Styling:** ${formatTech(answers.techStack.styling)}`);
+    }
+    if (answers.techStack.language) {
+      sections.push(`- **Language:** ${formatTech(answers.techStack.language)}`);
+    }
     sections.push('');
   }
 
@@ -184,7 +190,7 @@ export function generateAgentsMd(answers: WizardAnswers): string {
  * Check if tech stack has any values
  */
 function hasTechStack(stack: TechStack): boolean {
-  return !!(stack.frontend || stack.backend || stack.database);
+  return !!(stack.frontend || stack.backend || stack.database || stack.styling || stack.language);
 }
 
 /**
@@ -192,6 +198,7 @@ function hasTechStack(stack: TechStack): boolean {
  */
 function formatTech(tech: string): string {
   const names: Record<string, string> = {
+    astro: 'Astro',
     react: 'React',
     nextjs: 'Next.js',
     vue: 'Vue.js',
@@ -205,6 +212,12 @@ function formatTech(tech: string): string {
     sqlite: 'SQLite',
     postgres: 'PostgreSQL',
     mongodb: 'MongoDB',
+    tailwind: 'Tailwind CSS',
+    css: 'CSS',
+    scss: 'SCSS',
+    'styled-components': 'styled-components',
+    typescript: 'TypeScript',
+    javascript: 'JavaScript',
   };
   return names[tech] || tech;
 }

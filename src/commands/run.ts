@@ -24,6 +24,12 @@ import { fetchFromSource } from '../sources/index.js';
 /** Default fallback repo for GitHub issues when no project is specified */
 const DEFAULT_GITHUB_ISSUES_REPO = 'rubenmarcus/ralph-ideas';
 
+function formatDurationSeconds(durationSec: number): string {
+  const minutes = Math.floor(durationSec / 60);
+  const seconds = durationSec % 60;
+  return `${minutes}m ${seconds}s`;
+}
+
 /**
  * Detect how to run the project based on package.json scripts or common patterns
  */
@@ -619,7 +625,7 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     }
     if (result.stats) {
       const durationSec = Math.round(result.stats.totalDuration / 1000);
-      console.log(chalk.dim(`Total duration: ${durationSec}s`));
+      console.log(chalk.dim(`Total duration: ${formatDurationSeconds(durationSec)}`));
       if (result.stats.validationFailures > 0) {
         console.log(chalk.dim(`Validation failures: ${result.stats.validationFailures}`));
       }
