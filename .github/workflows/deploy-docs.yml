@@ -44,7 +44,7 @@ jobs:
       # Production deploy (push to main)
       - name: Deploy to Production
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: cloudflare/wrangler-action@da0e0235f371a81e3396a2baee477e1df5065e67 # v3
+        uses: cloudflare/wrangler-action@v3
         id: deploy-production
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
