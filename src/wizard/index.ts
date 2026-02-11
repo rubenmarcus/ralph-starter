@@ -493,7 +493,7 @@ Provide a prioritized list of suggestions with explanations.`;
   // Step 1: Initialize Ralph Playbook
   spinner.start('Setting up project...');
   try {
-    await initCommand({ name: answers.projectName });
+    await initCommand({ name: answers.projectName, nonInteractive: true });
     spinner.succeed('Project initialized');
   } catch (error) {
     spinner.fail('Failed to initialize project');

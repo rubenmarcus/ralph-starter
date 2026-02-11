@@ -9,6 +9,8 @@ import { type Agent, detectAvailableAgents, printAgentStatus } from '../loop/age
 
 interface InitOptions {
   name?: string;
+  /** Skip interactive prompts and agent detection (used when called from wizard) */
+  nonInteractive?: boolean;
 }
 
 export type ProjectType = 'nodejs' | 'python' | 'rust' | 'go' | 'unknown';
@@ -251,79 +253,97 @@ Add discoveries and learnings here as you work.
 export async function initCommand(_options: InitOptions): Promise<void> {
   const cwd = process.cwd();
   const spinner = ora();
+  const nonInteractive = _options.nonInteractive ?? false;
 
-  console.log();
-  console.log(chalk.cyan.bold('Initialize Ralph Wiggum'));
-  console.log(chalk.dim('Set up autonomous AI coding loops (Ralph Playbook)'));
-  console.log();
+  if (!nonInteractive) {
+    console.log();
+    console.log(chalk.cyan.bold('Initialize Ralph Wiggum'));
+    console.log(chalk.dim('Set up autonomous AI coding loops (Ralph Playbook)'));
+    console.log();
+  }
 
   // Check if already initialized
   if (existsSync(join(cwd, 'AGENTS.md'))) {
-    console.log(chalk.yellow('Ralph Playbook files already exist.'));
-    console.log(chalk.dim('Files: AGENTS.md, PROMPT_*.md, specs/'));
+    if (!nonInteractive) {
+      console.log(chalk.yellow('Ralph Playbook files already exist.'));
+      console.log(chalk.dim('Files: AGENTS.md, PROMPT_*.md, specs/'));
+    }
     return;
   }
 
   // Detect project
   const project = detectProject(cwd);
-  console.log(chalk.dim(`Detected: ${project.type === 'unknown' ? 'New project' : project.type}`));
-  console.log();
+  if (!nonInteractive) {
+    console.log(
+      chalk.dim(`Detected: ${project.type === 'unknown' ? 'New project' : project.type}`)
+    );
+    console.log();
+  }
 
   // Check git
   const hasGit = await isGitRepo(cwd);
   if (!hasGit) {
-    const { initGit } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'initGit',
-        message: 'No git repo found. Initialize one?',
-        default: true,
-      },
-    ]);
-
-    if (initGit) {
+    if (nonInteractive) {
+      // Auto-init git when called from wizard
       await initGitRepo(cwd);
-      console.log(chalk.green('Git repository initialized'));
+    } else {
+      const { initGit } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'initGit',
+          message: 'No git repo found. Initialize one?',
+          default: true,
+        },
+      ]);
+
+      if (initGit) {
+        await initGitRepo(cwd);
+        console.log(chalk.green('Git repository initialized'));
+      }
     }
   }
 
-  // Detect available agents
-  spinner.start('Detecting available agents...');
-  const agents = await detectAvailableAgents();
-  const availableAgents = agents.filter((a) => a.available);
-  spinner.stop();
+  // Detect available agents (skip in non-interactive mode — wizard handles this)
+  let selectedAgent: Agent | undefined;
+  if (!nonInteractive) {
+    spinner.start('Detecting available agents...');
+    const agents = await detectAvailableAgents();
+    const availableAgents = agents.filter((a) => a.available);
+    spinner.stop();
 
-  if (availableAgents.length === 0) {
-    console.log(chalk.red('No coding agents found!'));
+    if (availableAgents.length === 0) {
+      console.log(chalk.red('No coding agents found!'));
+      printAgentStatus(agents);
+      console.log(chalk.yellow('Please install one of the agents above first.'));
+      return;
+    }
+
     printAgentStatus(agents);
-    console.log(chalk.yellow('Please install one of the agents above first.'));
-    return;
-  }
 
-  printAgentStatus(agents);
-
-  // Select default agent
-  let selectedAgent: Agent;
-  if (availableAgents.length === 1) {
-    selectedAgent = availableAgents[0];
-    console.log(chalk.dim(`Using: ${selectedAgent.name}`));
-  } else {
-    const { agent } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'agent',
-        message: 'Select default coding agent:',
-        choices: availableAgents.map((a) => ({
-          name: a.name,
-          value: a,
-        })),
-      },
-    ]);
-    selectedAgent = agent;
+    // Select default agent
+    if (availableAgents.length === 1) {
+      selectedAgent = availableAgents[0];
+      console.log(chalk.dim(`Using: ${selectedAgent.name}`));
+    } else {
+      const { agent } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'agent',
+          message: 'Select default coding agent:',
+          choices: availableAgents.map((a) => ({
+            name: a.name,
+            value: a,
+          })),
+        },
+      ]);
+      selectedAgent = agent;
+    }
   }
 
   // Create Ralph Playbook files
-  spinner.start('Creating Ralph Playbook files...');
+  if (!nonInteractive) {
+    spinner.start('Creating Ralph Playbook files...');
+  }
 
   // AGENTS.md
   writeFileSync(join(cwd, 'AGENTS.md'), generateAgentsMd(project));
@@ -341,14 +361,17 @@ export async function initCommand(_options: InitOptions): Promise<void> {
     mkdirSync(specsDir, { recursive: true });
   }
 
-  spinner.succeed('Ralph Playbook files created');
+  if (!nonInteractive) {
+    spinner.succeed('Ralph Playbook files created');
+  }
 
   // Create .ralph config
+  const agentType = selectedAgent?.type ?? 'claude-code';
   const ralphDir = join(cwd, '.ralph');
   if (!existsSync(ralphDir)) {
     mkdirSync(ralphDir, { recursive: true });
     const config = {
-      agent: selectedAgent.type,
+      agent: agentType,
       auto_commit: true,
       max_iterations: 50,
       validation: {
@@ -361,7 +384,7 @@ export async function initCommand(_options: InitOptions): Promise<void> {
   }
 
   // Create .claude/CLAUDE.md if using Claude Code
-  if (selectedAgent.type === 'claude-code') {
+  if (agentType === 'claude-code') {
     const claudeDir = join(cwd, '.claude');
     if (!existsSync(claudeDir)) {
       mkdirSync(claudeDir, { recursive: true });
@@ -393,7 +416,13 @@ ${project.lintCmd ? `- \`${project.lintCmd}\`` : ''}
 `;
 
     writeFileSync(join(claudeDir, 'CLAUDE.md'), claudeMd);
-    console.log(chalk.dim('Created .claude/CLAUDE.md'));
+    if (!nonInteractive) {
+      console.log(chalk.dim('Created .claude/CLAUDE.md'));
+    }
+  }
+
+  if (nonInteractive) {
+    return;
   }
 
   console.log();
