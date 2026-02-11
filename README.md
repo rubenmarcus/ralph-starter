@@ -5,11 +5,11 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/ralph-starter"><img src="https://img.shields.io/npm/v/ralph-starter.svg?style=flat-square" alt="npm version"></a>
   <a href="https://www.npmjs.com/package/ralph-starter"><img src="https://img.shields.io/npm/dm/ralph-starter.svg?style=flat-square" alt="npm downloads"></a>
-  <a href="https://github.com/rubenmarcus/ralph-starter/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/ralph-starter.svg?style=flat-square" alt="license"></a>
-  <a href="https://github.com/rubenmarcus/ralph-starter/actions"><img src="https://img.shields.io/github/actions/workflow/status/rubenmarcus/ralph-starter/ci.yml?branch=main&style=flat-square" alt="build status"></a>
-  <a href="https://github.com/rubenmarcus/ralph-starter/actions/workflows/security.yml"><img src="https://img.shields.io/github/actions/workflow/status/rubenmarcus/ralph-starter/security.yml?branch=main&style=flat-square&label=security" alt="security scanning"></a>
-  <a href="https://securityscorecards.dev/viewer/?uri=github.com/rubenmarcus/ralph-starter"><img src="https://img.shields.io/ossf-scorecard/github.com/rubenmarcus/ralph-starter?style=flat-square&label=scorecard" alt="OSSF Scorecard"></a>
-  <a href="https://github.com/rubenmarcus/ralph-starter"><img src="https://img.shields.io/github/stars/rubenmarcus/ralph-starter?style=flat-square" alt="GitHub stars"></a>
+  <a href="https://github.com/multivmlabs/ralph-starter/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/ralph-starter.svg?style=flat-square" alt="license"></a>
+  <a href="https://github.com/multivmlabs/ralph-starter/actions"><img src="https://img.shields.io/github/actions/workflow/status/multivmlabs/ralph-starter/ci.yml?branch=main&style=flat-square" alt="build status"></a>
+  <a href="https://github.com/multivmlabs/ralph-starter/actions/workflows/security.yml"><img src="https://img.shields.io/github/actions/workflow/status/multivmlabs/ralph-starter/security.yml?branch=main&style=flat-square&label=security" alt="security scanning"></a>
+  <a href="https://securityscorecards.dev/viewer/?uri=github.com/multivmlabs/ralph-starter"><img src="https://img.shields.io/ossf-scorecard/github.com/multivmlabs/ralph-starter?style=flat-square&label=scorecard" alt="OSSF Scorecard"></a>
+  <a href="https://github.com/multivmlabs/ralph-starter"><img src="https://img.shields.io/github/stars/multivmlabs/ralph-starter?style=flat-square" alt="GitHub stars"></a>
 </p>
 
 <h3 align="center">
@@ -581,11 +581,11 @@ You can test ralph-starter with public URLs - no API keys required:
 
 ```bash
 # Test with a public GitHub gist or raw markdown
-ralph-starter run --from https://raw.githubusercontent.com/rubenmarcus/ralph-starter/main/README.md
+ralph-starter run --from https://raw.githubusercontent.com/multivmlabs/ralph-starter/main/README.md
 
 # Test with GitHub issues (requires gh CLI login)
 gh auth login
-ralph-starter run --from github --project rubenmarcus/ralph-starter --label "enhancement"
+ralph-starter run --from github --project multivmlabs/ralph-starter --label "enhancement"
 ```
 
 ### Testing the Wizard
@@ -676,8 +676,8 @@ Full documentation available at: https://ralphstarter.ai
 
 Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-- **Feature requests & ideas**: [ralph-ideas](https://github.com/rubenmarcus/ralph-ideas)
-- **Project templates**: [ralph-templates](https://github.com/rubenmarcus/ralph-templates)
+- **Feature requests & ideas**: [ralph-ideas](https://github.com/multivmlabs/ralph-ideas)
+- **Project templates**: [ralph-templates](https://github.com/multivmlabs/ralph-templates)
 
 For creating custom integrations, agents, or using the programmatic API, see the [Developer Extension Guide](https://ralphstarter.ai/docs/guides/extending-ralph-starter).
 

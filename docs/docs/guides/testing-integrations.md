@@ -47,7 +47,7 @@ Fetch specs from any public markdown or HTML page:
 
 ```bash
 # Public GitHub raw file
-ralph-starter run --from https://raw.githubusercontent.com/rubenmarcus/ralph-starter/main/README.md
+ralph-starter run --from https://raw.githubusercontent.com/multivmlabs/ralph-starter/main/README.md
 
 # Public gist
 ralph-starter run --from https://gist.githubusercontent.com/user/id/raw/spec.md
@@ -110,10 +110,10 @@ ralph-starter source test github
 
 ```bash
 # Preview issues from any public repo
-ralph-starter source preview github --project rubenmarcus/ralph-starter --limit 5
+ralph-starter source preview github --project multivmlabs/ralph-starter --limit 5
 
 # Run with a public repo
-ralph-starter run --from github --project rubenmarcus/ralph-starter --label "enhancement"
+ralph-starter run --from github --project multivmlabs/ralph-starter --label "enhancement"
 ```
 
 ### Alternative: Personal Access Token

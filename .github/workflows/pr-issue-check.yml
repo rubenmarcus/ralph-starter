@@ -52,7 +52,7 @@ jobs:
             This PR doesn't appear to have a linked issue. Consider linking to:
 
             - **This repo**: \`Closes #123\`
-            - **ralph-ideas**: \`Closes rubenmarcus/ralph-ideas#123\`
+            - **ralph-ideas**: \`Closes multivmlabs/ralph-ideas#123\`
 
             Using \`Closes\`, \`Fixes\`, or \`Resolves\` will auto-close the issue when this PR is merged.
 

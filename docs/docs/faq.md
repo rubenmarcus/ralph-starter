@@ -285,16 +285,16 @@ The circuit breaker automatically stops the loop when the agent is stuck on the 
 3. Make your changes
 4. Submit a pull request
 
-See the [contributing guide](https://github.com/rubenmarcus/ralph-starter/blob/main/CONTRIBUTING.md) for details.
+See the [contributing guide](https://github.com/multivmlabs/ralph-starter/blob/main/CONTRIBUTING.md) for details.
 
 ### How do I report bugs?
 
-Open an issue on GitHub: [github.com/rubenmarcus/ralph-starter/issues](https://github.com/rubenmarcus/ralph-starter/issues)
+Open an issue on GitHub: [github.com/multivmlabs/ralph-starter/issues](https://github.com/multivmlabs/ralph-starter/issues)
 
 ---
 
 ## More Questions?
 
 - Check the [full documentation](/docs/intro)
-- Browse [Templates](https://github.com/rubenmarcus/ralph-templates)
-- Open an [issue](https://github.com/rubenmarcus/ralph-starter/issues)
+- Browse [Templates](https://github.com/multivmlabs/ralph-templates)
+- Open an [issue](https://github.com/multivmlabs/ralph-starter/issues)

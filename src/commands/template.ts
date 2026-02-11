@@ -6,7 +6,7 @@ import inquirer from 'inquirer';
 import ora from 'ora';
 import { type RunCommandOptions, runCommand } from './run.js';
 
-const TEMPLATES_REPO_URL = 'https://raw.githubusercontent.com/rubenmarcus/ralph-templates/main';
+const TEMPLATES_REPO_URL = 'https://raw.githubusercontent.com/multivmlabs/ralph-templates/main';
 const TEMPLATES_JSON_URL = `${TEMPLATES_REPO_URL}/templates.json`;
 const CACHE_DIR = join(homedir(), '.ralph-starter', 'templates-cache');
 const CACHE_DURATION_MS = 1000 * 60 * 60; // 1 hour
@@ -388,7 +388,7 @@ ${chalk.bold('Examples:')}
   ralph-starter template browse
 
 ${chalk.bold('Template Source:')}
-  Templates are fetched from: ${chalk.dim('github.com/rubenmarcus/ralph-templates')}
+  Templates are fetched from: ${chalk.dim('github.com/multivmlabs/ralph-templates')}
   Cached locally at: ${chalk.dim(CACHE_DIR)}
 `);
 }

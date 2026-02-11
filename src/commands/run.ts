@@ -21,7 +21,7 @@ import { getSourceDefaults } from '../sources/config.js';
 import { fetchFromSource } from '../sources/index.js';
 
 /** Default fallback repo for GitHub issues when no project is specified */
-const DEFAULT_GITHUB_ISSUES_REPO = 'rubenmarcus/ralph-ideas';
+const DEFAULT_GITHUB_ISSUES_REPO = 'multivmlabs/ralph-ideas';
 
 /**
  * Detect how to run the project based on package.json scripts or common patterns

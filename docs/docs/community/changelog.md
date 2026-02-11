@@ -69,14 +69,14 @@ All notable changes to ralph-starter are documented here. This project follows [
 ## [0.1.1-beta.11] - 2026-02-03
 
 ### Changed
-- Replaced Discussions links with [Templates](https://github.com/rubenmarcus/ralph-templates)
+- Replaced Discussions links with [Templates](https://github.com/multivmlabs/ralph-templates)
 
 ---
 
 ## [0.1.1-beta.10] - 2026-02-03
 
 ### Added
-- [ralph-ideas](https://github.com/rubenmarcus/ralph-ideas) and [ralph-templates](https://github.com/rubenmarcus/ralph-templates) repository references
+- [ralph-ideas](https://github.com/multivmlabs/ralph-ideas) and [ralph-templates](https://github.com/multivmlabs/ralph-templates) repository references
 
 ### Security
 - Prevent path traversal attacks in file operations
@@ -184,13 +184,13 @@ All notable changes to ralph-starter are documented here. This project follows [
 - **Cost tracking** with token estimation per model
 - **Rate limiting** with sliding window algorithm
 - **Ralph Playbook** support for custom configurations
-- **[Template marketplace](https://github.com/rubenmarcus/ralph-templates)** with community templates
+- **[Template marketplace](https://github.com/multivmlabs/ralph-templates)** with community templates
 
 ---
 
 ## Links
 
-- [GitHub Releases](https://github.com/rubenmarcus/ralph-starter/releases)
+- [GitHub Releases](https://github.com/multivmlabs/ralph-starter/releases)
 - [npm Package History](https://www.npmjs.com/package/ralph-starter?activeTab=versions)
 
 ## Upgrade

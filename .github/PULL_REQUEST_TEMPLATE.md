@@ -16,7 +16,7 @@
 <!--
 Link any related issues using GitHub keywords:
 - For issues in this repo: Fixes #123, Closes #456
-- For issues in ralph-ideas: Closes rubenmarcus/ralph-ideas#123
+- For issues in ralph-ideas: Closes multivmlabs/ralph-ideas#123
 
 Keywords: closes, fixes, resolves (auto-closes issue on merge)
 -->

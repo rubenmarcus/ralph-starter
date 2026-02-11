@@ -160,7 +160,7 @@ function TemplateCard({ template }: { template: Template }) {
       <div className={styles.cardActions}>
         <code className={styles.useCommand}>ralph-starter template use {template.path}</code>
         <a
-          href={`https://github.com/rubenmarcus/ralph-templates/tree/main/templates/${template.path}`}
+          href={`https://github.com/multivmlabs/ralph-templates/tree/main/templates/${template.path}`}
           target="_blank"
           rel="noopener noreferrer"
           className={styles.viewLink}
@@ -191,7 +191,7 @@ export default function TemplatesPage(): React.ReactElement {
             </p>
             <div className={styles.heroActions}>
               <a
-                href="https://github.com/rubenmarcus/ralph-templates"
+                href="https://github.com/multivmlabs/ralph-templates"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.primaryButton}
@@ -242,7 +242,7 @@ export default function TemplatesPage(): React.ReactElement {
                 </p>
               </div>
               <a
-                href="https://github.com/rubenmarcus/ralph-templates/blob/main/CONTRIBUTING.md"
+                href="https://github.com/multivmlabs/ralph-templates/blob/main/CONTRIBUTING.md"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.contributeButton}

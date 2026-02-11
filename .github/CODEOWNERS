@@ -2,19 +2,19 @@
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 # Default owner for everything
-* @rubenmarcus @coderabbitai
+* @rubenmarcus
 
 # Core CLI source code
-/src/ @rubenmarcus @coderabbitai
+/src/ @rubenmarcus
 
 # Documentation
-/docs/ @rubenmarcus @coderabbitai
-*.md @rubenmarcus @coderabbitai
+/docs/ @rubenmarcus
+*.md @rubenmarcus
 
 # CI/CD and GitHub configuration
-/.github/ @rubenmarcus @coderabbitai
+/.github/ @rubenmarcus
 
 # Package configuration
-package.json @rubenmarcus @coderabbitai
+package.json @rubenmarcus
 pnpm-lock.yaml @rubenmarcus
-tsconfig.json @rubenmarcus @coderabbitai
+tsconfig.json @rubenmarcus

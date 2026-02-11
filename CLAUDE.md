@@ -72,5 +72,5 @@ pnpm dev        # Development mode
 ## Links
 
 - Docs: https://ralphstarter.ai
-- Ideas: https://github.com/rubenmarcus/ralph-ideas
-- Templates: https://github.com/rubenmarcus/ralph-templates
+- Ideas: https://github.com/multivmlabs/ralph-ideas
+- Templates: https://github.com/multivmlabs/ralph-templates

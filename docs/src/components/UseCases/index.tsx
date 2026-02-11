@@ -115,7 +115,7 @@ export default function UseCases(): React.ReactElement {
               </p>
             </div>
             <a
-              href="https://github.com/rubenmarcus/ralph-templates"
+              href="https://github.com/multivmlabs/ralph-templates"
               target="_blank"
               rel="noopener noreferrer"
               className={styles.templatesButton}

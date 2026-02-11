@@ -404,7 +404,7 @@ ralph-starter run "build a login page"
 ## Links
 
 - [Documentation](${baseUrl}/docs/intro)
-- [GitHub](https://github.com/rubenmarcus/ralph-starter)
+- [GitHub](https://github.com/multivmlabs/ralph-starter)
 - [npm](https://www.npmjs.com/package/ralph-starter)
 - [Full docs as markdown](${baseUrl}/llms-full.txt)
 
@@ -490,7 +490,7 @@ Fetch pages and database entries from Notion.
 ## Project Templates
 
 ralph-starter provides templates to accelerate project setup.
-Browse available templates at: https://github.com/rubenmarcus/ralph-templates
+Browse available templates at: https://github.com/multivmlabs/ralph-templates
 
 ## Using Templates
 
@@ -502,7 +502,7 @@ ralph-starter init --template <template-name>
 
 - [Getting Started](${baseUrl}/docs/intro)
 - [CLI Reference](${baseUrl}/docs/cli/init)
-- [Templates Repository](https://github.com/rubenmarcus/ralph-templates)
+- [Templates Repository](https://github.com/multivmlabs/ralph-templates)
 `,
     },
   ];

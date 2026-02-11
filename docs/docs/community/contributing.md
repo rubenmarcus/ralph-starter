@@ -12,7 +12,7 @@ Thank you for your interest in contributing to ralph-starter! This guide will he
 
 ### Report Bugs
 
-Found a bug? Please report it on [GitHub Issues](https://github.com/rubenmarcus/ralph-starter/issues).
+Found a bug? Please report it on [GitHub Issues](https://github.com/multivmlabs/ralph-starter/issues).
 
 When reporting bugs, please include:
 - ralph-starter version (`ralph-starter --version`)
@@ -24,7 +24,7 @@ When reporting bugs, please include:
 
 ### Submit Ideas
 
-Have a feature idea? Submit it to [ralph-ideas](https://github.com/rubenmarcus/ralph-ideas/issues).
+Have a feature idea? Submit it to [ralph-ideas](https://github.com/multivmlabs/ralph-ideas/issues).
 
 Good idea submissions include:
 - Clear description of the feature
@@ -36,7 +36,7 @@ Good idea submissions include:
 
 1. **Fork the repository**
    ```bash
-   gh repo fork rubenmarcus/ralph-starter
+   gh repo fork multivmlabs/ralph-starter
    ```
 
 2. **Clone your fork**
@@ -150,8 +150,8 @@ docs: update installation guide
 
 ## Questions?
 
-- [Browse Templates](https://github.com/rubenmarcus/ralph-templates)
-- [Open an Issue](https://github.com/rubenmarcus/ralph-starter/issues)
+- [Browse Templates](https://github.com/multivmlabs/ralph-templates)
+- [Open an Issue](https://github.com/multivmlabs/ralph-starter/issues)
 
 ---
 

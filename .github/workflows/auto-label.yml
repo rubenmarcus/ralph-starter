@@ -32,7 +32,6 @@ jobs:
               - '.github/actions/**'
             security:
               - '.github/workflows/security.yml'
-              - '.coderabbit.yaml'
               - 'SECURITY.md'
             config:
               - 'package.json'

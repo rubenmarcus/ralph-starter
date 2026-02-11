@@ -94,7 +94,7 @@ export default function IntegrationShowcase(): React.ReactElement {
 
             <div className={`${styles.cta} ${styles.animateIn} ${styles.delay3}`}>
               <Link
-                to="https://github.com/rubenmarcus/ralph-starter"
+                to="https://github.com/multivmlabs/ralph-starter"
                 className={styles.ctaLink}
               >
                 Contribute on GitHub →

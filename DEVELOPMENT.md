@@ -200,5 +200,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 - [Documentation](https://ralphstarter.ai)
 - [API Reference](https://ralphstarter.ai/docs/api)
-- [Feature Ideas](https://github.com/rubenmarcus/ralph-ideas)
-- [Project Templates](https://github.com/rubenmarcus/ralph-templates)
+- [Feature Ideas](https://github.com/multivmlabs/ralph-ideas)
+- [Project Templates](https://github.com/multivmlabs/ralph-templates)

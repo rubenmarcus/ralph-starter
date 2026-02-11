@@ -1,11 +1,11 @@
 ralph-starter:
   name: ralph-starter team
   title: Maintainers
-  url: https://github.com/rubenmarcus/ralph-starter
+  url: https://github.com/multivmlabs/ralph-starter
   image_url: https://github.com/rubenmarcus.png
 
 ralph:
   name: Ralph Team
   title: ralph-starter maintainers
-  url: https://github.com/rubenmarcus/ralph-starter
+  url: https://github.com/multivmlabs/ralph-starter
   image_url: /img/small-logo.png

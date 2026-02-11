@@ -393,7 +393,7 @@ export const tools = [
 
 ```bash
 # Clone the repo
-git clone https://github.com/rubenmarcus/ralph-starter.git
+git clone https://github.com/multivmlabs/ralph-starter.git
 cd ralph-starter
 
 # Install dependencies
@@ -514,6 +514,6 @@ interface PlanOptions {
 
 ## Need Help?
 
-- [GitHub Issues](https://github.com/rubenmarcus/ralph-starter/issues) - Bug reports and feature requests
+- [GitHub Issues](https://github.com/multivmlabs/ralph-starter/issues) - Bug reports and feature requests
 - [Documentation](https://rubenmarcus.github.io/ralph-starter/) - Full docs
-- [Templates](https://github.com/rubenmarcus/ralph-templates) - Project templates
+- [Templates](https://github.com/multivmlabs/ralph-templates) - Project templates

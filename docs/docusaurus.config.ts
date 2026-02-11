@@ -18,7 +18,7 @@ const config: Config = {
   baseUrl: '/',
 
   // Project config
-  organizationName: 'rubenmarcus',
+  organizationName: 'multivmlabs',
   projectName: 'ralph-starter',
   trailingSlash: false,
 
@@ -125,7 +125,7 @@ const config: Config = {
         },
         softwareRequirements: 'Node.js 18+',
         downloadUrl: 'https://www.npmjs.com/package/ralph-starter',
-        codeRepository: 'https://github.com/rubenmarcus/ralph-starter',
+        codeRepository: 'https://github.com/multivmlabs/ralph-starter',
         programmingLanguage: 'TypeScript',
         keywords: ['AI coding', 'autonomous coding', 'claude code', 'MCP server', 'developer tools'],
       }),
@@ -143,7 +143,7 @@ const config: Config = {
         url: siteUrl,
         logo: `${siteUrl}/img/small-logo.png`,
         sameAs: [
-          'https://github.com/rubenmarcus/ralph-starter',
+          'https://github.com/multivmlabs/ralph-starter',
           'https://www.npmjs.com/package/ralph-starter',
         ],
       }),
@@ -235,7 +235,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/rubenmarcus/ralph-starter/tree/main/docs/',
+          editUrl: 'https://github.com/multivmlabs/ralph-starter/tree/main/docs/',
           routeBasePath: 'docs',
         },
         blog: false, // Disabled for now
@@ -315,7 +315,7 @@ const config: Config = {
         {
           type: 'html',
           position: 'right',
-          value: '<a href="https://github.com/rubenmarcus/ralph-starter" target="_blank" rel="noopener noreferrer" class="navbar__badge-link"><img src="https://img.shields.io/github/stars/rubenmarcus/ralph-starter?style=for-the-badge&colorA=08080A&colorB=28282E&label=stars&logo=github&logoColor=white" alt="GitHub stars" height="28" /></a>',
+          value: '<a href="https://github.com/multivmlabs/ralph-starter" target="_blank" rel="noopener noreferrer" class="navbar__badge-link"><img src="https://img.shields.io/github/stars/multivmlabs/ralph-starter?style=for-the-badge&colorA=08080A&colorB=28282E&label=stars&logo=github&logoColor=white" alt="GitHub stars" height="28" /></a>',
         },
       ],
     },
@@ -333,10 +333,10 @@ const config: Config = {
         {
           title: 'Community',
           items: [
-            { label: 'GitHub', href: 'https://github.com/rubenmarcus/ralph-starter' },
+            { label: 'GitHub', href: 'https://github.com/multivmlabs/ralph-starter' },
             { label: 'Twitter / X', href: 'https://x.com/ralphstarter' },
-            { label: 'Ideas & Roadmap', href: 'https://github.com/rubenmarcus/ralph-ideas/issues' },
-            { label: 'Templates', href: 'https://github.com/rubenmarcus/ralph-templates' },
+            { label: 'Ideas & Roadmap', href: 'https://github.com/multivmlabs/ralph-ideas/issues' },
+            { label: 'Templates', href: 'https://github.com/multivmlabs/ralph-templates' },
           ],
         },
         {

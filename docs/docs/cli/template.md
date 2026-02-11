@@ -19,7 +19,7 @@ ralph-starter template [action] [args...] [options]
 
 The `template` command lets you browse, preview, and use pre-built project templates. Templates are curated specs that describe complete projects, which the AI agent builds from scratch.
 
-Templates are fetched from [github.com/rubenmarcus/ralph-templates](https://github.com/rubenmarcus/ralph-templates) and cached locally for offline use.
+Templates are fetched from [github.com/multivmlabs/ralph-templates](https://github.com/multivmlabs/ralph-templates) and cached locally for offline use.
 
 ## Actions
 
@@ -141,7 +141,7 @@ Templates are cached locally at `~/.ralph-starter/templates-cache/`:
 
 ## Creating Custom Templates
 
-To contribute templates, see the [ralph-templates repository](https://github.com/rubenmarcus/ralph-templates).
+To contribute templates, see the [ralph-templates repository](https://github.com/multivmlabs/ralph-templates).
 
 ## Exit Codes
 

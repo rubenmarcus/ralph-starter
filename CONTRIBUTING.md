@@ -6,14 +6,14 @@ Thanks for your interest in contributing to ralph-starter! This document covers 
 
 - [Documentation](https://ralphstarter.ai)
 - [Developer Extension Guide](https://ralphstarter.ai/docs/guides/extending-ralph-starter) - For creating custom sources, agents, and more
-- [Issues](https://github.com/rubenmarcus/ralph-starter/issues)
-- [Discussions](https://github.com/rubenmarcus/ralph-starter/discussions)
+- [Issues](https://github.com/multivmlabs/ralph-starter/issues)
+- [Discussions](https://github.com/multivmlabs/ralph-starter/discussions)
 
 ## Development Setup
 
 ```bash
 # Clone the repo
-git clone https://github.com/rubenmarcus/ralph-starter.git
+git clone https://github.com/multivmlabs/ralph-starter.git
 cd ralph-starter
 
 # Install dependencies
@@ -175,8 +175,8 @@ pnpm start  # Development server at localhost:3000
 
 ## Questions?
 
-- Open a [Discussion](https://github.com/rubenmarcus/ralph-starter/discussions) for questions
-- Open an [Issue](https://github.com/rubenmarcus/ralph-starter/issues) for bugs or feature requests
+- Open a [Discussion](https://github.com/multivmlabs/ralph-starter/discussions) for questions
+- Open an [Issue](https://github.com/multivmlabs/ralph-starter/issues) for bugs or feature requests
 
 ## License
 
