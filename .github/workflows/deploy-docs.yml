@@ -41,6 +41,12 @@ jobs:
         working-directory: docs
         run: pnpm build
 
+      - name: Generate SEO/AEO assets
+        working-directory: docs
+        run: |
+          pnpm seo:check || true
+          pnpm seo:sync || true
+
       # Production deploy (push to main)
       - name: Deploy to Production
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

@@ -72,6 +72,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin "${BRANCH_NAME}" || true
           git checkout -B "${BRANCH_NAME}"
           git add docs/static/sitemap.xml docs/static/llms.txt docs/static/llms-full.txt docs/static/docs.json docs/static/docs-urls.txt docs/static/ai-index.json docs/static/sidebar.json
           git commit -m "chore(docs): sync generated SEO/AEO assets [skip ci]"
