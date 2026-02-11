@@ -83,7 +83,7 @@ $ ralph-starter
 ❯ Yes, I know what I want to build
   No, help me brainstorm ideas
 
-? What's your idea for today?
+? Which idea do you want to build?
   (e.g., "a habit tracker app" or "an API for managing recipes")
 > a personal finance tracker
 
@@ -107,7 +107,7 @@ $ ralph-starter
 
   Complexity: Working MVP
 
-? Does this look right?
+? Is this the right specs?
 ❯ Yes, let's build it!
   I want to change something
   Start over with a different idea

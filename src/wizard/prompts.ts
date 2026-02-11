@@ -99,12 +99,31 @@ export async function askForIdea(): Promise<string> {
     {
       type: 'input',
       name: 'idea',
-      message: "What's your idea for today?",
+      message: 'Which idea do you want to build?',
       suffix: '\n  (e.g., "a habit tracker app" or "an API for managing recipes")\n  >',
-      validate: (input: string) => (input.trim().length > 0 ? true : 'Please describe your idea'),
+      validate: (input: string) =>
+        normalizeIdeaInput(input).length > 0 ? true : 'Please describe your idea',
     },
   ]);
-  return idea.trim();
+  return normalizeIdeaInput(idea);
+}
+
+function normalizeIdeaInput(input: string): string {
+  let trimmed = input.trim();
+
+  const yesPrefix = trimmed.match(/^(?:y|yes|yeah|yep|sure|ok|okay)[\s,.:;!-]+(.+)/i);
+  if (yesPrefix?.[1]) {
+    trimmed = yesPrefix[1].trim();
+  }
+
+  const buildPrefix = trimmed.match(
+    /^(?:i\s*(?:want|wanna|would\s+like)\s*to\s*)?build[\s,.:;!-]+(.+)/i
+  );
+  if (buildPrefix?.[1]) {
+    trimmed = buildPrefix[1].trim();
+  }
+
+  return trimmed.trim();
 }
 
 /**
@@ -338,7 +357,7 @@ export async function confirmPlan(): Promise<'proceed' | 'modify' | 'restart'> {
     {
       type: 'list',
       name: 'action',
-      message: 'Does this look right?',
+      message: 'Is this the right specs?',
       choices: [
         { name: "Yes, let's build it!", value: 'proceed' },
         { name: 'I want to change something', value: 'modify' },

@@ -101,7 +101,7 @@ export function estimateLoop(taskCount: TaskCount): LoopEstimate {
   let confidence: LoopEstimate['confidence'] = 'medium';
   if (pendingTasks <= 3) {
     confidence = 'high';
-  } else if (pendingTasks >= 10) {
+  } else if (pendingTasks >= 18) {
     confidence = 'low';
   }
 

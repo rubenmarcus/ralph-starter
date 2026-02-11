@@ -586,24 +586,28 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     // Show loop header with task info
     const sourceIcon = getSourceIcon(options.sourceType);
     const headerLines: string[] = [];
+    const boxWidth = Math.min(60, getTerminalWidth() - 4);
+    const innerWidth = boxWidth - 2;
     if (currentTask && totalTasks > 0) {
       const taskNum = completedTasks + 1;
       const cleanName = cleanTaskName(currentTask.name);
-      const tw = getTerminalWidth();
-      const maxNameLen = Math.max(20, tw - 30);
-      const taskName =
-        cleanName.length > maxNameLen ? `${cleanName.slice(0, maxNameLen - 3)}...` : cleanName;
+      const prefix = `  ${sourceIcon} Task ${taskNum}/${totalTasks} │ `;
+      const available = innerWidth - prefix.length;
+      if (available > 0) {
+        const taskName = truncateToFit(cleanName, Math.max(8, available));
+        headerLines.push(`${prefix}${chalk.white.bold(taskName)}`);
+      } else {
+        headerLines.push(truncateToFit(`${prefix}${cleanName}`, innerWidth));
+      }
       headerLines.push(
-        `  ${sourceIcon} Task ${taskNum}/${totalTasks} │ ${chalk.white.bold(taskName)}`
+        chalk.dim(truncateToFit(`  ${options.agent.name} │ Iter ${i}/${maxIterations}`, innerWidth))
       );
-      headerLines.push(chalk.dim(`  ${options.agent.name} │ Iter ${i}/${maxIterations}`));
     } else {
-      headerLines.push(
-        `  ${sourceIcon} Loop ${i}/${maxIterations} │ ${chalk.white.bold(`Running ${options.agent.name}`)}`
-      );
+      const fallbackLine = `  ${sourceIcon} Loop ${i}/${maxIterations} │ Running ${options.agent.name}`;
+      headerLines.push(chalk.white.bold(truncateToFit(fallbackLine, innerWidth)));
     }
     console.log();
-    console.log(drawBox(headerLines, { color: chalk.cyan }));
+    console.log(drawBox(headerLines, { color: chalk.cyan, width: boxWidth }));
     console.log();
 
     // Create progress renderer for this iteration
@@ -694,6 +698,19 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
       } else {
         // Wait for filesystem to settle before declaring done
         await waitForFilesystemQuiescence(options.cwd, 2000);
+      }
+    }
+
+    // In build mode, don't allow completion while plan tasks remain
+    if (status === 'done' && options.task.includes('IMPLEMENTATION_PLAN.md')) {
+      const latestTaskInfo = parsePlanTasks(options.cwd);
+      if (latestTaskInfo.pending > 0) {
+        console.log(
+          chalk.yellow(
+            `  Agent reported done but ${latestTaskInfo.pending} task(s) remain - continuing...`
+          )
+        );
+        status = 'continue';
       }
     }
 

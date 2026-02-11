@@ -225,40 +225,40 @@ async function runWizardFlow(spinner: Ora): Promise<void> {
   let continueWizard = true;
 
   while (continueWizard) {
-    // Ask if user has an idea, needs help, or wants to improve existing
-    const hasIdea = await askHasIdea({
-      isExistingProject: cwdIsExistingProject,
-      isRalphProject: cwdIsRalphProject,
-    });
+    let idea: string;
 
-    // Handle "improve existing project" flow
-    if (hasIdea === 'improve_existing') {
-      const improveAction = await askImproveAction();
+    if (cwdIsExistingProject) {
+      // Existing project: show list with improve_existing option
+      const hasIdea = await askHasIdea({
+        isExistingProject: true,
+        isRalphProject: cwdIsRalphProject,
+      });
 
-      if (improveAction === 'prompt') {
-        // User gives specific instructions
-        const improvementPrompt = await askImprovementPrompt();
+      // Handle "improve existing project" flow
+      if (hasIdea === 'improve_existing') {
+        const improveAction = await askImproveAction();
 
-        console.log();
-        console.log(chalk.cyan.bold('  Starting improvement loop...'));
-        console.log();
+        if (improveAction === 'prompt') {
+          const improvementPrompt = await askImprovementPrompt();
 
-        // Run with the improvement as the task
-        await runCommand(improvementPrompt, {
-          auto: true,
-          commit: false,
-          validate: true,
-        });
+          console.log();
+          console.log(chalk.cyan.bold('  Starting improvement loop...'));
+          console.log();
 
-        showSuccess('Improvement complete!');
-        return;
-      } else {
-        // Analyze and suggest improvements
-        console.log();
-        console.log(chalk.cyan.bold('  Analyzing project...'));
-        console.log();
+          await runCommand(improvementPrompt, {
+            auto: true,
+            commit: false,
+            validate: true,
+          });
 
-        const analysisPrompt = `Analyze this codebase and suggest improvements. Look at:
+          showSuccess('Improvement complete!');
+          return;
+        } else {
+          console.log();
+          console.log(chalk.cyan.bold('  Analyzing project...'));
+          console.log();
+
+          const analysisPrompt = `Analyze this codebase and suggest improvements. Look at:
 1. Code quality and best practices
 2. Missing features or incomplete implementations
 3. Performance opportunities
@@ -267,31 +267,44 @@ async function runWizardFlow(spinner: Ora): Promise<void> {
 
 Provide a prioritized list of suggestions with explanations.`;
 
-        await runCommand(analysisPrompt, {
-          auto: true,
-          commit: false,
-          validate: false,
-          maxIterations: 5,
-        });
+          await runCommand(analysisPrompt, {
+            auto: true,
+            commit: false,
+            validate: false,
+            maxIterations: 5,
+          });
 
-        showSuccess('Analysis complete!');
-        return;
+          showSuccess('Analysis complete!');
+          return;
+        }
       }
-    }
 
-    let idea: string;
-    if (hasIdea === 'need_help') {
-      // Launch idea mode
-      const selectedIdea = await runIdeaMode();
-      if (selectedIdea === null) {
-        // User wants to describe their own after browsing ideas
-        idea = await askForIdea();
+      if (hasIdea === 'need_help') {
+        const selectedIdea = await runIdeaMode();
+        if (selectedIdea === null) {
+          idea = await askForIdea();
+        } else {
+          idea = selectedIdea;
+        }
       } else {
-        idea = selectedIdea;
+        idea = await askForIdea();
       }
     } else {
-      idea = await askForIdea();
+      // New project: ask if they have an idea or want help
+      const hasIdea = await askHasIdea();
+
+      if (hasIdea === 'need_help') {
+        const selectedIdea = await runIdeaMode();
+        if (selectedIdea === null) {
+          idea = await askForIdea();
+        } else {
+          idea = selectedIdea;
+        }
+      } else {
+        idea = await askForIdea();
+      }
     }
+
     answers.rawIdea = idea;
 
     // Refine with LLM - pass spinner and agent to avoid conflicts and double detection
@@ -372,6 +385,10 @@ Provide a prioritized list of suggestions with explanations.`;
             answers.complexity = await askForComplexity(answers.complexity);
             break;
         }
+      } else {
+        console.log(chalk.dim('  Continuing with the current specs...'));
+        refining = false;
+        continueWizard = false;
       }
     }
   }
