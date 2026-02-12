@@ -190,6 +190,7 @@ export interface LoopOptions {
   trackCost?: boolean; // Track token usage and cost
   model?: string; // Model name for cost estimation
   contextBudget?: number; // Max input tokens per iteration (0 = unlimited)
+  validationWarmup?: number; // Skip validation until N tasks completed (for greenfield builds)
 }
 
 export interface LoopResult {
@@ -569,6 +570,9 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     // Check if tasks were completed since last iteration
     const newlyCompleted = completedTasks - previousCompletedTasks;
     if (newlyCompleted > 0 && i > 1) {
+      // Task completion is forward progress — reset circuit breaker consecutive failures
+      circuitBreaker.recordSuccess();
+
       // Get names of newly completed tasks (strip markdown)
       const maxNameWidth = Math.max(30, getTerminalWidth() - 30);
       const completedNames = taskInfo.tasks
@@ -798,10 +802,13 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     }
 
     // Run validation (backpressure) if enabled and there are changes
+    // Skip validation during warm-up period (greenfield builds where early tasks can't pass tests)
     let _validationPassed = true;
     let validationResults: ValidationResult[] = [];
+    const warmupThreshold = options.validationWarmup ?? 0;
+    const pastWarmup = completedTasks >= warmupThreshold;
 
-    if (validationCommands.length > 0 && (await hasUncommittedChanges(options.cwd))) {
+    if (validationCommands.length > 0 && pastWarmup && (await hasUncommittedChanges(options.cwd))) {
       spinner.start(chalk.yellow(`Loop ${i}: Running validation...`));
 
       validationResults = await runAllValidations(options.cwd, validationCommands);

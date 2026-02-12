@@ -89,7 +89,7 @@ describe('validation', () => {
       expect(commands.find((c) => c.name === 'test')).toEqual({
         name: 'test',
         command: 'npm',
-        args: ['run', 'test'],
+        args: ['test'],
       });
     });
 

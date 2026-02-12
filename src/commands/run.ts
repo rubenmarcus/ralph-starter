@@ -20,6 +20,7 @@ import { formatPresetsHelp, getPreset, type PresetConfig } from '../presets/inde
 import { autoInstallSkillsFromTask } from '../skills/auto-install.js';
 import { getSourceDefaults } from '../sources/config.js';
 import { fetchFromSource } from '../sources/index.js';
+import { detectPackageManager, formatRunCommand, getRunCommand } from '../utils/package-manager.js';
 
 /** Default fallback repo for GitHub issues when no project is specified */
 const DEFAULT_GITHUB_ISSUES_REPO = 'multivmlabs/ralph-ideas';
@@ -42,19 +43,14 @@ function detectRunCommand(
     try {
       const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
       const scripts = pkg.scripts || {};
+      const pm = detectPackageManager(cwd);
 
       // Priority order for dev commands
-      if (scripts.dev) {
-        return { command: 'npm', args: ['run', 'dev'], description: 'npm run dev' };
-      }
-      if (scripts.start) {
-        return { command: 'npm', args: ['run', 'start'], description: 'npm run start' };
-      }
-      if (scripts.serve) {
-        return { command: 'npm', args: ['run', 'serve'], description: 'npm run serve' };
-      }
-      if (scripts.preview) {
-        return { command: 'npm', args: ['run', 'preview'], description: 'npm run preview' };
+      for (const script of ['dev', 'start', 'serve', 'preview']) {
+        if (scripts[script]) {
+          const cmd = getRunCommand(pm, script);
+          return { ...cmd, description: formatRunCommand(pm, script) };
+        }
       }
     } catch {
       // Ignore parse errors
@@ -223,6 +219,7 @@ export interface RunCommandOptions {
   circuitBreakerFailures?: number;
   circuitBreakerErrors?: number;
   contextBudget?: number;
+  validationWarmup?: number;
   // Figma options
   figmaMode?: 'spec' | 'tokens' | 'components' | 'assets' | 'content';
   figmaFramework?: 'react' | 'vue' | 'svelte' | 'astro' | 'nextjs' | 'nuxt' | 'html';
@@ -573,6 +570,16 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     console.log(chalk.dim(`Max iterations: ${smartIterations} (${reason})`));
   }
 
+  // Auto-detect greenfield builds: skip validation until enough tasks are done
+  const isGreenfield = taskCount.total > 0 && taskCount.completed === 0;
+  const autoWarmup = isGreenfield ? Math.max(2, Math.floor(taskCount.total * 0.5)) : 0;
+  const validationWarmup = options.validationWarmup ? Number(options.validationWarmup) : autoWarmup;
+  if (validationWarmup > 0 && options.validate) {
+    console.log(
+      chalk.dim(`Validation warm-up: skipping until ${validationWarmup} tasks completed`)
+    );
+  }
+
   // Apply preset values with CLI overrides
   const loopOptions: LoopOptions = {
     task: preset?.promptPrefix ? `${preset.promptPrefix}\n\n${finalTask}` : finalTask,
@@ -587,6 +594,7 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     prIssueRef: sourceIssueRef,
     prLabels: options.auto ? ['AUTO'] : undefined,
     validate: options.validate ?? preset?.validate,
+    validationWarmup,
     sourceType: options.from?.toLowerCase(),
     // New options
     completionPromise: options.completionPromise ?? preset?.completionPromise,

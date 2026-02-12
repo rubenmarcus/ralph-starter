@@ -6,6 +6,11 @@ import ora from 'ora';
 import YAML from 'yaml';
 import { initGitRepo, isGitRepo } from '../automation/git.js';
 import { type Agent, detectAvailableAgents, printAgentStatus } from '../loop/agents.js';
+import {
+  detectPackageManager,
+  formatRunCommand,
+  type PackageManager,
+} from '../utils/package-manager.js';
 
 interface InitOptions {
   name?: string;
@@ -18,6 +23,7 @@ export type ProjectType = 'nodejs' | 'python' | 'rust' | 'go' | 'unknown';
 export interface ProjectInfo {
   type: ProjectType;
   name: string;
+  packageManager?: PackageManager;
   testCmd?: string;
   buildCmd?: string;
   lintCmd?: string;
@@ -29,12 +35,14 @@ export function detectProject(cwd: string): ProjectInfo {
     try {
       const pkg = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf-8'));
       const scripts = pkg.scripts || {};
+      const pm = detectPackageManager(cwd);
       return {
         type: 'nodejs',
         name: pkg.name || 'project',
-        testCmd: scripts.test ? 'npm test' : undefined,
-        buildCmd: scripts.build ? 'npm run build' : undefined,
-        lintCmd: scripts.lint ? 'npm run lint' : undefined,
+        packageManager: pm,
+        testCmd: scripts.test ? formatRunCommand(pm, 'test') : undefined,
+        buildCmd: scripts.build ? formatRunCommand(pm, 'build') : undefined,
+        lintCmd: scripts.lint ? formatRunCommand(pm, 'lint') : undefined,
       };
     } catch {
       return { type: 'nodejs', name: 'project' };
@@ -150,7 +158,7 @@ ${validationCmds.length > 0 ? validationCmds.join('\n') : '# Add your test/build
 
 ## Build Instructions
 
-${project.type === 'nodejs' ? '1. Run `npm install` to install dependencies\n2. Run `npm run build` to build (if applicable)\n3. Run `npm test` to verify' : ''}
+${project.type === 'nodejs' ? `1. Run \`${project.packageManager || 'npm'} install\` to install dependencies\n2. Run \`${project.buildCmd || `${project.packageManager || 'npm'} run build`}\` to build (if applicable)\n3. Run \`${project.testCmd || `${project.packageManager || 'npm'} test`}\` to verify` : ''}
 ${project.type === 'python' ? '1. Create virtual environment: `python -m venv venv`\n2. Install dependencies: `pip install -e .`\n3. Run tests: `pytest`' : ''}
 ${project.type === 'rust' ? '1. Run `cargo build` to compile\n2. Run `cargo test` to verify' : ''}
 ${project.type === 'go' ? '1. Run `go mod tidy` to sync dependencies\n2. Run `go build ./...` to compile\n3. Run `go test ./...` to verify' : ''}

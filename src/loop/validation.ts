@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { execa } from 'execa';
+import { detectPackageManager, getRunCommand } from '../utils/package-manager.js';
 
 export interface ValidationCommand {
   name: string;
@@ -68,18 +69,23 @@ export function detectValidationCommands(cwd: string): ValidationCommand[] {
       try {
         const pkg = JSON.parse(readFileSync(packagePath, 'utf-8'));
         const scripts = pkg.scripts || {};
+        const pm = detectPackageManager(cwd);
 
         if (scripts.test && scripts.test !== 'echo "Error: no test specified" && exit 1') {
-          commands.push({ name: 'test', command: 'npm', args: ['run', 'test'] });
+          const cmd = getRunCommand(pm, 'test');
+          commands.push({ name: 'test', ...cmd });
         }
         if (scripts.lint) {
-          commands.push({ name: 'lint', command: 'npm', args: ['run', 'lint'] });
+          const cmd = getRunCommand(pm, 'lint');
+          commands.push({ name: 'lint', ...cmd });
         }
         if (scripts.build) {
-          commands.push({ name: 'build', command: 'npm', args: ['run', 'build'] });
+          const cmd = getRunCommand(pm, 'build');
+          commands.push({ name: 'build', ...cmd });
         }
         if (scripts.typecheck) {
-          commands.push({ name: 'typecheck', command: 'npm', args: ['run', 'typecheck'] });
+          const cmd = getRunCommand(pm, 'typecheck');
+          commands.push({ name: 'typecheck', ...cmd });
         }
       } catch {
         // Invalid package.json

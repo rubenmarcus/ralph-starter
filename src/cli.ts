@@ -83,6 +83,10 @@ program
   .option('--circuit-breaker-failures <n>', 'Max consecutive failures before stopping (default: 3)')
   .option('--circuit-breaker-errors <n>', 'Max same error occurrences before stopping (default: 5)')
   .option(
+    '--validation-warmup <n>',
+    'Skip validation until N tasks are completed (auto-detected for greenfield builds)'
+  )
+  .option(
     '--context-budget <n>',
     'Max input tokens per iteration for smart context trimming (0 = unlimited)'
   )

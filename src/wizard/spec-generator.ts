@@ -1,3 +1,4 @@
+import { detectPackageManager, formatRunCommand } from '../utils/package-manager.js';
 import type { TechStack, WizardAnswers } from './types.js';
 import { formatComplexity, formatProjectType } from './ui.js';
 
@@ -160,9 +161,11 @@ export function generateAgentsMd(answers: WizardAnswers): string {
     answers.techStack.backend === 'nodejs';
 
   if (hasNodeStack) {
-    sections.push('- **lint**: `npm run lint`');
-    sections.push('- **build**: `npm run build`');
-    sections.push('- **test**: `npm test`');
+    // Detect PM from working directory if available, default to npm for greenfield projects
+    const pm = answers.workingDirectory ? detectPackageManager(answers.workingDirectory) : 'npm';
+    sections.push(`- **lint**: \`${formatRunCommand(pm, 'lint')}\``);
+    sections.push(`- **build**: \`${formatRunCommand(pm, 'build')}\``);
+    sections.push(`- **test**: \`${formatRunCommand(pm, 'test')}\``);
   } else if (answers.techStack.backend === 'python') {
     sections.push('- **lint**: `ruff check .`');
     sections.push('- **test**: `pytest`');
