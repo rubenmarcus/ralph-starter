@@ -129,7 +129,8 @@ async function installSkill(candidate: SkillCandidate, globalInstall: boolean): 
 
 export async function autoInstallSkillsFromTask(task: string, cwd: string): Promise<string[]> {
   if (!task.trim()) return [];
-  if (process.env.RALPH_DISABLE_SKILL_AUTO_INSTALL === '1') return [];
+  const autoInstallEnabled = process.env.RALPH_ENABLE_SKILL_AUTO_INSTALL === '1';
+  if (!autoInstallEnabled || process.env.RALPH_DISABLE_SKILL_AUTO_INSTALL === '1') return [];
 
   const queries = buildSkillQueries(task);
   if (queries.length === 0) return [];

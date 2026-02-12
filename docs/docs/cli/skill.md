@@ -125,9 +125,17 @@ and included in the agent's prompt context when relevant.
 
 ## Auto Skill Discovery
 
-When running a task, ralph-starter can also query the skills.sh
-registry to find and install relevant skills automatically.
-If you want to disable this behavior, set:
+Auto skill discovery is opt-in. When enabled, ralph-starter
+queries the skills.sh registry to find and install relevant
+skills automatically.
+
+Enable it by setting:
+
+```bash
+RALPH_ENABLE_SKILL_AUTO_INSTALL=1
+```
+
+You can also force-disable it with:
 
 ```bash
 RALPH_DISABLE_SKILL_AUTO_INSTALL=1
