@@ -63,11 +63,22 @@ pnpm build
 
 ### 1. Create a Branch
 
+Follow the branch naming convention:
+
 ```bash
-git checkout -b feature/my-feature
-# or
-git checkout -b fix/my-fix
+git checkout -b feature/my-feature    # New features
+git checkout -b fix/my-fix            # Bug fixes
+git checkout -b staging/v0.2.0        # Staging branches (use target version)
+git checkout -b release/v0.2.0        # Release branches (automated)
 ```
+
+**Branch naming rules:**
+- `feature/<name>` — New features
+- `fix/<name>` — Bug fixes
+- `docs/<name>` — Documentation changes
+- `chore/<name>` — Maintenance tasks
+- `staging/v<version>` — Pre-release staging (must use target semver)
+- `release/v<version>` — Release branches (created by CI)
 
 ### 2. Make Your Changes
 

@@ -17,11 +17,18 @@ import { type LoopOptions, runLoop } from '../loop/executor.js';
 import { formatPrdPrompt, getPrdStats, parsePrdFile } from '../loop/prd-parser.js';
 import { calculateOptimalIterations } from '../loop/task-counter.js';
 import { formatPresetsHelp, getPreset, type PresetConfig } from '../presets/index.js';
+import { autoInstallSkillsFromTask } from '../skills/auto-install.js';
 import { getSourceDefaults } from '../sources/config.js';
 import { fetchFromSource } from '../sources/index.js';
 
 /** Default fallback repo for GitHub issues when no project is specified */
 const DEFAULT_GITHUB_ISSUES_REPO = 'multivmlabs/ralph-ideas';
+
+function formatDurationSeconds(durationSec: number): string {
+  const minutes = Math.floor(durationSec / 60);
+  const seconds = durationSec % 60;
+  return `${minutes}m ${seconds}s`;
+}
 
 /**
  * Detect how to run the project based on package.json scripts or common patterns
@@ -215,6 +222,7 @@ export interface RunCommandOptions {
   trackCost?: boolean;
   circuitBreakerFailures?: number;
   circuitBreakerErrors?: number;
+  contextBudget?: number;
   // Figma options
   figmaMode?: 'spec' | 'tokens' | 'components' | 'assets' | 'content';
   figmaFramework?: 'react' | 'vue' | 'svelte' | 'astro' | 'nextjs' | 'nuxt' | 'html';
@@ -537,6 +545,9 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     return;
   }
 
+  // Auto-install relevant skills from skills.sh (if available)
+  await autoInstallSkillsFromTask(finalTask, cwd);
+
   // Apply preset if specified
   let preset: PresetConfig | undefined;
   if (options.preset) {
@@ -576,6 +587,7 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     prIssueRef: sourceIssueRef,
     prLabels: options.auto ? ['AUTO'] : undefined,
     validate: options.validate ?? preset?.validate,
+    sourceType: options.from?.toLowerCase(),
     // New options
     completionPromise: options.completionPromise ?? preset?.completionPromise,
     requireExitSignal: options.requireExitSignal,
@@ -584,6 +596,7 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     trackCost: options.trackCost ?? true, // Default to true
     model: agent.type === 'claude-code' ? 'claude-3-sonnet' : 'default',
     checkFileCompletion: true, // Always check for file-based completion
+    contextBudget: options.contextBudget ? Number(options.contextBudget) : undefined,
     circuitBreaker: preset?.circuitBreaker
       ? {
           maxConsecutiveFailures:
@@ -612,7 +625,7 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
     }
     if (result.stats) {
       const durationSec = Math.round(result.stats.totalDuration / 1000);
-      console.log(chalk.dim(`Total duration: ${durationSec}s`));
+      console.log(chalk.dim(`Total duration: ${formatDurationSeconds(durationSec)}`));
       if (result.stats.validationFailures > 0) {
         console.log(chalk.dim(`Validation failures: ${result.stats.validationFailures}`));
       }

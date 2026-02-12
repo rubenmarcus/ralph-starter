@@ -1,8 +1,9 @@
 /**
  * Unified LLM API for ralph-starter
- * Supports Anthropic, OpenAI, and OpenRouter
+ * Supports Anthropic (via SDK with prompt caching), OpenAI, and OpenRouter
  */
 
+import Anthropic from '@anthropic-ai/sdk';
 import { getProviderKeyFromEnv, type LLMProvider, PROVIDERS } from './providers.js';
 
 // Timeout for API calls (30 seconds)
@@ -10,14 +11,24 @@ const API_TIMEOUT_MS = 30000;
 
 export interface LLMRequest {
   prompt: string;
+  /** Optional system message (will be cached for Anthropic) */
+  system?: string;
   maxTokens?: number;
   model?: string;
+}
+
+export interface LLMUsage {
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationInputTokens?: number;
+  cacheReadInputTokens?: number;
 }
 
 export interface LLMResponse {
   content: string;
   model: string;
   provider: LLMProvider;
+  usage?: LLMUsage;
 }
 
 /**
@@ -47,48 +58,73 @@ async function fetchWithTimeout(
   }
 }
 
+// Singleton Anthropic client (reused for connection pooling and caching)
+let anthropicClient: Anthropic | null = null;
+
+function getAnthropicClient(apiKey: string): Anthropic {
+  if (!anthropicClient) {
+    anthropicClient = new Anthropic({ apiKey, timeout: API_TIMEOUT_MS });
+  }
+  return anthropicClient;
+}
+
 /**
- * Call Anthropic API
+ * Call Anthropic API using the official SDK with prompt caching support.
+ *
+ * When a `system` message is provided, it is marked with `cache_control`
+ * so that repeated calls with the same system prompt benefit from
+ * Anthropic's prompt caching (90% cheaper on cache reads).
  */
 async function callAnthropic(apiKey: string, request: LLMRequest): Promise<LLMResponse> {
   const config = PROVIDERS.anthropic;
   const model = request.model || config.defaultModel;
+  const client = getAnthropicClient(apiKey);
 
-  const response = await fetchWithTimeout(config.apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: request.maxTokens || 1024,
-      messages: [
+  // Build system message with cache control if provided
+  const system: Anthropic.Messages.TextBlockParam[] | undefined = request.system
+    ? [
         {
-          role: 'user',
-          content: request.prompt,
+          type: 'text' as const,
+          text: request.system,
+          cache_control: { type: 'ephemeral' as const },
         },
-      ],
-    }),
+      ]
+    : undefined;
+
+  const response = await client.messages.create({
+    model,
+    max_tokens: request.maxTokens || 1024,
+    system,
+    messages: [
+      {
+        role: 'user',
+        content: request.prompt,
+      },
+    ],
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Anthropic API error ${response.status}: ${errorText}`);
-  }
-
-  const data = await response.json();
-  const content = data.content?.[0]?.text;
+  const textBlock = response.content.find((block) => block.type === 'text');
+  const content = textBlock && 'text' in textBlock ? textBlock.text : undefined;
 
   if (!content) {
     throw new Error('No response content from Anthropic');
   }
 
+  // Extract usage including cache metrics
+  // Cache fields may exist on the usage object but aren't in the base type
+  const rawUsage = response.usage as unknown as Record<string, number>;
+  const usage: LLMUsage = {
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
+    cacheCreationInputTokens: rawUsage.cache_creation_input_tokens,
+    cacheReadInputTokens: rawUsage.cache_read_input_tokens,
+  };
+
   return {
     content,
     model,
     provider: 'anthropic',
+    usage,
   };
 }
 
@@ -114,18 +150,20 @@ async function callOpenAICompatible(
     headers['X-Title'] = 'ralph-starter';
   }
 
+  // Build messages array, optionally including system message
+  const messages: { role: string; content: string }[] = [];
+  if (request.system) {
+    messages.push({ role: 'system', content: request.system });
+  }
+  messages.push({ role: 'user', content: request.prompt });
+
   const response = await fetchWithTimeout(config.apiUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify({
       model,
       max_tokens: request.maxTokens || 1024,
-      messages: [
-        {
-          role: 'user',
-          content: request.prompt,
-        },
-      ],
+      messages,
     }),
   });
 
@@ -141,10 +179,19 @@ async function callOpenAICompatible(
     throw new Error(`No response content from ${config.displayName}`);
   }
 
+  // Extract usage if available
+  const usage: LLMUsage | undefined = data.usage
+    ? {
+        inputTokens: data.usage.prompt_tokens || 0,
+        outputTokens: data.usage.completion_tokens || 0,
+      }
+    : undefined;
+
   return {
     content,
     model,
     provider,
+    usage,
   };
 }
 

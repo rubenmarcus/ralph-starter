@@ -39,6 +39,12 @@
 - [ ] Add `--figma-preview` to show changes without applying
 - [ ] Add `--figma-mapping <file>` for custom content mapping
 
+### Session Management
+- [x] Create `src/loop/session.ts` for pause/resume support
+- [x] Add `ralph-starter pause` command
+- [x] Add `ralph-starter resume` command
+- [ ] Store session state in `.ralph-session.json`
+
 ### Task 6: Documentation
 
 - [ ] Add content mode section to README.md

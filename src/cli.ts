@@ -8,7 +8,9 @@ import { checkCommand } from './commands/check.js';
 import { configCommand } from './commands/config.js';
 import { initCommand } from './commands/init.js';
 import { integrationsCommand } from './commands/integrations.js';
+import { pauseCommand } from './commands/pause.js';
 import { planCommand } from './commands/plan.js';
+import { resumeCommand } from './commands/resume.js';
 import { runCommand } from './commands/run.js';
 import { setupCommand } from './commands/setup.js';
 import { skillCommand } from './commands/skill.js';
@@ -16,6 +18,7 @@ import { sourceCommand } from './commands/source.js';
 import { templateCommand } from './commands/template.js';
 import { startMcpServer } from './mcp/server.js';
 import { formatPresetsHelp, getPresetNames } from './presets/index.js';
+import { drawBox, getTerminalWidth } from './ui/box.js';
 import { getPackageVersion } from './utils/version.js';
 import { runIdeaMode, runWizard } from './wizard/index.js';
 
@@ -23,16 +26,20 @@ const VERSION = getPackageVersion();
 
 const program = new Command();
 
-const banner = `
-  ${chalk.cyan('╭─────────────────────────────────────────────────────────────╮')}
-  ${chalk.cyan('│')}                                                             ${chalk.cyan('│')}
-  ${chalk.cyan('│')}   ${chalk.bold.white('ralph-starter')} ${chalk.gray(`v${VERSION}`)}                                   ${chalk.cyan('│')}
-  ${chalk.cyan('│')}                                                             ${chalk.cyan('│')}
-  ${chalk.cyan('│')}   ${chalk.dim('Ralph Wiggum made easy.')}                                   ${chalk.cyan('│')}
-  ${chalk.cyan('│')}   ${chalk.dim('One command to run autonomous AI coding loops.')}            ${chalk.cyan('│')}
-  ${chalk.cyan('│')}                                                             ${chalk.cyan('│')}
-  ${chalk.cyan('╰─────────────────────────────────────────────────────────────╯')}
-`;
+function stripAnsi(text: string): string {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence detection requires control characters
+  return text.replace(/\u001b\[[0-9;]*m/g, '');
+}
+
+const bannerLines = [
+  `  ${chalk.bold.white('ralph-starter')} ${chalk.gray(`v${VERSION}`)}`,
+  `  ${chalk.dim('Ralph Wiggum made easy.')}`,
+  `  ${chalk.dim('One command to run autonomous AI coding loops.')}`,
+];
+
+const maxLineLen = Math.max(...bannerLines.map((line) => stripAnsi(line).length));
+const bannerWidth = Math.min(getTerminalWidth() - 4, Math.max(40, maxLineLen + 2));
+const banner = `\n${drawBox(bannerLines, { color: chalk.cyan, width: bannerWidth })}\n`;
 
 program
   .name('ralph-starter')
@@ -75,6 +82,10 @@ program
   .option('--no-track-cost', 'Disable cost tracking')
   .option('--circuit-breaker-failures <n>', 'Max consecutive failures before stopping (default: 3)')
   .option('--circuit-breaker-errors <n>', 'Max same error occurrences before stopping (default: 5)')
+  .option(
+    '--context-budget <n>',
+    'Max input tokens per iteration for smart context trimming (0 = unlimited)'
+  )
   // Figma integration options
   .option('--figma-mode <mode>', 'Figma mode: spec, tokens, components, assets, content')
   .option(
@@ -229,6 +240,8 @@ program
   .option('--validate', 'Run validation after each task', true)
   .option('--no-validate', 'Skip validation')
   .option('--max-iterations <n>', 'Max iterations per task (default: 15)')
+  .option('--batch', 'Use Anthropic Batch API for 50% cost reduction (no tool use)')
+  .option('--model <name>', 'Model to use in batch mode')
   .action(async (options) => {
     await autoCommand({
       source: options.source,
@@ -240,6 +253,30 @@ program
       agent: options.agent,
       validate: options.validate,
       maxIterations: options.maxIterations ? parseInt(options.maxIterations, 10) : undefined,
+      batch: options.batch,
+      model: options.model,
+    });
+  });
+
+// ralph-starter pause - Pause a running session
+program
+  .command('pause')
+  .description('Pause a running session for later resumption')
+  .option('--reason <text>', 'Reason for pausing the session')
+  .action(async (options) => {
+    await pauseCommand({
+      reason: options.reason,
+    });
+  });
+
+// ralph-starter resume - Resume a paused session
+program
+  .command('resume')
+  .description('Resume a paused session from where it left off')
+  .option('--force', 'Force resume even if session is not paused')
+  .action(async (options) => {
+    await resumeCommand({
+      force: options.force,
     });
   });
 

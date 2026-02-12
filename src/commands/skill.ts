@@ -1,17 +1,28 @@
+import { readFileSync } from 'node:fs';
 import chalk from 'chalk';
 import { execa } from 'execa';
 import inquirer from 'inquirer';
 import ora from 'ora';
+import { findSkill } from '../loop/skills.js';
 
 interface SkillOptions {
   global?: boolean;
 }
 
+interface SkillEntry {
+  name: string;
+  description: string;
+  category: string;
+  skills: string[];
+}
+
 // Popular skills registry (curated list)
-const POPULAR_SKILLS = [
+const POPULAR_SKILLS: SkillEntry[] = [
+  // Agents
   {
     name: 'vercel-labs/agent-skills',
     description: 'React, Next.js, and Vercel best practices',
+    category: 'agents',
     skills: [
       'react-best-practices',
       'nextjs-best-practices',
@@ -19,8 +30,48 @@ const POPULAR_SKILLS = [
       'web-design-review',
     ],
   },
-  // Add more as the ecosystem grows
+  {
+    name: 'anthropics/claude-code-best-practices',
+    description: 'Claude Code optimization patterns and workflows',
+    category: 'agents',
+    skills: ['claude-code-patterns', 'prompt-engineering'],
+  },
+  // Development
+  {
+    name: 'nicepkg/aide-skill',
+    description: 'Universal coding assistant skills for multiple editors',
+    category: 'development',
+    skills: ['code-generation', 'refactoring'],
+  },
+  {
+    name: 'nickbaumann98/cursor-skills',
+    description: 'Cursor IDE rules and development patterns',
+    category: 'development',
+    skills: ['cursor-rules', 'code-review'],
+  },
+  // Testing
+  {
+    name: 'testing-patterns/vitest-skills',
+    description: 'Testing best practices with Vitest and Jest',
+    category: 'testing',
+    skills: ['vitest-patterns', 'testing-strategies', 'mocking'],
+  },
+  // Design
+  {
+    name: 'design-system/figma-to-code',
+    description: 'Figma design to code conversion workflows',
+    category: 'design',
+    skills: ['figma-react', 'design-tokens', 'component-extraction'],
+  },
 ];
+
+// Category display names and order
+const CATEGORY_LABELS: Record<string, string> = {
+  agents: 'Agent Skills',
+  development: 'Development',
+  testing: 'Testing',
+  design: 'Design',
+};
 
 export async function skillCommand(
   action: string,
@@ -50,6 +101,10 @@ export async function skillCommand(
 
     case 'browse':
       await browseSkills();
+      break;
+
+    case 'info':
+      await showSkillInfo(skillName);
       break;
 
     default:
@@ -102,15 +157,26 @@ async function listSkills(): Promise<void> {
   console.log(chalk.cyan.bold('Popular Skills'));
   console.log();
 
-  for (const repo of POPULAR_SKILLS) {
-    console.log(chalk.white.bold(`  ${repo.name}`));
-    console.log(chalk.dim(`  ${repo.description}`));
-    console.log(chalk.gray(`  Skills: ${repo.skills.join(', ')}`));
+  // Group by category
+  const categories = [...new Set(POPULAR_SKILLS.map((s) => s.category))];
+
+  for (const category of categories) {
+    const label = CATEGORY_LABELS[category] || category;
+    console.log(chalk.dim(`  ── ${label} ──`));
     console.log();
+
+    const categorySkills = POPULAR_SKILLS.filter((s) => s.category === category);
+    for (const repo of categorySkills) {
+      console.log(chalk.white.bold(`  ${repo.name}`));
+      console.log(chalk.dim(`  ${repo.description}`));
+      console.log(chalk.gray(`  Skills: ${repo.skills.join(', ')}`));
+      console.log();
+    }
   }
 
   console.log(chalk.dim('Install with: ralph-starter skill add <repo>'));
-  console.log(chalk.dim('Browse more: https://github.com/topics/agent-skills'));
+  console.log(chalk.dim('Show details: ralph-starter skill info <name>'));
+  console.log(chalk.dim('Browse more:  https://github.com/topics/agent-skills'));
 }
 
 async function searchSkills(query?: string): Promise<void> {
@@ -129,6 +195,7 @@ async function searchSkills(query?: string): Promise<void> {
     (repo) =>
       repo.name.toLowerCase().includes(query.toLowerCase()) ||
       repo.description.toLowerCase().includes(query.toLowerCase()) ||
+      repo.category.toLowerCase().includes(query.toLowerCase()) ||
       repo.skills.some((s) => s.toLowerCase().includes(query.toLowerCase()))
   );
 
@@ -141,7 +208,57 @@ async function searchSkills(query?: string): Promise<void> {
   for (const repo of results) {
     console.log(chalk.white.bold(`  ${repo.name}`));
     console.log(chalk.dim(`  ${repo.description}`));
+    console.log(chalk.gray(`  Category: ${CATEGORY_LABELS[repo.category] || repo.category}`));
     console.log();
+  }
+}
+
+async function showSkillInfo(name?: string): Promise<void> {
+  if (!name) {
+    console.log(chalk.yellow('Please specify a skill name.'));
+    console.log(chalk.gray('  Example: ralph-starter skill info react-best-practices'));
+    return;
+  }
+
+  const cwd = process.cwd();
+  const skill = findSkill(cwd, name);
+
+  if (!skill) {
+    console.log(chalk.yellow(`Skill "${name}" not found locally.`));
+    console.log(chalk.dim('  Searched: ~/.claude/skills/, .claude/skills/, .agents/skills/'));
+    console.log();
+
+    // Check if it's in the registry
+    const registered = POPULAR_SKILLS.find(
+      (s) =>
+        s.name.toLowerCase().includes(name.toLowerCase()) ||
+        s.skills.some((sk) => sk.toLowerCase().includes(name.toLowerCase()))
+    );
+    if (registered) {
+      console.log(chalk.cyan(`Found in registry: ${registered.name}`));
+      console.log(chalk.dim(`  ${registered.description}`));
+      console.log(chalk.dim(`  Install: ralph-starter skill add ${registered.name}`));
+    }
+    return;
+  }
+
+  console.log();
+  console.log(chalk.cyan.bold(`Skill: ${skill.name}`));
+  console.log(chalk.dim(`  Source: ${skill.source}`));
+  console.log(chalk.dim(`  Path: ${skill.path}`));
+  if (skill.description) {
+    console.log(chalk.dim(`  Description: ${skill.description}`));
+  }
+  console.log();
+
+  // Show skill content
+  try {
+    const content = readFileSync(skill.path, 'utf-8');
+    console.log(chalk.dim('─'.repeat(60)));
+    console.log(content);
+    console.log(chalk.dim('─'.repeat(60)));
+  } catch {
+    console.log(chalk.red('  Could not read skill file'));
   }
 }
 
@@ -173,12 +290,14 @@ function showSkillHelp(): void {
   console.log();
   console.log('Commands:');
   console.log(chalk.gray('  add <repo>     Install a skill from a git repository'));
-  console.log(chalk.gray('  list           List popular skills'));
+  console.log(chalk.gray('  list           List popular skills by category'));
   console.log(chalk.gray('  search <term>  Search for skills'));
+  console.log(chalk.gray('  info <name>    Show details of an installed skill'));
   console.log(chalk.gray('  browse         Interactive skill browser'));
   console.log();
   console.log('Examples:');
   console.log(chalk.gray('  ralph-starter skill add vercel-labs/agent-skills'));
   console.log(chalk.gray('  ralph-starter skill list'));
   console.log(chalk.gray('  ralph-starter skill search react'));
+  console.log(chalk.gray('  ralph-starter skill info frontend-design'));
 }

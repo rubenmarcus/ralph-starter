@@ -13,6 +13,7 @@ import { runSetupWizard } from '../setup/wizard.js';
 import { runIdeaMode } from './ideas.js';
 import { isLlmAvailable, refineIdea } from './llm.js';
 import {
+  askBrainstormConfirm,
   askContinueAction,
   askExecutionOptions,
   askExistingProjectAction,
@@ -25,6 +26,7 @@ import {
   askImproveAction,
   askImprovementPrompt,
   askRalphPlaybookAction,
+  askSpecChangePrompt,
   askWhatToModify,
   askWorkingDirectory,
   confirmPlan,
@@ -46,6 +48,25 @@ import {
 
 // Global spinner reference for cleanup on exit
 let activeSpinner: Ora | null = null;
+
+function normalizeTechStackValue(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  const trimmed = String(value).trim();
+  if (!trimmed) return undefined;
+  const lower = trimmed.toLowerCase();
+  if (lower === 'null' || lower === 'none' || lower === 'undefined') return undefined;
+  return trimmed;
+}
+
+function normalizeTechStack(stack: WizardAnswers['techStack']): WizardAnswers['techStack'] {
+  return {
+    frontend: normalizeTechStackValue(stack.frontend),
+    backend: normalizeTechStackValue(stack.backend),
+    database: normalizeTechStackValue(stack.database),
+    styling: normalizeTechStackValue(stack.styling),
+    language: normalizeTechStackValue(stack.language),
+  };
+}
 
 /**
  * Handle graceful exit on Ctrl+C
@@ -225,40 +246,40 @@ async function runWizardFlow(spinner: Ora): Promise<void> {
   let continueWizard = true;
 
   while (continueWizard) {
-    // Ask if user has an idea, needs help, or wants to improve existing
-    const hasIdea = await askHasIdea({
-      isExistingProject: cwdIsExistingProject,
-      isRalphProject: cwdIsRalphProject,
-    });
+    let idea: string;
 
-    // Handle "improve existing project" flow
-    if (hasIdea === 'improve_existing') {
-      const improveAction = await askImproveAction();
+    if (cwdIsExistingProject) {
+      // Existing project: show list with improve_existing option
+      const hasIdea = await askHasIdea({
+        isExistingProject: true,
+        isRalphProject: cwdIsRalphProject,
+      });
 
-      if (improveAction === 'prompt') {
-        // User gives specific instructions
-        const improvementPrompt = await askImprovementPrompt();
+      // Handle "improve existing project" flow
+      if (hasIdea === 'improve_existing') {
+        const improveAction = await askImproveAction();
 
-        console.log();
-        console.log(chalk.cyan.bold('  Starting improvement loop...'));
-        console.log();
+        if (improveAction === 'prompt') {
+          const improvementPrompt = await askImprovementPrompt();
 
-        // Run with the improvement as the task
-        await runCommand(improvementPrompt, {
-          auto: true,
-          commit: false,
-          validate: true,
-        });
+          console.log();
+          console.log(chalk.cyan.bold('  Starting improvement loop...'));
+          console.log();
 
-        showSuccess('Improvement complete!');
-        return;
-      } else {
-        // Analyze and suggest improvements
-        console.log();
-        console.log(chalk.cyan.bold('  Analyzing project...'));
-        console.log();
+          await runCommand(improvementPrompt, {
+            auto: true,
+            commit: false,
+            validate: true,
+          });
 
-        const analysisPrompt = `Analyze this codebase and suggest improvements. Look at:
+          showSuccess('Improvement complete!');
+          return;
+        } else {
+          console.log();
+          console.log(chalk.cyan.bold('  Analyzing project...'));
+          console.log();
+
+          const analysisPrompt = `Analyze this codebase and suggest improvements. Look at:
 1. Code quality and best practices
 2. Missing features or incomplete implementations
 3. Performance opportunities
@@ -267,31 +288,54 @@ async function runWizardFlow(spinner: Ora): Promise<void> {
 
 Provide a prioritized list of suggestions with explanations.`;
 
-        await runCommand(analysisPrompt, {
-          auto: true,
-          commit: false,
-          validate: false,
-          maxIterations: 5,
-        });
+          await runCommand(analysisPrompt, {
+            auto: true,
+            commit: false,
+            validate: false,
+            maxIterations: 5,
+          });
 
-        showSuccess('Analysis complete!');
-        return;
+          showSuccess('Analysis complete!');
+          return;
+        }
       }
-    }
 
-    let idea: string;
-    if (hasIdea === 'need_help') {
-      // Launch idea mode
-      const selectedIdea = await runIdeaMode();
-      if (selectedIdea === null) {
-        // User wants to describe their own after browsing ideas
-        idea = await askForIdea();
+      if (hasIdea === 'need_help') {
+        const shouldBrainstorm = await askBrainstormConfirm();
+        if (shouldBrainstorm) {
+          const selectedIdea = await runIdeaMode();
+          if (selectedIdea === null) {
+            idea = await askForIdea();
+          } else {
+            idea = selectedIdea;
+          }
+        } else {
+          idea = await askForIdea();
+        }
       } else {
-        idea = selectedIdea;
+        idea = await askForIdea();
       }
     } else {
-      idea = await askForIdea();
+      // New project: ask if they have an idea or want help
+      const hasIdea = await askHasIdea();
+
+      if (hasIdea === 'need_help') {
+        const shouldBrainstorm = await askBrainstormConfirm();
+        if (shouldBrainstorm) {
+          const selectedIdea = await runIdeaMode();
+          if (selectedIdea === null) {
+            idea = await askForIdea();
+          } else {
+            idea = selectedIdea;
+          }
+        } else {
+          idea = await askForIdea();
+        }
+      } else {
+        idea = await askForIdea();
+      }
     }
+
     answers.rawIdea = idea;
 
     // Refine with LLM - pass spinner and agent to avoid conflicts and double detection
@@ -321,7 +365,7 @@ Provide a prioritized list of suggestions with explanations.`;
     answers.projectName = refinedIdea.projectName;
     answers.projectDescription = refinedIdea.projectDescription;
     answers.projectType = refinedIdea.projectType;
-    answers.techStack = refinedIdea.suggestedStack;
+    answers.techStack = normalizeTechStack(refinedIdea.suggestedStack);
     answers.suggestedFeatures = refinedIdea.suggestedFeatures;
     answers.complexity = refinedIdea.estimatedComplexity;
 
@@ -349,6 +393,34 @@ Provide a prioritized list of suggestions with explanations.`;
       } else if (action === 'restart') {
         refining = false;
         // Will loop back to get new idea
+      } else if (action === 'prompt') {
+        const changeRequest = await askSpecChangePrompt();
+        const updatedIdea = `${answers.rawIdea}\n\nChange request: ${changeRequest}`;
+
+        spinner.start('Updating specs...');
+        try {
+          refinedIdea = await refineIdea(updatedIdea, spinner, agent);
+        } catch (_error) {
+          spinner.fail('Could not update specs');
+          refinedIdea = {
+            projectName: answers.projectName || 'my-project',
+            projectDescription: answers.projectDescription || updatedIdea,
+            projectType: answers.projectType || 'web',
+            suggestedStack: answers.techStack,
+            coreFeatures: refinedIdea.coreFeatures,
+            suggestedFeatures: refinedIdea.suggestedFeatures,
+            estimatedComplexity: answers.complexity,
+          };
+        }
+
+        answers.rawIdea = updatedIdea;
+        answers.projectName = refinedIdea.projectName;
+        answers.projectDescription = refinedIdea.projectDescription;
+        answers.projectType = refinedIdea.projectType;
+        answers.techStack = normalizeTechStack(refinedIdea.suggestedStack);
+        answers.suggestedFeatures = refinedIdea.suggestedFeatures;
+        answers.selectedFeatures = [];
+        answers.complexity = refinedIdea.estimatedComplexity;
       } else if (action === 'modify') {
         const modifyWhat = await askWhatToModify();
 
@@ -372,6 +444,10 @@ Provide a prioritized list of suggestions with explanations.`;
             answers.complexity = await askForComplexity(answers.complexity);
             break;
         }
+      } else {
+        console.log(chalk.dim('  Continuing with the current specs...'));
+        refining = false;
+        continueWizard = false;
       }
     }
   }
@@ -493,7 +569,7 @@ Provide a prioritized list of suggestions with explanations.`;
   // Step 1: Initialize Ralph Playbook
   spinner.start('Setting up project...');
   try {
-    await initCommand({ name: answers.projectName });
+    await initCommand({ name: answers.projectName, nonInteractive: true });
     spinner.succeed('Project initialized');
   } catch (error) {
     spinner.fail('Failed to initialize project');

@@ -34,22 +34,34 @@ export function parsePlanTasks(cwd: string): TaskCount {
 
     let currentTask: PlanTask | null = null;
     let taskIndex = 0;
+    let hasHeaders = false;
 
-    // First pass: look for "### Task N:" headers (hierarchical format)
+    // First pass: look for "### Phase N:" or "### Task N:" headers (hierarchical format)
     for (const line of lines) {
-      // Match "### Task N: Description"
-      const taskHeaderMatch = line.match(/^#{2,3}\s*Task\s*\d+[:\s]+(.+)/i);
-      if (taskHeaderMatch) {
+      const phaseHeaderMatch = line.match(/^#{2,3}\s*Phase\s*\d+[:\s-]+(.+)/i);
+      const taskHeaderMatch = line.match(/^#{2,3}\s*Task\s*\d+[:\s-]+(.+)/i);
+      const headingMatch = line.match(/^#{1,6}\s+/);
+
+      if (phaseHeaderMatch || taskHeaderMatch) {
+        hasHeaders = true;
         // Save previous task if exists
         if (currentTask) {
           tasks.push(currentTask);
         }
+        const headerText = (phaseHeaderMatch?.[1] || taskHeaderMatch?.[1] || '').trim();
         currentTask = {
-          name: taskHeaderMatch[1].trim(),
+          name: headerText || `Task ${taskIndex + 1}`,
           completed: false, // Will be determined by subtasks
           index: taskIndex++,
           subtasks: [],
         };
+        continue;
+      }
+
+      // If we hit another heading, close out the current task
+      if (headingMatch && currentTask) {
+        tasks.push(currentTask);
+        currentTask = null;
         continue;
       }
 
@@ -70,11 +82,13 @@ export function parsePlanTasks(cwd: string): TaskCount {
     }
 
     // If hierarchical format found, determine task completion from subtasks
-    if (tasks.length > 0 && tasks.some((t) => t.subtasks && t.subtasks.length > 0)) {
+    if (hasHeaders) {
       for (const task of tasks) {
         if (task.subtasks && task.subtasks.length > 0) {
           // Task is complete when ALL subtasks are complete
           task.completed = task.subtasks.every((st) => st.completed);
+        } else {
+          task.completed = false;
         }
       }
     } else {

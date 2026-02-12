@@ -59,10 +59,42 @@ export function showWelcomeCompact(): void {
 export function showRefinedSummary(
   projectName: string,
   projectType: string,
-  stack: { frontend?: string; backend?: string; database?: string },
+  stack: {
+    frontend?: string;
+    backend?: string;
+    database?: string;
+    styling?: string;
+    language?: string;
+  },
   features: string[],
   complexity: string
 ): void {
+  const formatTechLabel = (tech: string): string => {
+    const names: Record<string, string> = {
+      astro: 'Astro',
+      react: 'React',
+      nextjs: 'Next.js',
+      vue: 'Vue.js',
+      svelte: 'Svelte',
+      vanilla: 'Vanilla JavaScript',
+      'react-native': 'React Native',
+      expo: 'Expo (React Native)',
+      nodejs: 'Node.js',
+      python: 'Python',
+      go: 'Go',
+      sqlite: 'SQLite',
+      postgres: 'PostgreSQL',
+      mongodb: 'MongoDB',
+      tailwind: 'Tailwind CSS',
+      css: 'CSS',
+      scss: 'SCSS',
+      'styled-components': 'styled-components',
+      typescript: 'TypeScript',
+      javascript: 'JavaScript',
+    };
+    return names[tech] || tech;
+  };
+
   console.log();
   console.log(chalk.cyan.bold("  Here's what I understand:"));
   console.log(chalk.gray('  ────────────────────────────────────────'));
@@ -71,11 +103,18 @@ export function showRefinedSummary(
   console.log(`  ${chalk.white('Type:')} ${projectType}`);
   console.log();
 
-  if (stack.frontend || stack.backend || stack.database) {
+  if (stack.frontend || stack.backend || stack.database || stack.styling || stack.language) {
     console.log(`  ${chalk.white('Tech Stack:')}`);
-    if (stack.frontend) console.log(`    ${chalk.dim('Frontend:')} ${stack.frontend}`);
-    if (stack.backend) console.log(`    ${chalk.dim('Backend:')} ${stack.backend}`);
-    if (stack.database) console.log(`    ${chalk.dim('Database:')} ${stack.database}`);
+    if (stack.frontend)
+      console.log(`    ${chalk.dim('Frontend:')} ${formatTechLabel(stack.frontend)}`);
+    if (stack.backend)
+      console.log(`    ${chalk.dim('Backend:')} ${formatTechLabel(stack.backend)}`);
+    if (stack.database)
+      console.log(`    ${chalk.dim('Database:')} ${formatTechLabel(stack.database)}`);
+    if (stack.styling)
+      console.log(`    ${chalk.dim('Styling:')} ${formatTechLabel(stack.styling)}`);
+    if (stack.language)
+      console.log(`    ${chalk.dim('Language:')} ${formatTechLabel(stack.language)}`);
     console.log();
   }
 

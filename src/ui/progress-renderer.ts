@@ -15,12 +15,14 @@ export function formatElapsed(ms: number): string {
 }
 
 /**
- * ProgressRenderer - Single-line progress display with shimmer effect
+ * ProgressRenderer - Single-line progress display with progress bar
  *
  * Features:
  * - Animated spinner
- * - Shimmer text effect
+ * - Readable text (subtle pulse)
+ * - Progress bar with iteration tracking
  * - Elapsed time counter
+ * - Live cost display
  * - Dynamic step updates
  * - Sub-step indicator
  */
@@ -33,6 +35,9 @@ export class ProgressRenderer {
   private lastRender = '';
   private lastStepUpdate = 0;
   private minStepInterval = 500; // ms - debounce step updates
+  private currentIteration = 0;
+  private maxIterations = 0;
+  private currentCost = 0;
 
   /**
    * Start the progress renderer
@@ -47,6 +52,17 @@ export class ProgressRenderer {
     // Render immediately, then every 100ms
     this.render();
     this.interval = setInterval(() => this.render(), 100);
+  }
+
+  /**
+   * Update iteration progress for the progress bar
+   */
+  updateProgress(iteration: number, maxIterations: number, cost?: number): void {
+    this.currentIteration = iteration;
+    this.maxIterations = maxIterations;
+    if (cost !== undefined) {
+      this.currentCost = cost;
+    }
   }
 
   /**
@@ -72,7 +88,7 @@ export class ProgressRenderer {
   }
 
   /**
-   * Render the progress line
+   * Render the progress line(s)
    */
   private render(): void {
     this.frame++;
@@ -82,7 +98,7 @@ export class ProgressRenderer {
     const timeStr = formatElapsed(elapsed);
     const shimmerText = applyShimmer(this.currentStep, this.frame);
 
-    // Main line
+    // Main line: spinner + step + time
     let line = `  ${chalk.cyan(spinner)} ${shimmerText} ${chalk.dim(timeStr)}`;
 
     // Sub-step on same line if present
@@ -90,9 +106,25 @@ export class ProgressRenderer {
       line += chalk.dim(` - ${this.subStep}`);
     }
 
+    // Progress bar line (if iteration info is available)
+    if (this.maxIterations > 0) {
+      const barWidth = 16;
+      const ratio = Math.min(1, this.currentIteration / this.maxIterations);
+      const filled = Math.round(ratio * barWidth);
+      const empty = barWidth - filled;
+      const bar = `${'█'.repeat(filled)}${'░'.repeat(empty)}`;
+      const costStr = this.currentCost > 0 ? ` │ $${this.currentCost.toFixed(2)}` : '';
+      line += `\n    ${chalk.cyan(bar)} ${chalk.dim(`${this.currentIteration}/${this.maxIterations}${costStr}`)}`;
+    }
+
     // Only update if changed (reduces flicker)
     if (line !== this.lastRender) {
-      process.stdout.write(`\r\x1B[K${line}`);
+      // Clear current line(s) and write
+      const lineCount = this.maxIterations > 0 ? 2 : 1;
+      const clearUp = lineCount > 1 ? `\x1B[${lineCount - 1}A\r\x1B[J` : '\r\x1B[K';
+      // On first render, don't try to go up
+      const clear = this.lastRender ? clearUp : '\r\x1B[K';
+      process.stdout.write(`${clear}${line}`);
       this.lastRender = line;
     }
   }
@@ -110,8 +142,16 @@ export class ProgressRenderer {
     const timeStr = formatElapsed(elapsed);
     const icon = success ? chalk.green('✓') : chalk.red('✗');
     const message = finalMessage || this.currentStep;
+    const costStr = this.currentCost > 0 ? chalk.dim(` ~$${this.currentCost.toFixed(2)}`) : '';
 
-    process.stdout.write(`\r\x1B[K  ${icon} ${message} ${chalk.dim(`(${timeStr})`)}\n`);
+    // Clear progress bar line if present
+    if (this.maxIterations > 0 && this.lastRender) {
+      process.stdout.write('\x1B[1A\r\x1B[J');
+    } else {
+      process.stdout.write('\r\x1B[K');
+    }
+
+    process.stdout.write(`  ${icon} ${message} ${chalk.dim(`(${timeStr})`)}${costStr}\n`);
     this.lastRender = '';
   }
 

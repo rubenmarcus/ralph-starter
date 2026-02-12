@@ -6,14 +6,38 @@ export interface ClaudeSkill {
   name: string;
   path: string;
   description?: string;
-  source: 'global' | 'project' | 'skills.sh';
+  source: 'global' | 'project' | 'agents' | 'skills.sh';
+}
+
+/**
+ * Parse YAML frontmatter from markdown content
+ * Returns name and description if found
+ */
+function parseFrontmatter(content: string): { name?: string; description?: string } {
+  const match = content.match(/^---\s*\n([\s\S]*?)\n---/);
+  if (!match) return {};
+
+  const yaml = match[1];
+  const result: { name?: string; description?: string } = {};
+
+  const nameMatch = yaml.match(/^name:\s*(.+)$/m);
+  if (nameMatch) result.name = nameMatch[1].trim().replace(/^['"]|['"]$/g, '');
+
+  const descMatch = yaml.match(/^description:\s*(.+)$/m);
+  if (descMatch) result.description = descMatch[1].trim().replace(/^['"]|['"]$/g, '');
+
+  return result;
 }
 
 /**
  * Extract skill description from markdown content
- * Looks for first paragraph after title
+ * First tries YAML frontmatter, then falls back to first paragraph after title
  */
 function extractDescription(content: string): string | undefined {
+  // Try frontmatter first
+  const fm = parseFrontmatter(content);
+  if (fm.description) return fm.description;
+
   const lines = content.split('\n');
   let foundTitle = false;
 
@@ -40,56 +64,78 @@ function extractDescription(content: string): string | undefined {
 }
 
 /**
+ * Extract skill name from content (frontmatter or filename)
+ */
+function extractName(content: string, fallbackName: string): string {
+  const fm = parseFrontmatter(content);
+  return fm.name || fallbackName;
+}
+
+/**
+ * Scan a directory for skill files (.md files and subdirectories with SKILL.md)
+ */
+function scanSkillsDir(dir: string, source: ClaudeSkill['source']): ClaudeSkill[] {
+  const skills: ClaudeSkill[] = [];
+
+  if (!existsSync(dir)) return skills;
+
+  try {
+    const entries = readdirSync(dir);
+    for (const entry of entries) {
+      const fullPath = join(dir, entry);
+
+      if (entry.endsWith('.md')) {
+        // Try reading as a flat .md skill file
+        try {
+          const content = readFileSync(fullPath, 'utf-8');
+          skills.push({
+            name: extractName(content, entry.replace('.md', '')),
+            path: fullPath,
+            description: extractDescription(content),
+            source,
+          });
+        } catch {
+          // File unreadable, skip
+        }
+      } else {
+        // Try reading SKILL.md inside subdirectory
+        const skillMdPath = join(fullPath, 'SKILL.md');
+        try {
+          const content = readFileSync(skillMdPath, 'utf-8');
+          skills.push({
+            name: extractName(content, entry),
+            path: skillMdPath,
+            description: extractDescription(content),
+            source,
+          });
+        } catch {
+          // Not a skill directory or unreadable, skip
+        }
+      }
+    }
+  } catch {
+    // Directory not readable
+  }
+
+  return skills;
+}
+
+/**
  * Detect Claude Code skills from various sources
  */
 export function detectClaudeSkills(cwd: string): ClaudeSkill[] {
   const skills: ClaudeSkill[] = [];
 
   // 1. Check global skills directory (~/.claude/skills/)
-  const globalSkillsDir = join(homedir(), '.claude', 'skills');
-  if (existsSync(globalSkillsDir)) {
-    try {
-      const files = readdirSync(globalSkillsDir);
-      for (const file of files) {
-        if (file.endsWith('.md')) {
-          const skillPath = join(globalSkillsDir, file);
-          const content = readFileSync(skillPath, 'utf-8');
-          skills.push({
-            name: file.replace('.md', ''),
-            path: skillPath,
-            description: extractDescription(content),
-            source: 'global',
-          });
-        }
-      }
-    } catch {
-      // Directory not readable
-    }
-  }
+  skills.push(...scanSkillsDir(join(homedir(), '.claude', 'skills'), 'global'));
 
   // 2. Check project skills directory (.claude/skills/)
-  const projectSkillsDir = join(cwd, '.claude', 'skills');
-  if (existsSync(projectSkillsDir)) {
-    try {
-      const files = readdirSync(projectSkillsDir);
-      for (const file of files) {
-        if (file.endsWith('.md')) {
-          const skillPath = join(projectSkillsDir, file);
-          const content = readFileSync(skillPath, 'utf-8');
-          skills.push({
-            name: file.replace('.md', ''),
-            path: skillPath,
-            description: extractDescription(content),
-            source: 'project',
-          });
-        }
-      }
-    } catch {
-      // Directory not readable
-    }
-  }
+  skills.push(...scanSkillsDir(join(cwd, '.claude', 'skills'), 'project'));
 
-  // 3. Check for skills.sh script (common pattern for skill installation)
+  // 3. Check .agents/skills/ directory (multi-agent skill sharing pattern)
+  skills.push(...scanSkillsDir(join(cwd, '.agents', 'skills'), 'agents'));
+
+  // 4. Check for skills.sh scripts
   const skillsShPaths = [
     join(cwd, 'skills.sh'),
     join(cwd, '.claude', 'skills.sh'),
@@ -100,11 +146,11 @@ export function detectClaudeSkills(cwd: string): ClaudeSkill[] {
     if (existsSync(skillsShPath)) {
       try {
         const content = readFileSync(skillsShPath, 'utf-8');
-        // Parse skills from skills.sh
-        // Common patterns: skill names in comments or install commands
-        const skillMatches = content.match(/# Skill: (.+)/gi);
-        if (skillMatches) {
-          for (const match of skillMatches) {
+
+        // Parse "# Skill: <name>" comments
+        const commentMatches = content.match(/# Skill: (.+)/gi);
+        if (commentMatches) {
+          for (const match of commentMatches) {
             const name = match.replace(/# Skill: /i, '').trim();
             skills.push({
               name,
@@ -112,6 +158,23 @@ export function detectClaudeSkills(cwd: string): ClaudeSkill[] {
               description: 'From skills.sh',
               source: 'skills.sh',
             });
+          }
+        }
+
+        // Parse "npx add-skill <name>" install commands
+        const installMatches = content.match(/npx\s+add-skill\s+(\S+)/gi);
+        if (installMatches) {
+          for (const match of installMatches) {
+            const name = match.replace(/npx\s+add-skill\s+/i, '').trim();
+            // Avoid duplicates from the comment patterns above
+            if (!skills.some((s) => s.name === name)) {
+              skills.push({
+                name,
+                path: skillsShPath,
+                description: 'From skills.sh',
+                source: 'skills.sh',
+              });
+            }
           }
         }
       } catch {
@@ -182,7 +245,35 @@ export function getRelevantSkills(
 /**
  * Format skills for inclusion in agent prompt
  */
-export function formatSkillsForPrompt(skills: ClaudeSkill[]): string {
+function shouldAutoApplySkill(skill: ClaudeSkill, task: string): boolean {
+  const name = skill.name.toLowerCase();
+  const desc = (skill.description || '').toLowerCase();
+  const text = `${name} ${desc}`;
+  const taskLower = task.toLowerCase();
+
+  const taskIsWeb =
+    taskLower.includes('web') ||
+    taskLower.includes('website') ||
+    taskLower.includes('landing') ||
+    taskLower.includes('frontend') ||
+    taskLower.includes('ui') ||
+    taskLower.includes('ux');
+
+  const isDesignSkill =
+    text.includes('design') ||
+    text.includes('ui') ||
+    text.includes('ux') ||
+    text.includes('frontend');
+
+  if (taskIsWeb && isDesignSkill) return true;
+  if (taskLower.includes('astro') && text.includes('astro')) return true;
+  if (taskLower.includes('tailwind') && text.includes('tailwind')) return true;
+  if (taskLower.includes('seo') && text.includes('seo')) return true;
+
+  return false;
+}
+
+export function formatSkillsForPrompt(skills: ClaudeSkill[], task?: string): string {
   if (skills.length === 0) return '';
 
   const lines = ['## Available Claude Code Skills', ''];
@@ -192,6 +283,16 @@ export function formatSkillsForPrompt(skills: ClaudeSkill[]): string {
   }
 
   lines.push('');
+
+  if (task) {
+    const autoApply = skills.filter((skill) => shouldAutoApplySkill(skill, task));
+    if (autoApply.length > 0) {
+      const skillList = autoApply.map((skill) => `/${skill.name}`).join(', ');
+      lines.push(`Auto-apply these skills: ${skillList}`);
+      lines.push('');
+    }
+  }
+
   lines.push('Use these skills when appropriate by invoking them with /skill-name.');
 
   return lines.join('\n');
@@ -202,4 +303,12 @@ export function formatSkillsForPrompt(skills: ClaudeSkill[]): string {
  */
 export function hasSkills(cwd: string): boolean {
   return detectClaudeSkills(cwd).length > 0;
+}
+
+/**
+ * Find a specific skill by name across all locations
+ */
+export function findSkill(cwd: string, name: string): ClaudeSkill | undefined {
+  const skills = detectClaudeSkills(cwd);
+  return skills.find((s) => s.name.toLowerCase() === name.toLowerCase());
 }
