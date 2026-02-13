@@ -144,7 +144,7 @@ export function getTaskByIndex(cwd: string, index: number): PlanTask | null {
  * - Buffer = max(2, pendingTasks * 0.3) - at least 2, or 30% extra for retries
  * - Minimum: 3 (even for small tasks)
  * - Maximum: 25 (prevent runaway loops)
- * - If no plan: 10 (sensible default)
+ * - If no plan: 7 (sensible default)
  */
 export function calculateOptimalIterations(cwd: string): {
   iterations: number;
@@ -153,10 +153,10 @@ export function calculateOptimalIterations(cwd: string): {
 } {
   const taskCount = parsePlanTasks(cwd);
 
-  // No implementation plan - use default
+  // No implementation plan - use conservative default
   if (taskCount.total === 0) {
     return {
-      iterations: 10,
+      iterations: 7,
       taskCount,
       reason: 'No implementation plan found, using default',
     };

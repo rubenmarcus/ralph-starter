@@ -398,6 +398,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
   let validationFailures = 0;
   let exitReason: LoopResult['exitReason'] = 'max_iterations';
   let finalIteration = maxIterations;
+  let consecutiveIdleIterations = 0;
 
   // Initialize circuit breaker
   const circuitBreaker = new CircuitBreaker(options.circuitBreaker);
@@ -692,23 +693,42 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     // Check for completion using enhanced detection
     let status = detectCompletion(result.output, completionOptions);
 
-    // Verify completion - check if files were actually changed
-    if (status === 'done' && i === 1) {
-      // On first iteration, verify that files were actually created/modified
-      const hasChanges = await hasUncommittedChanges(options.cwd);
-      if (!hasChanges) {
-        console.log(chalk.yellow('  Agent reported done but no files changed - continuing...'));
-        status = 'continue';
-      } else {
-        // Wait for filesystem to settle before declaring done
-        await waitForFilesystemQuiescence(options.cwd, 2000);
-      }
+    // Track file changes between iterations for stall detection
+    const hasChanges = await hasUncommittedChanges(options.cwd);
+    if (!hasChanges) {
+      consecutiveIdleIterations++;
+    } else {
+      consecutiveIdleIterations = 0;
     }
 
-    // In build mode, don't allow completion while plan tasks remain
-    if (status === 'done' && options.task.includes('IMPLEMENTATION_PLAN.md')) {
+    // Verify completion - check if files were actually changed
+    if (status === 'done' && !hasChanges) {
+      if (i === 1) {
+        console.log(chalk.yellow('  Agent reported done but no files changed - continuing...'));
+        status = 'continue';
+      }
+      // On later iterations, allow done if agent genuinely finished (no more work to do)
+    } else if (status === 'done' && hasChanges) {
+      // Wait for filesystem to settle before declaring done
+      await waitForFilesystemQuiescence(options.cwd, 2000);
+    }
+
+    // Stall detection: stop if no file changes for 2+ consecutive iterations
+    if (consecutiveIdleIterations >= 2 && i > 1) {
+      console.log(
+        chalk.yellow(
+          `  No file changes for ${consecutiveIdleIterations} consecutive iterations - stopping`
+        )
+      );
+      finalIteration = i;
+      exitReason = 'completed';
+      break;
+    }
+
+    // Don't allow completion while plan tasks remain (check plan file if it exists)
+    if (status === 'done') {
       const latestTaskInfo = parsePlanTasks(options.cwd);
-      if (latestTaskInfo.pending > 0) {
+      if (latestTaskInfo.total > 0 && latestTaskInfo.pending > 0) {
         console.log(
           chalk.yellow(
             `  Agent reported done but ${latestTaskInfo.pending} task(s) remain - continuing...`
