@@ -122,7 +122,7 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
       : `Ralph: ${finalTask.slice(0, 50)}`;
 
     // Calculate smart iterations based on tasks
-    const { iterations: smartIterations } = calculateOptimalIterations(cwd);
+    const { iterations: smartIterations } = calculateOptimalIterations(cwd, finalTask);
 
     const loopOptions: LoopOptions = {
       task: finalTask,

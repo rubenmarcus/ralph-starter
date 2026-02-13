@@ -560,7 +560,11 @@ Focus on one task at a time. After completing a task, update IMPLEMENTATION_PLAN
   }
 
   // Calculate smart iterations based on tasks (always, unless explicitly overridden)
-  const { iterations: smartIterations, taskCount, reason } = calculateOptimalIterations(cwd);
+  const {
+    iterations: smartIterations,
+    taskCount,
+    reason,
+  } = calculateOptimalIterations(cwd, finalTask);
   if (!options.maxIterations && !preset?.maxIterations) {
     if (taskCount.total > 0) {
       console.log(

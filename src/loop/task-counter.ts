@@ -137,28 +137,77 @@ export function getTaskByIndex(cwd: string, index: number): PlanTask | null {
 }
 
 /**
+ * Estimate task complexity from spec/task content when no plan file exists.
+ * Counts structural elements (headings, bullet points, numbered items)
+ * and maps them to an estimated task count.
+ */
+export function estimateTasksFromContent(content: string): { estimated: number; reason: string } {
+  if (!content || content.length < 20) {
+    return { estimated: 0, reason: 'no content' };
+  }
+
+  const lines = content.split('\n');
+
+  // Count structural signals
+  const headings = lines.filter((l) => /^#{1,4}\s+/.test(l)).length;
+  const bullets = lines.filter((l) => /^\s*[-*]\s+/.test(l)).length;
+  const numbered = lines.filter((l) => /^\s*\d+[.)]\s+/.test(l)).length;
+  const checkboxes = lines.filter((l) => /^\s*[-*]\s*\[[ xX]\]/.test(l)).length;
+
+  // If there are explicit checkboxes, use that count
+  if (checkboxes > 0) {
+    return { estimated: checkboxes, reason: `${checkboxes} checkboxes in spec` };
+  }
+
+  // Estimate from structural elements: headings define major tasks,
+  // dense bullet lists suggest subtasks within those
+  const majorTasks = Math.max(1, headings);
+  const detailItems = bullets + numbered;
+
+  // Heuristic: ~4 detail items per iteration of work
+  const fromDetails = Math.ceil(detailItems / 4);
+  const estimated = Math.max(majorTasks, fromDetails, 1);
+
+  return {
+    estimated,
+    reason: `estimated from spec (${headings} sections, ${bullets + numbered} items)`,
+  };
+}
+
+/**
  * Calculate optimal number of loop iterations based on task count
  *
  * Formula:
- * - If tasks exist: pendingTasks + buffer (for retries/validation fixes)
+ * - If plan exists: pendingTasks + buffer (for retries/validation fixes)
  * - Buffer = max(2, pendingTasks * 0.3) - at least 2, or 30% extra for retries
+ * - If no plan but spec content: estimate from spec structure
  * - Minimum: 3 (even for small tasks)
  * - Maximum: 25 (prevent runaway loops)
- * - If no plan: 7 (sensible default)
  */
-export function calculateOptimalIterations(cwd: string): {
+export function calculateOptimalIterations(
+  cwd: string,
+  taskContent?: string
+): {
   iterations: number;
   taskCount: TaskCount;
   reason: string;
 } {
   const taskCount = parsePlanTasks(cwd);
 
-  // No implementation plan - use conservative default
+  // No implementation plan - estimate from spec content if available
   if (taskCount.total === 0) {
+    const estimate = taskContent ? estimateTasksFromContent(taskContent) : null;
+    if (estimate && estimate.estimated > 0) {
+      const buffer = Math.max(2, Math.ceil(estimate.estimated * 0.3));
+      let iterations = estimate.estimated + buffer;
+      iterations = Math.max(3, iterations);
+      iterations = Math.min(15, iterations);
+      return { iterations, taskCount, reason: estimate.reason };
+    }
     return {
       iterations: 7,
       taskCount,
-      reason: 'No implementation plan found, using default',
+      reason: 'No plan or spec structure found, using default',
     };
   }
 
