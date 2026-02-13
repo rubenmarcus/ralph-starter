@@ -1,9 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  detectBuildCommands,
   detectValidationCommands,
   formatValidationFeedback,
   runAllValidations,
+  runBuildValidation,
   runValidation,
   type ValidationCommand,
   type ValidationResult,
@@ -305,6 +307,138 @@ describe('validation', () => {
       const feedback = formatValidationFeedback(results);
 
       expect(feedback).toContain('Output error');
+    });
+  });
+
+  describe('detectBuildCommands', () => {
+    it('should return empty array when no config files exist', () => {
+      mockExistsSync.mockReturnValue(false);
+      const commands = detectBuildCommands('/test/dir');
+      expect(commands).toHaveLength(0);
+    });
+
+    it('should detect build command from AGENTS.md', () => {
+      mockExistsSync.mockImplementation((path: any) => path.toString().includes('AGENTS.md'));
+      mockReadFileSync.mockReturnValue('- **Build**: `pnpm run build`');
+
+      const commands = detectBuildCommands('/test/dir');
+
+      expect(commands).toHaveLength(1);
+      expect(commands[0].name).toBe('build');
+      expect(commands[0].command).toBe('pnpm');
+      expect(commands[0].args).toEqual(['run', 'build']);
+    });
+
+    it('should detect both build and typecheck from AGENTS.md', () => {
+      mockExistsSync.mockImplementation((path: any) => path.toString().includes('AGENTS.md'));
+      mockReadFileSync.mockReturnValue(
+        '- **Build**: `npm run build`\n- **Typecheck**: `npm run typecheck`'
+      );
+
+      const commands = detectBuildCommands('/test/dir');
+
+      expect(commands).toHaveLength(2);
+      expect(commands.map((c) => c.name)).toEqual(['build', 'typecheck']);
+    });
+
+    it('should NOT include test or lint commands from package.json', () => {
+      mockExistsSync.mockImplementation((path: any) => path.toString().includes('package.json'));
+      mockReadFileSync.mockReturnValue(
+        JSON.stringify({
+          scripts: { test: 'vitest', lint: 'eslint .', build: 'tsc', typecheck: 'tsc --noEmit' },
+        })
+      );
+
+      const commands = detectBuildCommands('/test/dir');
+      const names = commands.map((c) => c.name);
+
+      expect(names).not.toContain('test');
+      expect(names).not.toContain('lint');
+      expect(names).toContain('build');
+      expect(names).toContain('typecheck');
+    });
+
+    it('should fall back to npx tsc --noEmit for TypeScript projects without build script', () => {
+      mockExistsSync.mockImplementation((path: any) => {
+        if (path.toString().includes('tsconfig.json')) return true;
+        if (path.toString().includes('package.json')) return true;
+        return false;
+      });
+      mockReadFileSync.mockReturnValue(JSON.stringify({ scripts: {} }));
+
+      const commands = detectBuildCommands('/test/dir');
+
+      expect(commands).toHaveLength(1);
+      expect(commands[0]).toEqual({ name: 'typecheck', command: 'npx', args: ['tsc', '--noEmit'] });
+    });
+
+    it('should NOT use tsc fallback when build script exists', () => {
+      mockExistsSync.mockImplementation((path: any) => {
+        if (path.toString().includes('tsconfig.json')) return true;
+        if (path.toString().includes('package.json')) return true;
+        return false;
+      });
+      mockReadFileSync.mockReturnValue(JSON.stringify({ scripts: { build: 'next build' } }));
+
+      const commands = detectBuildCommands('/test/dir');
+
+      expect(commands).toHaveLength(1);
+      expect(commands[0].name).toBe('build');
+    });
+  });
+
+  describe('runBuildValidation', () => {
+    beforeEach(() => {
+      mockExeca.mockReset(); // Clear persistent mockResolvedValue from runAllValidations tests
+    });
+
+    it('should use 2-minute timeout', async () => {
+      mockExeca.mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: 'Built successfully',
+        stderr: '',
+      } as any);
+
+      const command: ValidationCommand = { name: 'build', command: 'npm', args: ['run', 'build'] };
+      await runBuildValidation('/test/dir', command);
+
+      expect(mockExeca).toHaveBeenCalledWith('npm', ['run', 'build'], {
+        cwd: '/test/dir',
+        timeout: 120000,
+        reject: false,
+      });
+    });
+
+    it('should return success on exit code 0', async () => {
+      mockExeca.mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: 'Built successfully',
+        stderr: '',
+      } as any);
+
+      const command: ValidationCommand = { name: 'build', command: 'npm', args: ['run', 'build'] };
+      const result = await runBuildValidation('/test/dir', command);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('should return failure with error on non-zero exit', async () => {
+      // Use same pattern as runValidation tests (which pass)
+      mockExeca.mockResolvedValueOnce({
+        exitCode: 1,
+        stdout: 'Build output',
+        stderr: 'Cannot find module Testimonials',
+      } as any);
+
+      const command: ValidationCommand = { name: 'build', command: 'npm', args: ['run', 'build'] };
+
+      // Verify mock is set up
+      expect(mockExeca).toBeDefined();
+
+      const result = await runBuildValidation('/test/dir', command);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Cannot find module');
     });
   });
 });

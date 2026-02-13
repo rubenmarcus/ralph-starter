@@ -33,9 +33,11 @@ import { detectClaudeSkills, formatSkillsForPrompt } from './skills.js';
 import { detectStepFromOutput } from './step-detector.js';
 import { getCurrentTask, parsePlanTasks } from './task-counter.js';
 import {
+  detectBuildCommands,
   detectValidationCommands,
   formatValidationFeedback,
   runAllValidations,
+  runBuildValidation,
   type ValidationResult,
 } from './validation.js';
 
@@ -422,6 +424,10 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
   // Detect validation commands if validation is enabled
   const validationCommands = options.validate ? detectValidationCommands(options.cwd) : [];
 
+  // Always-on build validation (not gated by --validate flag)
+  // Re-detected inside the loop for greenfield projects where package.json appears mid-loop
+  let buildCommands = detectBuildCommands(options.cwd);
+
   // Detect Claude Code skills
   const detectedSkills = detectClaudeSkills(options.cwd);
   let taskWithSkills = options.task;
@@ -797,8 +803,88 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
       };
     }
 
-    // Run validation (backpressure) if enabled and there are changes
-    let _validationPassed = true;
+    // --- Always-on build validation ---
+    // Re-detect build commands if none found yet (greenfield: package.json may appear mid-loop)
+    if (buildCommands.length === 0) {
+      buildCommands = detectBuildCommands(options.cwd);
+      if (buildCommands.length > 0 && process.env.RALPH_DEBUG) {
+        console.error(
+          `[DEBUG] Build commands detected: ${buildCommands.map((c) => c.name).join(', ')}`
+        );
+      }
+    }
+
+    // Run build validation if commands available and not already covered by full validation
+    const buildCoveredByFullValidation =
+      options.validate &&
+      validationCommands.some((vc) => vc.name === 'build' || vc.name === 'typecheck');
+
+    if (
+      buildCommands.length > 0 &&
+      !buildCoveredByFullValidation &&
+      (await hasUncommittedChanges(options.cwd))
+    ) {
+      spinner.start(chalk.yellow(`Loop ${i}: Running build check...`));
+
+      const buildResults: ValidationResult[] = [];
+      for (const cmd of buildCommands) {
+        buildResults.push(await runBuildValidation(options.cwd, cmd));
+      }
+      const allBuildsPassed = buildResults.every((r) => r.success);
+
+      if (!allBuildsPassed) {
+        validationFailures++;
+        const feedback = formatValidationFeedback(buildResults);
+        spinner.fail(chalk.red(`Loop ${i}: Build check failed`));
+
+        const failedSummaries: string[] = [];
+        for (const vr of buildResults) {
+          if (!vr.success) {
+            const errorText = vr.error || vr.output || '';
+            const errorCount = (errorText.match(/error/gi) || []).length;
+            const hint = errorCount > 0 ? `${errorCount} errors` : 'failed';
+            failedSummaries.push(`${vr.command} (${hint})`);
+          }
+        }
+        console.log(chalk.red(`  ✗ ${failedSummaries.join(' │ ')}`));
+
+        const errorMsg = buildResults
+          .filter((r) => !r.success)
+          .map((r) => r.error?.slice(0, 200) || r.output?.slice(0, 200) || r.command)
+          .join('\n');
+        const tripped = circuitBreaker.recordFailure(errorMsg);
+
+        if (tripped) {
+          const reason = circuitBreaker.getTripReason();
+          console.log(chalk.red(`Circuit breaker tripped: ${reason}`));
+          if (progressTracker && progressEntry) {
+            progressEntry.status = 'failed';
+            progressEntry.summary = `Circuit breaker tripped (build): ${reason}`;
+            progressEntry.validationResults = buildResults;
+            progressEntry.duration = Date.now() - iterationStart;
+            await progressTracker.appendEntry(progressEntry);
+          }
+          finalIteration = i;
+          exitReason = 'circuit_breaker';
+          break;
+        }
+
+        if (progressTracker && progressEntry) {
+          progressEntry.status = 'validation_failed';
+          progressEntry.summary = 'Build check failed';
+          progressEntry.validationResults = buildResults;
+          progressEntry.duration = Date.now() - iterationStart;
+          await progressTracker.appendEntry(progressEntry);
+        }
+
+        const compressedFeedback = compressValidationFeedback(feedback);
+        taskWithSkills = `${taskWithSkills}\n\n${compressedFeedback}`;
+        continue; // Go to next iteration to fix build issues
+      }
+      spinner.succeed(chalk.green(`Loop ${i}: Build check passed`));
+    }
+
+    // Run full validation (backpressure) if enabled and there are changes
     let validationResults: ValidationResult[] = [];
 
     if (validationCommands.length > 0 && (await hasUncommittedChanges(options.cwd))) {
@@ -808,7 +894,6 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
       const allPassed = validationResults.every((r) => r.success);
 
       if (!allPassed) {
-        _validationPassed = false;
         validationFailures++;
         const feedback = formatValidationFeedback(validationResults);
         spinner.fail(chalk.red(`Loop ${i}: Validation failed`));

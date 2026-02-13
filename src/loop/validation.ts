@@ -91,6 +91,95 @@ export function detectValidationCommands(cwd: string): ValidationCommand[] {
 }
 
 /**
+ * Detect build-only commands for always-on build validation.
+ * Unlike detectValidationCommands(), this:
+ * 1. Only returns build/typecheck commands (not test/lint)
+ * 2. Has TypeScript fallback (npx tsc --noEmit) when no build script exists
+ * 3. Is designed to be called per-iteration (re-detects if package.json appears mid-loop)
+ */
+export function detectBuildCommands(cwd: string): ValidationCommand[] {
+  const commands: ValidationCommand[] = [];
+
+  // Check AGENTS.md for build command
+  const agentsPath = join(cwd, 'AGENTS.md');
+  if (existsSync(agentsPath)) {
+    const content = readFileSync(agentsPath, 'utf-8');
+
+    const buildMatch = content.match(/[-*]\s*\*?\*?build\*?\*?[:\s]+`([^`]+)`/i);
+    if (buildMatch) {
+      const parts = buildMatch[1].trim().split(/\s+/);
+      commands.push({ name: 'build', command: parts[0], args: parts.slice(1) });
+    }
+
+    const typecheckMatch = content.match(/[-*]\s*\*?\*?typecheck\*?\*?[:\s]+`([^`]+)`/i);
+    if (typecheckMatch) {
+      const parts = typecheckMatch[1].trim().split(/\s+/);
+      commands.push({ name: 'typecheck', command: parts[0], args: parts.slice(1) });
+    }
+  }
+
+  // Fallback to package.json
+  if (commands.length === 0) {
+    const packagePath = join(cwd, 'package.json');
+    if (existsSync(packagePath)) {
+      try {
+        const pkg = JSON.parse(readFileSync(packagePath, 'utf-8'));
+        const scripts = pkg.scripts || {};
+
+        if (scripts.build) {
+          commands.push({ name: 'build', command: 'npm', args: ['run', 'build'] });
+        }
+        if (scripts.typecheck) {
+          commands.push({ name: 'typecheck', command: 'npm', args: ['run', 'typecheck'] });
+        }
+      } catch {
+        // Invalid package.json
+      }
+    }
+  }
+
+  // TypeScript fallback: if no build/typecheck script but tsconfig.json exists
+  if (commands.length === 0) {
+    const tsconfigPath = join(cwd, 'tsconfig.json');
+    if (existsSync(tsconfigPath)) {
+      commands.push({ name: 'typecheck', command: 'npx', args: ['tsc', '--noEmit'] });
+    }
+  }
+
+  return commands;
+}
+
+/**
+ * Run a single build validation command with a shorter timeout.
+ */
+export async function runBuildValidation(
+  cwd: string,
+  command: ValidationCommand
+): Promise<ValidationResult> {
+  try {
+    const result = await execa(command.command, command.args, {
+      cwd,
+      timeout: 120000, // 2 minute timeout (vs 5 min for full validation)
+      reject: false,
+    });
+
+    return {
+      success: result.exitCode === 0,
+      command: `${command.command} ${command.args.join(' ')}`,
+      output: result.stdout,
+      ...(result.exitCode !== 0 && { error: result.stderr || result.stdout }),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      command: `${command.command} ${command.args.join(' ')}`,
+      output: '',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
  * Run a single validation command
  */
 export async function runValidation(

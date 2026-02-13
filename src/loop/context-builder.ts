@@ -143,9 +143,24 @@ export function buildIterationContext(opts: ContextBuildOptions): BuiltContext {
   const debugParts: string[] = [];
   let prompt: string;
 
+  // Loop-aware preamble — gives the agent behavioral context
+  const preamble = `You are a coding agent in an autonomous development loop (iteration ${iteration}/${opts.maxIterations}).
+
+Rules:
+- Study IMPLEMENTATION_PLAN.md and work on ONE task at a time
+- Mark each subtask [x] in IMPLEMENTATION_PLAN.md immediately when done
+- Study specs/ directory for original requirements
+- Don't assume functionality is not already implemented — search the codebase first
+- Implement completely — no placeholders or stubs
+- Create files before importing them — never import components or modules that don't exist yet
+- After creating or modifying files, verify the project compiles by running the build or dev command
+- When ALL tasks are complete, explicitly state "All tasks completed"
+- If you learn how to run/build the project, update AGENTS.md
+`;
+
   // No structured tasks — just pass the task as-is
   if (!currentTask || totalTasks === 0) {
-    prompt = taskWithSkills;
+    prompt = `${preamble}\n${taskWithSkills}`;
     if (validationFeedback) {
       const compressed = compressValidationFeedback(validationFeedback);
       prompt = `${prompt}\n\n${compressed}`;
@@ -156,7 +171,8 @@ export function buildIterationContext(opts: ContextBuildOptions): BuiltContext {
     const taskNum = completedTasks + 1;
     const subtasksList = currentTask.subtasks?.map((st) => `- [ ] ${st.name}`).join('\n') || '';
 
-    prompt = `${taskWithSkills}
+    prompt = `${preamble}
+${taskWithSkills}
 
 ## Current Task (${taskNum}/${totalTasks}): ${currentTask.name}
 
@@ -171,7 +187,8 @@ Complete these subtasks, then mark them done in IMPLEMENTATION_PLAN.md by changi
     // Iterations 2-3: Trimmed plan context + abbreviated spec reference
     const planContext = buildTrimmedPlanContext(currentTask, taskInfo);
 
-    prompt = `Continue working on the project. Check IMPLEMENTATION_PLAN.md for full progress.
+    prompt = `${preamble}
+Continue working on the project. Study specs/ for requirements if needed. Check IMPLEMENTATION_PLAN.md for full progress.
 
 ${planContext}`;
 
@@ -188,7 +205,8 @@ ${planContext}`;
     // Iterations 4+: Minimal context — just current task
     const planContext = buildTrimmedPlanContext(currentTask, taskInfo);
 
-    prompt = `Continue working on the project.
+    prompt = `${preamble}
+Continue working on the project. Specs in specs/. Check IMPLEMENTATION_PLAN.md for progress.
 
 ${planContext}`;
 
