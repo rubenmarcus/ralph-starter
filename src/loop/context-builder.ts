@@ -143,20 +143,44 @@ export function buildIterationContext(opts: ContextBuildOptions): BuiltContext {
   const debugParts: string[] = [];
   let prompt: string;
 
-  // No structured tasks — just pass the task as-is
+  // Loop-aware preamble — gives the agent behavioral context per Ralph Playbook patterns
+  const preamble = `You are a coding agent in an autonomous development loop (iteration ${iteration}/${opts.maxIterations}).
+
+Rules:
+- Study IMPLEMENTATION_PLAN.md and work on ONE task at a time
+- Mark each subtask [x] in IMPLEMENTATION_PLAN.md immediately when done
+- Study specs/ directory for original requirements
+- Don't assume functionality is not already implemented — search the codebase first
+- Implement completely — no placeholders or stubs
+- When ALL tasks are complete, explicitly state "All tasks completed"
+- If you learn how to run/build the project, update AGENTS.md
+`;
+
+  // No structured tasks — pass the task with preamble
   if (!currentTask || totalTasks === 0) {
-    prompt = taskWithSkills;
+    if (iteration > 1) {
+      // Later iterations without structured tasks — remind agent to create a plan
+      prompt = `${preamble}
+Continue working on the project.
+If you haven't already, create an IMPLEMENTATION_PLAN.md with structured tasks.
+Study the specs/ directory for the original specification.
+
+${taskWithSkills}`;
+    } else {
+      prompt = `${preamble}\n${taskWithSkills}`;
+    }
     if (validationFeedback) {
       const compressed = compressValidationFeedback(validationFeedback);
       prompt = `${prompt}\n\n${compressed}`;
     }
     debugParts.push('mode=raw (no structured tasks)');
   } else if (iteration === 1) {
-    // Iteration 1: Full context — spec + skills + full current task details
+    // Iteration 1: Full context — preamble + spec + skills + full current task details
     const taskNum = completedTasks + 1;
     const subtasksList = currentTask.subtasks?.map((st) => `- [ ] ${st.name}`).join('\n') || '';
 
-    prompt = `${taskWithSkills}
+    prompt = `${preamble}
+${taskWithSkills}
 
 ## Current Task (${taskNum}/${totalTasks}): ${currentTask.name}
 
@@ -166,12 +190,13 @@ ${subtasksList}
 Complete these subtasks, then mark them done in IMPLEMENTATION_PLAN.md by changing [ ] to [x].`;
 
     debugParts.push('mode=full (iteration 1)');
-    debugParts.push(`included: full spec + skills + task ${taskNum}/${totalTasks}`);
+    debugParts.push(`included: preamble + full spec + skills + task ${taskNum}/${totalTasks}`);
   } else if (iteration <= 3) {
-    // Iterations 2-3: Trimmed plan context + abbreviated spec reference
+    // Iterations 2-3: Preamble + trimmed plan context + spec reference
     const planContext = buildTrimmedPlanContext(currentTask, taskInfo);
 
-    prompt = `Continue working on the project. Check IMPLEMENTATION_PLAN.md for full progress.
+    prompt = `${preamble}
+Continue working on the project. Study specs/ for requirements if needed. Check IMPLEMENTATION_PLAN.md for full progress.
 
 ${planContext}`;
 
@@ -185,10 +210,11 @@ ${planContext}`;
     debugParts.push(`mode=trimmed (iteration ${iteration})`);
     debugParts.push(`excluded: full spec, skills`);
   } else {
-    // Iterations 4+: Minimal context — just current task
+    // Iterations 4+: Preamble + minimal context
     const planContext = buildTrimmedPlanContext(currentTask, taskInfo);
 
-    prompt = `Continue working on the project.
+    prompt = `${preamble}
+Continue working on the project. Specs in specs/. Check IMPLEMENTATION_PLAN.md for progress.
 
 ${planContext}`;
 

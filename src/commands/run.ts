@@ -455,7 +455,7 @@ export async function runCommand(
       writeFileSync(implementationPlanPath, extractedPlan);
       console.log(chalk.cyan('Created IMPLEMENTATION_PLAN.md from spec'));
 
-      finalTask = `Build the following project based on this specification:
+      finalTask = `Study the following specification carefully:
 
 ${sourceSpec}
 
@@ -463,13 +463,33 @@ ${sourceSpec}
 
 An IMPLEMENTATION_PLAN.md file has been created with tasks extracted from this spec.
 As you complete each task, mark it done by changing [ ] to [x] in IMPLEMENTATION_PLAN.md.
-Focus on one task at a time.`;
+Focus on ONE task at a time. Don't assume functionality is not already implemented — search the codebase first.
+Implement completely — no placeholders or stubs.`;
     } else {
-      finalTask = `Build the following project based on this specification:
+      finalTask = `Study the following specification carefully:
 
 ${sourceSpec}
 
-Analyze the specification and implement all required features. Create a proper project structure with all necessary files.`;
+## Getting Started
+
+IMPORTANT: Before writing any code, you MUST first:
+1. Study the specification above thoroughly
+2. Search the codebase — don't assume functionality is not already implemented
+3. Create an IMPLEMENTATION_PLAN.md file with tasks broken down as:
+
+### Task 1: [name]
+- [ ] Subtask a
+- [ ] Subtask b
+
+### Task 2: [name]
+- [ ] Subtask a
+
+Break the spec into 3-8 logical tasks, sorted by priority.
+
+4. Then start working on Task 1 only.
+
+As you complete each subtask, mark it done by changing [ ] to [x] in IMPLEMENTATION_PLAN.md.
+Focus on ONE task at a time. Implement completely — no placeholders or stubs.`;
     }
     console.log(chalk.cyan('Using fetched specification as task'));
   }
