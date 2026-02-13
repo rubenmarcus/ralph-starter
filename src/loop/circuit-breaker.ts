@@ -35,17 +35,21 @@ export class CircuitBreaker {
   }
 
   /**
-   * Hash an error message to track similar errors
+   * Hash an error message to track similar errors.
+   * Normalizes variable parts (line numbers, timestamps, hex, stack traces)
+   * while preserving semantically meaningful content like error messages.
    */
   private hashError(error: string): string {
-    // Normalize the error by removing variable parts like line numbers, timestamps
+    // Order matters: timestamps must be normalized before :line:col, otherwise
+    // "14:07:39" in a timestamp matches :\d+:\d+ and gets mangled first.
     const normalized = error
-      .replace(/\d+/g, 'N') // Replace numbers
-      .replace(/0x[a-fA-F0-9]+/g, 'HEX') // Replace hex values
+      .replace(/0x[a-fA-F0-9]+/g, 'HEX') // Replace hex addresses
       .replace(/at\s+\S+\s+\(\S+:\d+:\d+\)/g, 'STACK') // Replace stack traces
+      .replace(/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}/g, 'TIMESTAMP') // Replace timestamps (before :line:col)
+      .replace(/:\d+:\d+/g, ':N:N') // Replace file:line:col locations
       .toLowerCase()
       .trim()
-      .slice(0, 500); // Limit length
+      .slice(0, 500);
 
     return crypto.createHash('md5').update(normalized).digest('hex').slice(0, 8);
   }

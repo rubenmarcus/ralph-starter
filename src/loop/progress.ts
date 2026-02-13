@@ -6,7 +6,7 @@ import type { ValidationResult } from './validation.js';
 export interface ProgressEntry {
   timestamp: string;
   iteration: number;
-  status: 'started' | 'completed' | 'failed' | 'blocked' | 'validation_failed';
+  status: 'started' | 'completed' | 'partial' | 'failed' | 'blocked' | 'validation_failed';
   summary: string;
   validationResults?: ValidationResult[];
   commitHash?: string;
@@ -86,6 +86,8 @@ function getStatusBadge(status: ProgressEntry['status']): string {
       return '🔄 Started';
     case 'completed':
       return '✅ Completed';
+    case 'partial':
+      return '🔶 Partial';
     case 'failed':
       return '❌ Failed';
     case 'blocked':
