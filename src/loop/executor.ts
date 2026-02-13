@@ -24,7 +24,7 @@ import {
 } from '../utils/rate-limit-display.js';
 import { type Agent, type AgentRunOptions, runAgent } from './agents.js';
 import { CircuitBreaker, type CircuitBreakerConfig } from './circuit-breaker.js';
-import { buildIterationContext } from './context-builder.js';
+import { buildIterationContext, buildSpecSummary } from './context-builder.js';
 import { CostTracker, type CostTrackerStats, formatCost } from './cost-tracker.js';
 import { estimateLoop, formatEstimateDetailed } from './estimator.js';
 import { checkFileBasedCompletion, createProgressTracker, type ProgressEntry } from './progress.js';
@@ -453,6 +453,9 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     taskWithSkills = `${options.task}\n\n${skillsPrompt}`;
   }
 
+  // Build abbreviated spec summary for context builder (iterations 2+)
+  const specSummary = buildSpecSummary(options.cwd);
+
   // Track validation feedback separately — don't mutate taskWithSkills
   // initialValidationFeedback lets the `fix` command pre-populate errors for iteration 1
   let lastValidationFeedback = options.initialValidationFeedback || '';
@@ -700,6 +703,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
       maxIterations,
       validationFeedback: lastValidationFeedback || undefined,
       maxInputTokens: options.contextBudget || 0,
+      specSummary,
     });
     const iterationTask = builtContext.prompt;
 
