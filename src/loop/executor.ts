@@ -32,7 +32,7 @@ import { RateLimiter } from './rate-limiter.js';
 import { analyzeResponse, hasExitSignal } from './semantic-analyzer.js';
 import { detectClaudeSkills, formatSkillsForPrompt } from './skills.js';
 import { detectStepFromOutput } from './step-detector.js';
-import { getCurrentTask, parsePlanTasks } from './task-counter.js';
+import { getCurrentTask, MAX_ESTIMATED_ITERATIONS, parsePlanTasks } from './task-counter.js';
 import {
   detectBuildCommands,
   detectValidationCommands,
@@ -403,7 +403,7 @@ function summarizeChanges(output: string): string {
 
 export async function runLoop(options: LoopOptions): Promise<LoopResult> {
   const spinner = ora();
-  const maxIterations = options.maxIterations || 50;
+  let maxIterations = options.maxIterations || 50;
   const commits: string[] = [];
   const startTime = Date.now();
   let validationFailures = 0;
@@ -507,6 +507,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
 
   // Track completed tasks to show progress diff between iterations
   let previousCompletedTasks = initialTaskCount.completed;
+  let previousTotalTasks = initialTaskCount.total;
 
   // Filesystem snapshot for git-independent change detection
   let previousSnapshot = await getFilesystemSnapshot(options.cwd);
@@ -624,6 +625,26 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
       }
     }
     previousCompletedTasks = completedTasks;
+
+    // Dynamic iteration budget: if agent expanded the plan (added more tasks),
+    // recalculate maxIterations so we don't run out mid-project
+    if (totalTasks > previousTotalTasks && totalTasks > 0) {
+      const buffer = Math.max(3, Math.ceil(totalTasks * 0.3));
+      const newMax = Math.min(
+        MAX_ESTIMATED_ITERATIONS,
+        Math.max(maxIterations, totalTasks + buffer)
+      );
+      if (newMax > maxIterations) {
+        console.log(
+          chalk.dim(
+            `  Adjusting iterations: ${maxIterations} → ${newMax} (plan expanded to ${totalTasks} tasks)`
+          )
+        );
+        maxIterations = newMax;
+        finalIteration = maxIterations;
+      }
+      previousTotalTasks = totalTasks;
+    }
 
     // Show loop header with task info
     const sourceIcon = getSourceIcon(options.sourceType);

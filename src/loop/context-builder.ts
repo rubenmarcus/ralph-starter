@@ -175,7 +175,7 @@ Rules:
 - Don't assume functionality is not already implemented — search the codebase first
 - Implement completely — no placeholders or stubs
 - Create files before importing them — never import components or modules that don't exist yet
-- After creating or modifying files, verify the project compiles by running the build or dev command
+- After creating or modifying files, verify the project compiles by running the build command (e.g., \`npm run build\`). NEVER start a dev server (\`npm run dev\`, \`npx vite\`, etc.) — it blocks forever and wastes resources
 - When ALL tasks are complete, explicitly state "All tasks completed"
 - If you learn how to run/build the project, update AGENTS.md
 
@@ -186,7 +186,7 @@ Technology gotchas (CRITICAL — follow these exactly):
   * CSS file must use: \`@import "tailwindcss";\` (NOT \`@tailwind base/components/utilities\` — those are v3 directives)
   * Do NOT create tailwind.config.js — Tailwind v4 uses CSS-based configuration
 - JSX: Never put unescaped quotes inside attribute strings. For SVG backgrounds or data URLs, use a CSS file or encodeURIComponent().
-- Run the dev server or build command to verify the project works before marking setup tasks complete.
+- Run \`npm run build\` (NOT \`npm run dev\`) to verify the project compiles before marking setup tasks complete.
 
 Design quality (IMPORTANT — avoid generic AI aesthetics):
 - NEVER use purple-blue gradient backgrounds or gradient text — this is the #1 AI design tell
