@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import { POPULAR_SKILLS } from '../commands/skill.js';
-import { findSkill } from '../loop/skills.js';
+import { type ClaudeSkill, detectClaudeSkills } from '../loop/skills.js';
 
 export interface SkillCandidate {
   fullName: string; // owner/repo@skill
@@ -23,6 +23,17 @@ interface SkillsApiSkill {
   installs: number;
   source: string;
 }
+
+/** Keywords that indicate a skill is NOT relevant for standard web projects */
+const WEB_NEGATIVE_KEYWORDS = [
+  'react-native',
+  'mobile',
+  'ios',
+  'android',
+  'flutter',
+  'swift',
+  'kotlin',
+];
 
 function buildSkillQueries(task: string): string[] {
   const queries = new Set<string>();
@@ -55,6 +66,61 @@ function buildSkillQueries(task: string): string[] {
   }
 
   return Array.from(queries);
+}
+
+/**
+ * Check if a skill is relevant to the given task.
+ * Reuses the same logic as the executor's shouldAutoApplySkill.
+ */
+function isSkillRelevantToTask(skill: ClaudeSkill, task: string): boolean {
+  const name = skill.name.toLowerCase();
+  const desc = (skill.description || '').toLowerCase();
+  const text = `${name} ${desc}`;
+  const taskLower = task.toLowerCase();
+
+  const taskIsWeb =
+    taskLower.includes('web') ||
+    taskLower.includes('website') ||
+    taskLower.includes('landing') ||
+    taskLower.includes('frontend') ||
+    taskLower.includes('ui') ||
+    taskLower.includes('ux') ||
+    taskLower.includes('page') ||
+    taskLower.includes('dashboard') ||
+    taskLower.includes('app') ||
+    taskLower.includes('component') ||
+    taskLower.includes('shop') ||
+    taskLower.includes('store');
+
+  const isDesignSkill =
+    text.includes('design') ||
+    text.includes('ui') ||
+    text.includes('ux') ||
+    text.includes('frontend');
+
+  if (taskIsWeb && isDesignSkill) return true;
+  if (taskLower.includes('astro') && text.includes('astro')) return true;
+  if (taskLower.includes('tailwind') && text.includes('tailwind')) return true;
+  if (taskLower.includes('seo') && text.includes('seo')) return true;
+
+  return false;
+}
+
+/**
+ * Check if a candidate skill is irrelevant to the task (negative filtering).
+ * E.g., react-native-design for a web landing page.
+ */
+function isCandidateIrrelevant(candidate: SkillCandidate, task: string): boolean {
+  const taskLower = task.toLowerCase();
+  const skillText = `${candidate.fullName} ${candidate.skill}`.toLowerCase();
+
+  // If the task explicitly mentions a platform, don't filter it out
+  for (const keyword of WEB_NEGATIVE_KEYWORDS) {
+    if (taskLower.includes(keyword)) return false;
+  }
+
+  // For standard web tasks, filter out mobile/native skills
+  return WEB_NEGATIVE_KEYWORDS.some((keyword) => skillText.includes(keyword));
 }
 
 function scoreCandidate(candidate: SkillCandidate, task: string): number {
@@ -165,6 +231,16 @@ export async function autoInstallSkillsFromTask(task: string, cwd: string): Prom
   // Explicit disable is the only way to turn this off
   if (process.env.RALPH_DISABLE_SKILL_AUTO_INSTALL === '1') return [];
 
+  // Check if relevant skills are already installed — skip API if so
+  const installedSkills = detectClaudeSkills(cwd);
+  const relevantInstalled = installedSkills.filter((s) => isSkillRelevantToTask(s, task));
+
+  if (relevantInstalled.length > 0) {
+    const names = relevantInstalled.map((s) => s.name);
+    console.log(chalk.cyan(`Using installed skills: ${names.join(', ')}`));
+    return names;
+  }
+
   const queries = buildSkillQueries(task);
   if (queries.length === 0) return [];
 
@@ -197,7 +273,11 @@ export async function autoInstallSkillsFromTask(task: string, cwd: string): Prom
 
   const ranked = rankCandidates(Array.from(allCandidates.values()), task);
   const toInstall = ranked
-    .filter((candidate) => !findSkill(cwd, candidate.skill))
+    .filter((candidate) => !isCandidateIrrelevant(candidate, task))
+    .filter(
+      (candidate) =>
+        !installedSkills.some((s) => s.name.toLowerCase() === candidate.skill.toLowerCase())
+    )
     .slice(0, MAX_SKILLS_TO_INSTALL);
 
   if (toInstall.length === 0) {
