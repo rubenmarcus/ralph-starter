@@ -129,7 +129,9 @@ export async function runValidation(
 }
 
 /**
- * Run all validation commands
+ * Run all validation commands.
+ * Runs every command regardless of individual failures — this gives the agent
+ * a complete picture of all issues, enabling multi-fix iterations.
  */
 export async function runAllValidations(
   cwd: string,
@@ -140,11 +142,6 @@ export async function runAllValidations(
   for (const command of commands) {
     const result = await runValidation(cwd, command);
     results.push(result);
-
-    // Stop on first failure
-    if (!result.success) {
-      break;
-    }
   }
 
   return results;

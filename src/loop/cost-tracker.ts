@@ -92,6 +92,8 @@ export interface CostTrackerStats {
 export interface CostTrackerConfig {
   model: string;
   maxIterations?: number;
+  /** Maximum cost in USD before the loop should stop (0 = unlimited) */
+  maxCost?: number;
 }
 
 /**
@@ -357,6 +359,19 @@ export class CostTracker {
 | Avg Cost/Iteration | ${formatCost(stats.avgCostPerIteration.totalCost)} |
 ${stats.totalCacheSavings > 0 ? `| Cache Savings | ${formatCost(stats.totalCacheSavings)} |\n` : ''}${stats.projectedCost ? `| Projected Max Cost | ${formatCost(stats.projectedCost.totalCost)} |` : ''}
 `;
+  }
+
+  /**
+   * Check if accumulated cost exceeds the configured budget.
+   * Returns the budget and current total if over, null otherwise.
+   */
+  isOverBudget(): { maxCost: number; currentCost: number } | null {
+    if (!this.config.maxCost || this.config.maxCost <= 0) return null;
+    const total = this.iterations.reduce((sum, i) => sum + i.cost.totalCost, 0);
+    if (total >= this.config.maxCost) {
+      return { maxCost: this.config.maxCost, currentCost: total };
+    }
+    return null;
   }
 
   /**

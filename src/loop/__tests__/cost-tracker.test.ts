@@ -233,6 +233,36 @@ describe('cost-tracker', () => {
       });
     });
 
+    describe('isOverBudget', () => {
+      it('should return null when no maxCost is set', () => {
+        tracker.recordIteration('input', 'output');
+        expect(tracker.isOverBudget()).toBeNull();
+      });
+
+      it('should return null when under budget', () => {
+        const budgetTracker = new CostTracker({
+          model: 'claude-3-sonnet',
+          maxCost: 100, // $100 budget
+        });
+        budgetTracker.recordIteration('input', 'output');
+        expect(budgetTracker.isOverBudget()).toBeNull();
+      });
+
+      it('should return budget info when over budget', () => {
+        const budgetTracker = new CostTracker({
+          model: 'claude-3-sonnet',
+          maxCost: 0.0001, // Extremely low budget
+        });
+        // Record enough iterations to exceed tiny budget
+        budgetTracker.recordIteration('a'.repeat(10000), 'b'.repeat(10000));
+
+        const result = budgetTracker.isOverBudget();
+        expect(result).not.toBeNull();
+        expect(result?.maxCost).toBe(0.0001);
+        expect(result?.currentCost).toBeGreaterThan(0);
+      });
+    });
+
     describe('model pricing', () => {
       it('should use default pricing for unknown models', () => {
         const unknownTracker = new CostTracker({ model: 'unknown-model' });

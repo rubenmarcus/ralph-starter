@@ -228,7 +228,7 @@ describe('validation', () => {
       expect(results.every((r) => r.success)).toBe(true);
     });
 
-    it('should stop on first failure', async () => {
+    it('should run all commands even when some fail', async () => {
       mockExeca
         .mockResolvedValueOnce({ exitCode: 0, stdout: 'Passed', stderr: '' } as any)
         .mockResolvedValueOnce({ exitCode: 1, stdout: '', stderr: 'Failed' } as any)
@@ -242,9 +242,10 @@ describe('validation', () => {
 
       const results = await runAllValidations('/test/dir', commands);
 
-      expect(results).toHaveLength(2); // Stopped after lint failed
+      expect(results).toHaveLength(3); // All commands run
       expect(results[0].success).toBe(true);
       expect(results[1].success).toBe(false);
+      expect(results[2].success).toBe(true);
     });
 
     it('should handle empty command list', async () => {
