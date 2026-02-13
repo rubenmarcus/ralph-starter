@@ -163,20 +163,24 @@ export async function runAgent(
     let output = '';
     let stdoutBuffer = '';
 
-    // Track data timing for debugging and silence warnings
+    // Track data timing for debugging and silence notifications
     let lastDataTime = Date.now();
     let silenceWarningShown = false;
+    let extendedSilenceShown = false;
 
-    // Warn if no data received for 30 seconds
+    // Notify if no data received for 30+ seconds (calm, non-alarming)
     const silenceChecker = setInterval(() => {
       const silentMs = Date.now() - lastDataTime;
-      if (silentMs > 30000 && !silenceWarningShown) {
+      if (silentMs > 60000 && !extendedSilenceShown) {
+        extendedSilenceShown = true;
+        console.log(chalk.dim('  Still working... Use RALPH_DEBUG=1 for verbose output.'));
+      } else if (silentMs > 30000 && !silenceWarningShown) {
         silenceWarningShown = true;
-        console.warn('\n[WARNING] No output from agent for 30+ seconds. Claude may be:');
-        console.warn('  - Processing a complex task');
-        console.warn('  - Stuck/rate limited');
-        console.warn('  - Waiting for something');
-        console.warn('Use RALPH_DEBUG=1 for detailed output\n');
+        console.log(
+          chalk.dim(
+            '\n  Agent is thinking... (no output for 30s, this is normal for complex tasks)'
+          )
+        );
       }
     }, 5000);
 

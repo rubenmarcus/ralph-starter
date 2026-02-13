@@ -20,6 +20,7 @@ import { formatPresetsHelp, getPreset, type PresetConfig } from '../presets/inde
 import { autoInstallSkillsFromTask } from '../skills/auto-install.js';
 import { getSourceDefaults } from '../sources/config.js';
 import { fetchFromSource } from '../sources/index.js';
+import { showWelcomeCompact } from '../wizard/ui.js';
 
 /** Default fallback repo for GitHub issues when no project is specified */
 const DEFAULT_GITHUB_ISSUES_REPO = 'multivmlabs/ralph-ideas';
@@ -250,10 +251,7 @@ export async function runCommand(
     }
   }
 
-  console.log();
-  console.log(chalk.cyan.bold('ralph-starter'));
-  console.log(chalk.dim('Ralph Wiggum made easy'));
-  console.log();
+  showWelcomeCompact();
 
   // Check for git repo
   if (options.commit || options.push || options.pr) {
@@ -337,16 +335,39 @@ export async function runCommand(
       const isIntegrationSource = integrationSources.includes(options.from?.toLowerCase() || '');
 
       if (isIntegrationSource && !options.auto && !options.outputDir) {
-        const { projectLocation } = await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'projectLocation',
-            message: 'Where do you want to run this task?',
-            choices: [
+        // Detect existing project markers to choose smart default ordering
+        const projectMarkers = [
+          'package.json',
+          '.git',
+          'Cargo.toml',
+          'go.mod',
+          'pyproject.toml',
+          'requirements.txt',
+          'Gemfile',
+          'pom.xml',
+          'build.gradle',
+        ];
+        const hasProjectMarkers = projectMarkers.some((f) => existsSync(join(cwd, f)));
+
+        // If existing project detected, default to "Current directory" first
+        const choices = hasProjectMarkers
+          ? [
               { name: `Current directory (${cwd})`, value: 'current' },
               { name: 'Create new project folder', value: 'new' },
               { name: 'Enter custom path', value: 'custom' },
-            ],
+            ]
+          : [
+              { name: 'Create new project folder', value: 'new' },
+              { name: `Current directory (${cwd})`, value: 'current' },
+              { name: 'Enter custom path', value: 'custom' },
+            ];
+
+        const { projectLocation } = await inquirer.prompt([
+          {
+            type: 'select',
+            name: 'projectLocation',
+            message: 'Where do you want to run this task?',
+            choices,
           },
         ]);
 
