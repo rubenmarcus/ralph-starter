@@ -23,7 +23,7 @@ import {
 } from '../utils/rate-limit-display.js';
 import { type Agent, type AgentRunOptions, runAgent } from './agents.js';
 import { CircuitBreaker, type CircuitBreakerConfig } from './circuit-breaker.js';
-import { buildIterationContext, compressValidationFeedback } from './context-builder.js';
+import { buildIterationContext } from './context-builder.js';
 import { CostTracker, type CostTrackerStats, formatCost } from './cost-tracker.js';
 import { estimateLoop, formatEstimateDetailed } from './estimator.js';
 import { checkFileBasedCompletion, createProgressTracker, type ProgressEntry } from './progress.js';
@@ -438,6 +438,9 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     taskWithSkills = `${options.task}\n\n${skillsPrompt}`;
   }
 
+  // Track validation feedback separately — don't mutate taskWithSkills
+  let lastValidationFeedback = '';
+
   // Completion detection options
   const completionOptions: CompletionOptions = {
     completionPromise: options.completionPromise,
@@ -634,7 +637,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
       taskInfo,
       iteration: i,
       maxIterations,
-      validationFeedback: undefined, // Validation feedback handled separately below
+      validationFeedback: lastValidationFeedback || undefined,
       maxInputTokens: options.contextBudget || 0,
     });
     const iterationTask = builtContext.prompt;
@@ -975,14 +978,15 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
           await progressTracker.appendEntry(progressEntry);
         }
 
-        // Continue loop with compressed validation feedback
-        const compressedFeedback = compressValidationFeedback(feedback);
-        taskWithSkills = `${taskWithSkills}\n\n${compressedFeedback}`;
+        // Pass validation feedback to context builder for next iteration
+        // (don't mutate taskWithSkills — that defeats context trimming)
+        lastValidationFeedback = feedback;
         continue; // Go to next iteration to fix issues
       } else {
-        // Validation passed - record success
+        // Validation passed - record success and clear feedback
         spinner.succeed(chalk.green(`Loop ${i}: Validation passed`));
         circuitBreaker.recordSuccess();
+        lastValidationFeedback = '';
       }
     }
 
@@ -1072,9 +1076,6 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
         `Iter ${i}/${maxIterations}${taskLabel}${costLabel} │ ${elapsedMin}m ${elapsedSec}s`
       )
     );
-
-    // Small delay between iterations
-    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
   // Post-loop actions
