@@ -63,21 +63,19 @@ export async function checkAgentAvailable(type: AgentType): Promise<boolean> {
 }
 
 export async function detectAvailableAgents(): Promise<Agent[]> {
-  const agents: Agent[] = [];
+  const entries = Object.entries(AGENTS).filter(([type]) => type !== 'unknown');
 
-  for (const [type, config] of Object.entries(AGENTS)) {
-    if (type === 'unknown') continue;
-
-    const available = await checkAgentAvailable(type as AgentType);
-    agents.push({
+  // Check all agents in parallel — each spawns an independent subprocess
+  const results = await Promise.all(
+    entries.map(async ([type, config]) => ({
       type: type as AgentType,
       name: config.name,
       command: config.command,
-      available,
-    });
-  }
+      available: await checkAgentAvailable(type as AgentType),
+    }))
+  );
 
-  return agents;
+  return results;
 }
 
 export async function detectBestAgent(): Promise<Agent | null> {

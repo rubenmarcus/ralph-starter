@@ -1,5 +1,8 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+
+/** Mtime-based cache for parsePlanTasks to avoid redundant file reads within the same iteration */
+let _planCache: { path: string; mtimeMs: number; result: TaskCount } | null = null;
 
 export interface PlanTask {
   name: string;
@@ -24,7 +27,18 @@ export function parsePlanTasks(cwd: string): TaskCount {
   const planPath = join(cwd, 'IMPLEMENTATION_PLAN.md');
 
   if (!existsSync(planPath)) {
+    _planCache = null;
     return { total: 0, completed: 0, pending: 0, tasks: [] };
+  }
+
+  // Return cached result if file hasn't changed (avoids redundant reads within same iteration)
+  try {
+    const mtimeMs = statSync(planPath).mtimeMs;
+    if (_planCache && _planCache.path === planPath && _planCache.mtimeMs === mtimeMs) {
+      return _planCache.result;
+    }
+  } catch {
+    // stat failed — fall through to full parse
   }
 
   try {
@@ -109,13 +123,23 @@ export function parsePlanTasks(cwd: string): TaskCount {
     const completed = tasks.filter((t) => t.completed).length;
     const pending = tasks.filter((t) => !t.completed).length;
 
-    return {
+    const result: TaskCount = {
       total: tasks.length,
       completed,
       pending,
       tasks,
     };
+
+    // Cache result with mtime for subsequent calls within the same iteration
+    try {
+      _planCache = { path: planPath, mtimeMs: statSync(planPath).mtimeMs, result };
+    } catch {
+      // stat failed — skip caching
+    }
+
+    return result;
   } catch {
+    _planCache = null;
     return { total: 0, completed: 0, pending: 0, tasks: [] };
   }
 }
