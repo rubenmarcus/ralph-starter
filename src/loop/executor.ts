@@ -797,7 +797,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     const postIterationTaskInfo = parsePlanTasks(options.cwd);
     const tasksProgressedThisIteration = postIterationTaskInfo.completed > previousCompletedTasks;
     // Build/validation failures are NOT idle — agent is actively debugging
-    const hadValidationFailure = lastValidationFeedback !== null;
+    const hadValidationFailure = !!lastValidationFeedback;
     const hasProductiveProgress =
       hasChanges || tasksProgressedThisIteration || hadValidationFailure;
 

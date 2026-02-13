@@ -275,7 +275,16 @@ export async function autoInstallSkillsFromTask(task: string, cwd: string): Prom
     console.log(chalk.cyan(`Using installed skills: ${names.join(', ')}`));
   }
 
-  // Always search for complementary skills (even if some are installed)
+  // Skip API search when enough relevant skills are already installed
+  const SUFFICIENT_RELEVANT_SKILLS = 3;
+  if (relevantInstalled.length >= SUFFICIENT_RELEVANT_SKILLS) {
+    console.log(
+      chalk.green(`Sufficient skills installed (${relevantInstalled.length}), skipping search.`)
+    );
+    return relevantInstalled.map((s) => s.name);
+  }
+
+  // Search for complementary skills if we don't have enough relevant ones
   const queries = buildSkillQueries(task);
   if (queries.length === 0) return relevantInstalled.map((s) => s.name);
 

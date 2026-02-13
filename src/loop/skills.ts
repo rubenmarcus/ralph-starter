@@ -315,21 +315,33 @@ function shouldAutoApplySkill(skill: ClaudeSkill, task: string): boolean {
 export function formatSkillsForPrompt(skills: ClaudeSkill[], task?: string): string {
   if (skills.length === 0) return '';
 
+  const MAX_SKILLS_IN_PROMPT = 5;
+
+  // When we have a task, only include relevant skills to avoid prompt bloat
+  let selected: ClaudeSkill[];
+  if (task) {
+    const relevant = skills.filter((skill) => shouldAutoApplySkill(skill, task));
+    selected =
+      relevant.length > 0
+        ? relevant.slice(0, MAX_SKILLS_IN_PROMPT)
+        : skills.slice(0, MAX_SKILLS_IN_PROMPT);
+  } else {
+    selected = skills.slice(0, MAX_SKILLS_IN_PROMPT);
+  }
+
   const lines = ['## Available Claude Code Skills', ''];
 
-  for (const skill of skills) {
+  for (const skill of selected) {
     lines.push(`- **${skill.name}**: ${skill.description || 'No description'}`);
   }
 
   lines.push('');
 
   if (task) {
-    const autoApply = skills.filter((skill) => shouldAutoApplySkill(skill, task));
-    if (autoApply.length > 0) {
-      const skillList = autoApply.map((skill) => `/${skill.name}`).join(', ');
-      lines.push(`Auto-apply these skills: ${skillList}`);
-      lines.push('');
-    }
+    // All selected skills are already relevant — tell the agent to apply them
+    const skillList = selected.map((skill) => `/${skill.name}`).join(', ');
+    lines.push(`Auto-apply these skills: ${skillList}`);
+    lines.push('');
   }
 
   lines.push('Use these skills when appropriate by invoking them with /skill-name.');
