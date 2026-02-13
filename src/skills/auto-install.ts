@@ -1,17 +1,28 @@
 import chalk from 'chalk';
-import { execa } from 'execa';
 import ora from 'ora';
+import { POPULAR_SKILLS } from '../commands/skill.js';
 import { findSkill } from '../loop/skills.js';
 
 export interface SkillCandidate {
   fullName: string; // owner/repo@skill
   repo: string;
   skill: string;
+  installs: number;
   score: number;
 }
 
 const MAX_SKILLS_TO_INSTALL = 2;
+const SKILLS_API_URL = 'https://skills.sh/api/search';
 const SKILLS_CLI = 'skills';
+
+/** Shape of a single skill from the skills.sh search API */
+interface SkillsApiSkill {
+  id: string;
+  skillId: string;
+  name: string;
+  installs: number;
+  source: string;
+}
 
 function buildSkillQueries(task: string): string[] {
   const queries = new Set<string>();
@@ -46,22 +57,6 @@ function buildSkillQueries(task: string): string[] {
   return Array.from(queries);
 }
 
-function parseSkillLine(line: string): SkillCandidate | null {
-  const match = line.match(/([a-z0-9_.-]+\/[a-z0-9_.-]+@[a-z0-9_.-]+)/i);
-  if (!match) return null;
-
-  const fullName = match[1];
-  const [repo, skill] = fullName.split('@');
-  if (!repo || !skill) return null;
-
-  return {
-    fullName,
-    repo,
-    skill,
-    score: 0,
-  };
-}
-
 function scoreCandidate(candidate: SkillCandidate, task: string): number {
   const text = `${candidate.fullName}`.toLowerCase();
   const taskLower = task.toLowerCase();
@@ -82,6 +77,11 @@ function scoreCandidate(candidate: SkillCandidate, task: string): number {
   boost('tailwind', taskLower.includes('tailwind') ? 2 : 0);
   boost('seo', taskLower.includes('seo') ? 2 : 0);
 
+  // Boost based on install count (popularity as quality signal)
+  if (candidate.installs > 10000) score += 5;
+  else if (candidate.installs > 1000) score += 3;
+  else if (candidate.installs > 100) score += 1;
+
   return score;
 }
 
@@ -93,29 +93,62 @@ function rankCandidates(candidates: SkillCandidate[], task: string): SkillCandid
   return candidates.sort((a, b) => b.score - a.score);
 }
 
+/**
+ * Search skills.sh HTTP API for skills matching a query.
+ * Returns structured results with real repo names and install counts.
+ */
 async function findSkillsByQuery(query: string): Promise<SkillCandidate[]> {
   try {
-    const result = await execa('npx', [SKILLS_CLI, 'find', query], {
-      stdio: 'pipe',
-    });
+    const url = `${SKILLS_API_URL}?q=${encodeURIComponent(query)}`;
+    const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!resp.ok) return [];
 
-    const lines = result.stdout.split('\n').map((line) => line.trim());
-    const candidates: SkillCandidate[] = [];
-
-    for (const line of lines) {
-      const candidate = parseSkillLine(line);
-      if (candidate) {
-        candidates.push(candidate);
-      }
-    }
-
-    return candidates;
+    const data = (await resp.json()) as { skills?: SkillsApiSkill[] };
+    return (data.skills || []).map((s) => ({
+      fullName: `${s.source}@${s.skillId}`,
+      repo: s.source,
+      skill: s.skillId,
+      installs: s.installs ?? 0,
+      score: 0,
+    }));
   } catch {
-    return [];
+    return []; // Timeout or network error — caller falls back to POPULAR_SKILLS
   }
 }
 
+/**
+ * Fallback: match task keywords against the curated POPULAR_SKILLS registry
+ * when the skills.sh API is unreachable.
+ */
+function fallbackFromPopularSkills(task: string): SkillCandidate[] {
+  const taskLower = task.toLowerCase();
+  const candidates: SkillCandidate[] = [];
+
+  for (const entry of POPULAR_SKILLS) {
+    const entryText = `${entry.name} ${entry.description} ${entry.category}`.toLowerCase();
+    const matches =
+      entry.skills.some((s) => taskLower.includes(s.split('-')[0])) ||
+      entryText.includes('frontend') ||
+      entryText.includes('design');
+
+    if (matches) {
+      for (const skill of entry.skills) {
+        candidates.push({
+          fullName: `${entry.name}@${skill}`,
+          repo: entry.name,
+          skill,
+          installs: 0,
+          score: 0,
+        });
+      }
+    }
+  }
+
+  return candidates;
+}
+
 async function installSkill(candidate: SkillCandidate, globalInstall: boolean): Promise<boolean> {
+  const { execa } = await import('execa');
   const args = [SKILLS_CLI, 'add', candidate.fullName, '-y'];
   if (globalInstall) args.push('-g');
 
@@ -127,18 +160,10 @@ async function installSkill(candidate: SkillCandidate, globalInstall: boolean): 
   }
 }
 
-export async function autoInstallSkillsFromTask(
-  task: string,
-  cwd: string,
-  options?: { forceEnable?: boolean }
-): Promise<string[]> {
+export async function autoInstallSkillsFromTask(task: string, cwd: string): Promise<string[]> {
   if (!task.trim()) return [];
-  // Explicit disable always wins
+  // Explicit disable is the only way to turn this off
   if (process.env.RALPH_DISABLE_SKILL_AUTO_INSTALL === '1') return [];
-  // Enable if: env var set, OR caller opts in (greenfield projects)
-  const autoInstallEnabled =
-    process.env.RALPH_ENABLE_SKILL_AUTO_INSTALL === '1' || options?.forceEnable === true;
-  if (!autoInstallEnabled) return [];
 
   const queries = buildSkillQueries(task);
   if (queries.length === 0) return [];
@@ -149,6 +174,16 @@ export async function autoInstallSkillsFromTask(
   for (const query of queries) {
     const candidates = await findSkillsByQuery(query);
     for (const candidate of candidates) {
+      if (!allCandidates.has(candidate.fullName)) {
+        allCandidates.set(candidate.fullName, candidate);
+      }
+    }
+  }
+
+  // Fallback to curated registry if API returned nothing
+  if (allCandidates.size === 0) {
+    const fallback = fallbackFromPopularSkills(task);
+    for (const candidate of fallback) {
       if (!allCandidates.has(candidate.fullName)) {
         allCandidates.set(candidate.fullName, candidate);
       }

@@ -9,7 +9,7 @@ interface SkillOptions {
   global?: boolean;
 }
 
-interface SkillEntry {
+export interface SkillEntry {
   name: string;
   description: string;
   category: string;
@@ -17,7 +17,7 @@ interface SkillEntry {
 }
 
 // Popular skills registry (curated list)
-const POPULAR_SKILLS: SkillEntry[] = [
+export const POPULAR_SKILLS: SkillEntry[] = [
   // Agents
   {
     name: 'vercel-labs/agent-skills',
