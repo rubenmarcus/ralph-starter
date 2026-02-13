@@ -31,6 +31,8 @@ export interface ContextBuildOptions {
   maxInputTokens?: number;
   /** Abbreviated spec summary for later iterations (avoids agent re-reading specs/) */
   specSummary?: string;
+  /** Skip IMPLEMENTATION_PLAN.md instructions in preamble (used by fix --design) */
+  skipPlanInstructions?: boolean;
 }
 
 export interface BuiltContext {
@@ -198,6 +200,7 @@ export function buildIterationContext(opts: ContextBuildOptions): BuiltContext {
     validationFeedback,
     maxInputTokens = 0,
     specSummary,
+    skipPlanInstructions = false,
   } = opts;
 
   const totalTasks = taskInfo.total;
@@ -206,14 +209,19 @@ export function buildIterationContext(opts: ContextBuildOptions): BuiltContext {
   let prompt: string;
   let wasTrimmed = false;
 
+  // Plan-related rules — omitted for fix/design passes where IMPLEMENTATION_PLAN.md is irrelevant
+  const planRules = skipPlanInstructions
+    ? '- This is a fix/review pass. Focus on the specific instructions in the task below.'
+    : `- Study IMPLEMENTATION_PLAN.md and work on ONE task at a time
+- Mark each subtask [x] in IMPLEMENTATION_PLAN.md immediately when done
+- Study specs/ directory for original requirements`;
+
   // Loop-aware preamble — gives the agent behavioral context per Ralph Playbook patterns
   const preamble = `You are a coding agent in an autonomous development loop (iteration ${iteration}/${opts.maxIterations}).
 
 Rules:
 - IMPORTANT: The current working directory IS the project root. Create ALL files here — do NOT create a subdirectory for the project (e.g., do NOT run \`mkdir my-app\` or \`npx create-vite my-app\`). If you use a scaffolding tool, run it with \`.\` as the target (e.g., \`npm create vite@latest . -- --template react\`).
-- Study IMPLEMENTATION_PLAN.md and work on ONE task at a time
-- Mark each subtask [x] in IMPLEMENTATION_PLAN.md immediately when done
-- Study specs/ directory for original requirements
+${planRules}
 - Don't assume functionality is not already implemented — search the codebase first
 - Implement completely — no placeholders or stubs
 - Create files before importing them — never import components or modules that don't exist yet

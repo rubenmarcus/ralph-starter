@@ -237,6 +237,7 @@ export interface LoopOptions {
   agentTimeout?: number; // Agent timeout in milliseconds (default: 300000 = 5 min)
   initialValidationFeedback?: string; // Pre-populate with errors (used by `fix` command)
   maxSkills?: number; // Cap skills included in prompt (default: 5)
+  skipPlanInstructions?: boolean; // Skip IMPLEMENTATION_PLAN.md rules in preamble (fix --design)
 }
 
 export interface LoopResult {
@@ -710,6 +711,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
       validationFeedback: lastValidationFeedback || undefined,
       maxInputTokens: options.contextBudget || 0,
       specSummary,
+      skipPlanInstructions: options.skipPlanInstructions,
     });
     const iterationTask = builtContext.prompt;
 

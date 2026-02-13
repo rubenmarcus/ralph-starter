@@ -288,6 +288,7 @@ This is a visual/design task. After making your CSS and styling changes, you MUS
     checkFileCompletion: false,
     validate: mode === 'scan',
     maxSkills: options.design ? 4 : undefined,
+    skipPlanInstructions: options.design,
   });
 
   // --- Step 5: Verify fix by re-running validations ---
