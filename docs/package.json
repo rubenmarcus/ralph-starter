@@ -5,7 +5,8 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
-    "build": "docusaurus build",
+    "build": "node scripts/generate-full-docs.cjs && docusaurus build",
+    "docs:full": "node scripts/generate-full-docs.cjs",
     "seo:check": "node scripts/check-seo-aeo.cjs",
     "seo:sync": "node scripts/sync-seo-aeo-assets.cjs",
     "swizzle": "docusaurus swizzle",

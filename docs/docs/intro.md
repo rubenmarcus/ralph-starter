@@ -9,6 +9,10 @@ keywords: [ralph wiggum, autonomous coding, AI coding loops, claude code]
 
 > **Ralph Wiggum made easy.** One command to run autonomous AI coding loops.
 
+import DownloadDocs from '@site/src/components/DownloadDocs'
+
+<DownloadDocs />
+
 ## What is Ralph Wiggum?
 
 Ralph Wiggum is a technique for running AI coding agents in autonomous loops until tasks are completed. Instead of prompting back and forth, you give the AI a task and let it iterate until done.
