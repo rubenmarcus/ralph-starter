@@ -91,8 +91,23 @@ function stripFrontmatter(content) {
 
 function bumpHeadings(content) {
   // Bump all headings down by one level (# -> ##, ## -> ###, etc.)
-  // so section headings stay as the top-level within each section
-  return content.replace(/^(#{1,5}) /gm, (_, hashes) => hashes + '# ');
+  // so section headings stay as the top-level within each section.
+  // Skip lines inside fenced code blocks to avoid mutating snippets
+  // (e.g. shell comments like "# Install" should not become "## Install").
+  const lines = content.split('\n');
+  let inFence = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (/^```/.test(lines[i])) {
+      inFence = !inFence;
+      continue;
+    }
+    if (!inFence) {
+      lines[i] = lines[i].replace(/^(#{1,5}) /, (_, hashes) => hashes + '# ');
+    }
+  }
+
+  return lines.join('\n');
 }
 
 function generate() {

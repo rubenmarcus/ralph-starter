@@ -24,6 +24,10 @@
 
 > **Ralph Wiggum made easy.** One command to run autonomous AI coding loops.
 
+import DownloadDocs from '@site/src/components/DownloadDocs'
+
+<DownloadDocs />
+
 ### What is Ralph Wiggum?
 
 Ralph Wiggum is a technique for running AI coding agents in autonomous loops until tasks are completed. Instead of prompting back and forth, you give the AI a task and let it iterate until done.
@@ -57,10 +61,10 @@ This launches **Idea Mode** - a brainstorming session to help you discover proje
 #### Use a Template
 
 ```bash
-## Browse available templates
+# Browse available templates
 ralph-starter template list
 
-## Use a template to start a project
+# Use a template to start a project
 ralph-starter template use nextjs-saas
 ```
 
@@ -69,13 +73,13 @@ Templates are pre-built project specs - just pick one and let the AI build it.
 #### For Developers
 
 ```bash
-## Run a single task
+# Run a single task
 ralph-starter run "build a todo app with React"
 
-## With git automation
+# With git automation
 ralph-starter run "add user authentication" --commit --pr
 
-## Fetch specs from external sources
+# Fetch specs from external sources
 ralph-starter run --from github --project myorg/myrepo --label "ready"
 ```
 
@@ -131,10 +135,10 @@ ralph-starter works with several AI coding agents. You need at least one install
 The official Anthropic CLI for Claude.
 
 ```bash
-## Install via npm
+# Install via npm
 npm install -g @anthropic-ai/claude-code
 
-## Authenticate
+# Authenticate
 claude login
 ```
 
@@ -154,7 +158,7 @@ AI-powered code editor with built-in agent capabilities.
 OpenAI's coding assistant.
 
 ```bash
-## Install the OpenAI CLI
+# Install the OpenAI CLI
 npm install -g openai
 ```
 
@@ -163,10 +167,10 @@ npm install -g openai
 Open-source alternative with multiple model support.
 
 ```bash
-## Install
+# Install
 npm install -g opencode-ai
 
-## Configure
+# Configure
 opencode setup
 ```
 
@@ -286,49 +290,49 @@ The `run` command executes an autonomous coding loop. The AI agent works on task
 #### Basic Usage
 
 ```bash
-## Run a single task
+# Run a single task
 ralph-starter run "build a todo app with React"
 
-## Run from implementation plan
+# Run from implementation plan
 ralph-starter run
 ```
 
 #### With Git Automation
 
 ```bash
-## Auto-commit changes
+# Auto-commit changes
 ralph-starter run "add login page" --commit
 
-## Commit and push
+# Commit and push
 ralph-starter run "fix bug" --commit --push
 
-## Full automation with PR
+# Full automation with PR
 ralph-starter run "add feature" --commit --push --pr
 ```
 
 #### With Validation
 
 ```bash
-## Run tests/lint/build after each iteration
+# Run tests/lint/build after each iteration
 ralph-starter run "refactor auth" --validate
 
-## Combine with commit
+# Combine with commit
 ralph-starter run "add tests" --commit --validate
 ```
 
 #### From External Sources
 
 ```bash
-## From URL
+# From URL
 ralph-starter run --from https://example.com/spec.md
 
-## From GitHub
+# From GitHub
 ralph-starter run --from github --project owner/repo --label "ready"
 
-## From a specific GitHub issue
+# From a specific GitHub issue
 ralph-starter run --from github --project owner/repo --issue 123
 
-## From Linear
+# From Linear
 ralph-starter run --from linear --label "in-progress"
 ```
 
@@ -346,10 +350,10 @@ When fetching from integration sources (GitHub, Linear, Notion), you'll be promp
 To skip the prompt:
 
 ```bash
-## Use --output-dir to specify the directory
+# Use --output-dir to specify the directory
 ralph-starter run --from github --project owner/repo --issue 42 --output-dir ~/projects/new-app
 
-## Use --auto for non-interactive mode (uses current directory)
+# Use --auto for non-interactive mode (uses current directory)
 ralph-starter run --from github --project owner/repo --issue 42 --auto
 ```
 
@@ -358,29 +362,29 @@ ralph-starter run --from github --project owner/repo --issue 42 --auto
 Work through tasks from a Product Requirements Document (PRD) file. The standard ralph-wiggum filename is `PRD.md`:
 
 ```bash
-## Run tasks from PRD.md (standard filename)
+# Run tasks from PRD.md (standard filename)
 ralph-starter run --prd PRD.md
 
-## Or specify a custom path
+# Or specify a custom path
 ralph-starter run --prd ./specs/feature-prd.md
 
-## Combine with automation
+# Combine with automation
 ralph-starter run --prd PRD.md --commit --validate
 ```
 
 **PRD.md Format Example:**
 
 ```markdown
-## User Authentication
+# User Authentication
 
 Implement secure authentication for the application.
 
-### Backend
+## Backend
 - [ ] Create user model with email/password
 - [ ] Implement JWT token generation
 - [ ] Add password hashing with bcrypt
 
-### Frontend
+## Frontend
 - [ ] Build login form component
 - [ ] Add session management
 - [ ] Handle authentication errors
@@ -396,13 +400,13 @@ The agent will:
 #### Advanced
 
 ```bash
-## Specify agent
+# Specify agent
 ralph-starter run "build API" --agent claude-code
 
-## Limit iterations
+# Limit iterations
 ralph-starter run "complex task" --max-iterations 100
 
-## Full automation
+# Full automation
 ralph-starter run --auto --commit --validate --max-iterations 30
 ```
 
@@ -485,17 +489,17 @@ The command must be run inside a git repository. It will warn you if there are u
 #### Basic Usage
 
 ```bash
-## Process GitHub issues labeled "auto-ready"
+# Process GitHub issues labeled "auto-ready"
 ralph-starter auto --source github --project myorg/myrepo --label "auto-ready"
 
-## Process Linear tickets
+# Process Linear tickets
 ralph-starter auto --source linear --project "My Project"
 ```
 
 #### Preview Before Running
 
 ```bash
-## Dry run to see which tasks would be processed
+# Dry run to see which tasks would be processed
 ralph-starter auto --source github --project myorg/myrepo --label "bug" --dry-run
 ```
 
@@ -530,21 +534,21 @@ Would execute:
 #### Limit Task Count
 
 ```bash
-## Only process the first 3 tasks
+# Only process the first 3 tasks
 ralph-starter auto --source github --project myorg/myrepo --limit 3
 ```
 
 #### Skip PR Creation
 
 ```bash
-## Commit and push, but don't create pull requests
+# Commit and push, but don't create pull requests
 ralph-starter auto --source github --project myorg/myrepo --skip-pr
 ```
 
 #### Disable Validation
 
 ```bash
-## Skip tests/lint/build validation for faster execution
+# Skip tests/lint/build validation for faster execution
 ralph-starter auto --source linear --no-validate
 ```
 
@@ -634,13 +638,13 @@ The `init` command sets up Ralph Playbook files in the current directory. These 
 ### Examples
 
 ```bash
-## Initialize in current directory
+# Initialize in current directory
 ralph-starter init
 
-## With project name
+# With project name
 ralph-starter init --name my-awesome-app
 
-## In a new project
+# In a new project
 mkdir my-project && cd my-project
 git init
 ralph-starter init --name my-project
@@ -651,23 +655,23 @@ ralph-starter init --name my-project
 #### AGENTS.md
 
 ```markdown
-## AGENTS.md
+# AGENTS.md
 
-### Project: my-project
+## Project: my-project
 
-#### Validation Commands
+### Validation Commands
 - test: npm test
 - lint: npm run lint
 - build: npm run build
 
-#### Agent Instructions
+### Agent Instructions
 [Instructions for AI agents...]
 ```
 
 #### PROMPT_plan.md
 
 ```markdown
-## Planning Mode
+# Planning Mode
 
 Read the specs in `specs/` and create an implementation plan.
 
@@ -677,7 +681,7 @@ Read the specs in `specs/` and create an implementation plan.
 #### PROMPT_build.md
 
 ```markdown
-## Building Mode
+# Building Mode
 
 Execute tasks from IMPLEMENTATION_PLAN.md.
 
@@ -737,10 +741,10 @@ The `plan` command analyzes specs in the `specs/` directory and generates an `IM
 ### Examples
 
 ```bash
-## Interactive planning
+# Interactive planning
 ralph-starter plan
 
-## Automated planning
+# Automated planning
 ralph-starter plan --auto
 ```
 
@@ -754,33 +758,33 @@ ralph-starter plan --auto
 ### Generated Plan Format
 
 ```markdown
-## Implementation Plan
+# Implementation Plan
 
-### Overview
+## Overview
 Brief summary of the project.
 
-### Tasks
+## Tasks
 
-#### Phase 1: Setup
+### Phase 1: Setup
 - [ ] Initialize project structure
 - [ ] Set up development environment
 - [ ] Configure build tools
 
-#### Phase 2: Core Features
+### Phase 2: Core Features
 - [ ] Implement user authentication
 - [ ] Create main dashboard
 - [ ] Add data persistence
 
-#### Phase 3: Polish
+### Phase 3: Polish
 - [ ] Add error handling
 - [ ] Write tests
 - [ ] Documentation
 
-### Dependencies
+## Dependencies
 - Task B depends on Task A
 - Task C depends on Task B
 
-### Notes
+## Notes
 Additional context for the AI agent.
 ```
 
@@ -789,23 +793,23 @@ Additional context for the AI agent.
 For best results, write detailed specs:
 
 ```markdown
-## Feature: User Authentication
+# Feature: User Authentication
 
-### Description
+## Description
 Add email/password authentication to the application.
 
-### Requirements
+## Requirements
 - Login form with email and password
 - Registration with email verification
 - Password reset flow
 - Session management
 
-### Technical Notes
+## Technical Notes
 - Use NextAuth.js
 - Store sessions in database
 - Implement rate limiting
 
-### Acceptance Criteria
+## Acceptance Criteria
 - [ ] User can register with email
 - [ ] User can log in
 - [ ] User can reset password
@@ -815,19 +819,19 @@ Add email/password authentication to the application.
 ### Workflow
 
 ```bash
-## 1. Initialize
+# 1. Initialize
 ralph-starter init
 
-## 2. Write specs
+# 2. Write specs
 echo "# My Feature\n\nDescription here..." > specs/feature.md
 
-## 3. Create plan
+# 3. Create plan
 ralph-starter plan
 
-## 4. Review plan
+# 4. Review plan
 cat IMPLEMENTATION_PLAN.md
 
-## 5. Start building
+# 5. Start building
 ralph-starter run
 ```
 
@@ -938,7 +942,7 @@ Step 4: Saving Configuration
 #### Re-Run Setup
 
 ```bash
-## Force re-run even if already configured
+# Force re-run even if already configured
 ralph-starter setup --force
 ```
 
@@ -1183,21 +1187,21 @@ ralph-starter config get linear.apiKey
 #### Set Value
 
 ```bash
-## Set LLM provider API keys
+# Set LLM provider API keys
 ralph-starter config set providers.anthropic.apiKey sk-ant-xxxx
 ralph-starter config set providers.openai.apiKey sk-xxxx
 ralph-starter config set providers.openrouter.apiKey sk-or-xxxx
 
-## Set active LLM provider
+# Set active LLM provider
 ralph-starter config set llm.provider anthropic
 
-## Set source integration keys
+# Set source integration keys
 ralph-starter config set linear.apiKey lin_api_xxxx
 ralph-starter config set notion.token secret_xxxx
 ralph-starter config set github.token ghp_xxxx
 ralph-starter config set figma.token figd_xxxx
 
-## Set defaults
+# Set defaults
 ralph-starter config set github.defaultIssuesRepo owner/repo
 ```
 
@@ -1335,7 +1339,7 @@ Credentials are stored locally in the ralph-starter sources configuration file.
 #### Start OAuth Flow (Linear)
 
 ```bash
-## Authenticate with Linear via browser OAuth
+# Authenticate with Linear via browser OAuth
 ralph-starter auth linear
 ```
 
@@ -1365,7 +1369,7 @@ Credentials stored in: /home/user/.config/ralph-starter/sources.json
 #### Logout from a Service
 
 ```bash
-## Remove stored credentials for Linear
+# Remove stored credentials for Linear
 ralph-starter auth --logout linear
 ```
 
@@ -1374,20 +1378,20 @@ ralph-starter auth --logout linear
 For services that do not support OAuth PKCE, configure API keys manually:
 
 ```bash
-## Notion
+# Notion
 ralph-starter config set notion.apiKey ntn_your_api_key_here
 
-## Todoist
+# Todoist
 ralph-starter config set todoist.apiKey your_todoist_api_key
 
-## GitHub
+# GitHub
 ralph-starter config set github.apiKey ghp_your_github_token
 ```
 
 #### Show Help
 
 ```bash
-## Run auth with no arguments to see help
+# Run auth with no arguments to see help
 ralph-starter auth
 ```
 
@@ -1407,13 +1411,13 @@ If the browser cannot be opened automatically, the authorization URL is printed 
 #### Setting Up Linear OAuth
 
 ```bash
-## 1. Set your Linear OAuth client ID
+# 1. Set your Linear OAuth client ID
 export RALPH_LINEAR_CLIENT_ID=your_client_id
 
-## 2. Run the auth flow
+# 2. Run the auth flow
 ralph-starter auth linear
 
-## 3. Verify
+# 3. Verify
 ralph-starter auth --list
 ```
 
@@ -1513,17 +1517,17 @@ Use "ralph-starter integrations help <name>" for setup instructions
 #### View Setup Help
 
 ```bash
-## Show setup instructions for Notion
+# Show setup instructions for Notion
 ralph-starter integrations help notion
 
-## Show setup instructions for GitHub
+# Show setup instructions for GitHub
 ralph-starter integrations help github
 ```
 
 #### Test Connectivity
 
 ```bash
-## Test GitHub integration
+# Test GitHub integration
 ralph-starter integrations test github
 ```
 
@@ -1545,16 +1549,16 @@ Run the following for setup instructions:
 #### Fetch and Preview Data
 
 ```bash
-## Fetch GitHub issues from a repository
+# Fetch GitHub issues from a repository
 ralph-starter integrations fetch github owner/repo
 
-## Fetch with filters
+# Fetch with filters
 ralph-starter integrations fetch github owner/repo --label "bug" --status open --limit 5
 
-## Fetch a Notion page
+# Fetch a Notion page
 ralph-starter integrations fetch notion "https://notion.so/Page-abc123"
 
-## Fetch Linear issues for a project
+# Fetch Linear issues for a project
 ralph-starter integrations fetch linear my-project --status "In Progress"
 ```
 
@@ -1573,11 +1577,11 @@ Metadata: {
 
 Preview:
 ────────────────────────────────────────────────────────
-### Description
+## Description
 
 Users are experiencing an infinite redirect loop when...
 
-### Steps to Reproduce
+## Steps to Reproduce
 
 1. Navigate to /login
 2. Enter valid credentials
@@ -1747,19 +1751,19 @@ Found 3 items matching filters.
 ### Workflow
 
 ```bash
-## 1. Check available sources
+# 1. Check available sources
 ralph-starter source list
 
-## 2. Configure if needed
+# 2. Configure if needed
 ralph-starter config set linear.apiKey <key>
 
-## 3. Test connection
+# 3. Test connection
 ralph-starter source test linear
 
-## 4. Preview items
+# 4. Preview items
 ralph-starter source preview linear --label "in-progress"
 
-## 5. Run with source
+# 5. Run with source
 ralph-starter run --from linear --label "in-progress"
 ```
 
@@ -1780,10 +1784,10 @@ List and use pre-configured workflow presets for common development scenarios.
 ### Synopsis
 
 ```bash
-## List all available presets
+# List all available presets
 ralph-starter presets
 
-## Use a preset with the run command
+# Use a preset with the run command
 ralph-starter run --preset <name> [task]
 ```
 
@@ -2196,13 +2200,13 @@ CLI and stored as markdown files in either a global directory
 #### Install a Skill
 
 ```bash
-## Install a skill repository
+# Install a skill repository
 ralph-starter skill add vercel-labs/agent-skills
 
-## Short alias
+# Short alias
 ralph-starter skill i vercel-labs/agent-skills
 
-## Install globally
+# Install globally
 ralph-starter skill add vercel-labs/agent-skills --global
 ```
 
@@ -2366,53 +2370,53 @@ Templates are organized into categories:
 #### List Templates
 
 ```bash
-## List all templates
+# List all templates
 ralph-starter template list
 
-## Filter by category
+# Filter by category
 ralph-starter template list --category web-dev
 
-## Force refresh from remote
+# Force refresh from remote
 ralph-starter template list --refresh
 ```
 
 #### Preview a Template
 
 ```bash
-## Preview template content
+# Preview template content
 ralph-starter template preview nextjs-saas
 
-## Preview a CLI tool template
+# Preview a CLI tool template
 ralph-starter template preview cli-tool
 ```
 
 #### Use a Template
 
 ```bash
-## Use a template (interactive)
+# Use a template (interactive)
 ralph-starter template use landing-page
 
-## Specify output directory
+# Specify output directory
 ralph-starter template use nextjs-saas --output-dir ~/projects/my-saas
 
-## Skip prompts
+# Skip prompts
 ralph-starter template use cli-tool --auto
 
-## With full automation
+# With full automation
 ralph-starter template use landing-page --auto --commit --pr
 ```
 
 #### Interactive Browser
 
 ```bash
-## Browse templates interactively
+# Browse templates interactively
 ralph-starter template browse
 ```
 
 #### Quick Use (Shorthand)
 
 ```bash
-## Use template name directly as action
+# Use template name directly as action
 ralph-starter template nextjs-saas
 ```
 
@@ -2499,19 +2503,19 @@ ralph-starter run --from <source> [options]
 #### Examples
 
 ```bash
-## From a URL
+# From a URL
 ralph-starter run --from https://example.com/spec.md
 
-## From a local file
+# From a local file
 ralph-starter run --from ./requirements.pdf
 
-## From GitHub Issues
+# From GitHub Issues
 ralph-starter run --from github --project owner/repo --label "sprint-1"
 
-## From Linear
+# From Linear
 ralph-starter run --from linear --label "in-progress" --limit 5
 
-## From Notion
+# From Notion
 ralph-starter run --from notion --project "Product Specs"
 
 ```
@@ -2521,19 +2525,19 @@ ralph-starter run --from notion --project "Product Specs"
 Store credentials for integration sources:
 
 ```bash
-## Set credentials
+# Set credentials
 ralph-starter config set figma.token <your-token>
 ralph-starter config set linear.apiKey <your-key>
 ralph-starter config set notion.token <your-key>
 ralph-starter config set github.token <your-token>
 
-## View all config
+# View all config
 ralph-starter config list
 
-## Get specific value
+# Get specific value
 ralph-starter config get linear.apiKey
 
-## Remove
+# Remove
 ralph-starter config delete linear.apiKey
 ```
 
@@ -2542,16 +2546,16 @@ Credentials are stored in `~/.ralph-starter/sources.json`.
 ### Source Commands
 
 ```bash
-## List available sources
+# List available sources
 ralph-starter source list
 
-## Get help for a source
+# Get help for a source
 ralph-starter source help github
 
-## Test connectivity
+# Test connectivity
 ralph-starter source test linear
 
-## Preview items from source
+# Preview items from source
 ralph-starter source preview github --project owner/repo
 ```
 
@@ -2614,19 +2618,19 @@ Required scopes:
 ### Usage
 
 ```bash
-## Fetch all open issues from a repo
+# Fetch all open issues from a repo
 ralph-starter run --from github --project owner/repo
 
-## Filter by label
+# Filter by label
 ralph-starter run --from github --project owner/repo --label "ready-to-build"
 
-## Filter by status
+# Filter by status
 ralph-starter run --from github --project owner/repo --status open
 
-## Limit results
+# Limit results
 ralph-starter run --from github --project owner/repo --limit 5
 
-## Combine filters
+# Combine filters
 ralph-starter run --from github --project owner/repo --label "sprint-1" --status open --limit 10
 ```
 
@@ -2635,13 +2639,13 @@ ralph-starter run --from github --project owner/repo --label "sprint-1" --status
 Fetch a specific issue by number:
 
 ```bash
-## By issue number (uses default repo if configured)
+# By issue number (uses default repo if configured)
 ralph-starter run --from github --issue 123
 
-## From a specific repo
+# From a specific repo
 ralph-starter run --from github --project owner/repo --issue 123
 
-## By full URL
+# By full URL
 ralph-starter run --from github --project https://github.com/owner/repo/issues/123
 ```
 
@@ -2657,10 +2661,10 @@ Perfect for building features from well-specified issues.
 Configure a default repository for fetching issues, so you don't need to specify `--project` every time:
 
 ```bash
-## Set your default issues repo
+# Set your default issues repo
 ralph-starter config set github.defaultIssuesRepo myorg/my-ideas
 
-## Now you can simply run:
+# Now you can simply run:
 ralph-starter run --from github --issue 42
 ```
 
@@ -2695,18 +2699,18 @@ GitHub issues are converted to specs with:
 #### Example Issue
 
 ```markdown
-## Add user authentication
+# Add user authentication
 
-### Description
+## Description
 Add email/password authentication to the app.
 
-### Requirements
+## Requirements
 - Login form
 - Registration form
 - Password reset flow
 - Session management
 
-### Acceptance Criteria
+## Acceptance Criteria
 - [ ] Users can register with email
 - [ ] Users can log in
 - [ ] Users can reset password
@@ -2715,21 +2719,21 @@ Add email/password authentication to the app.
 #### Generated Spec
 
 ```markdown
-## Add user authentication
+# Add user authentication
 
 Source: GitHub Issue #42 (owner/repo)
 Labels: feature, authentication
 
-### Description
+## Description
 Add email/password authentication to the app.
 
-### Requirements
+## Requirements
 - Login form
 - Registration form
 - Password reset flow
 - Session management
 
-### Acceptance Criteria
+## Acceptance Criteria
 - [ ] Users can register with email
 - [ ] Users can log in
 - [ ] Users can reset password
@@ -2775,16 +2779,16 @@ ralph-starter config set linear.apiKey lin_api_xxxxxxxxxxxx
 ### Usage
 
 ```bash
-## Fetch issues by label
+# Fetch issues by label
 ralph-starter run --from linear --label "ready-to-build"
 
-## Filter by project
+# Filter by project
 ralph-starter run --from linear --project "Mobile App"
 
-## Filter by status
+# Filter by status
 ralph-starter run --from linear --status "In Progress"
 
-## Combine filters
+# Combine filters
 ralph-starter run --from linear --project "Web App" --label "sprint-1" --limit 10
 ```
 
@@ -2815,18 +2819,18 @@ Title: Add user authentication
 Description:
 Implement email/password authentication for the web app.
 
-### Requirements
+## Requirements
 - Login page with email/password
 - Registration with email verification
 - Password reset flow
 - Remember me functionality
 
-### Technical Notes
+## Technical Notes
 - Use NextAuth.js
 - Store sessions in database
 - Add rate limiting
 
-### Acceptance Criteria
+## Acceptance Criteria
 - [ ] User can register with email
 - [ ] User receives verification email
 - [ ] User can log in
@@ -2836,28 +2840,28 @@ Implement email/password authentication for the web app.
 ### Generated Spec
 
 ```markdown
-## Add user authentication
+# Add user authentication
 
 Source: Linear Issue ENG-123
 Project: Web App
 Labels: feature, authentication
 Priority: High
 
-### Description
+## Description
 Implement email/password authentication for the web app.
 
-### Requirements
+## Requirements
 - Login page with email/password
 - Registration with email verification
 - Password reset flow
 - Remember me functionality
 
-### Technical Notes
+## Technical Notes
 - Use NextAuth.js
 - Store sessions in database
 - Add rate limiting
 
-### Acceptance Criteria
+## Acceptance Criteria
 - [ ] User can register with email
 - [ ] User receives verification email
 - [ ] User can log in
@@ -2948,10 +2952,10 @@ Note: Public page fetching has limited content extraction because Notion renders
 ### Usage
 
 ```bash
-## Fetch from a specific database/page
+# Fetch from a specific database/page
 ralph-starter run --from notion --project "Product Specs"
 
-## With limit
+# With limit
 ralph-starter run --from notion --project "Feature Ideas" --limit 5
 ```
 
@@ -2967,17 +2971,17 @@ ralph-starter run --from notion --project "Feature Ideas" --limit 5
 #### Simple Page
 
 ```markdown
-## Build a Habit Tracker
+# Build a Habit Tracker
 
 A mobile app for tracking daily habits with streaks and reminders.
 
-### Features
+## Features
 - Add/edit/delete habits
 - Daily check-in
 - Streak tracking
 - Push notifications
 
-### Tech Stack
+## Tech Stack
 - React Native
 - SQLite
 - Expo
@@ -3000,21 +3004,21 @@ ralph-starter fetches items where Status = "Ready" (or as filtered).
 ### Generated Spec
 
 ```markdown
-## Build a Habit Tracker
+# Build a Habit Tracker
 
 Source: Notion Page
 Database: Product Specs
 
-### Description
+## Description
 A mobile app for tracking daily habits with streaks and reminders.
 
-### Features
+## Features
 - Add/edit/delete habits
 - Daily check-in
 - Streak tracking
 - Push notifications
 
-### Tech Stack
+## Tech Stack
 - React Native
 - SQLite
 - Expo
@@ -3039,26 +3043,26 @@ ralph-starter source test notion
 Create a Notion template with these sections:
 
 ```markdown
-## [Feature Name]
+# [Feature Name]
 
-### Summary
+## Summary
 One paragraph describing the feature.
 
-### Problem
+## Problem
 What problem does this solve?
 
-### Solution
+## Solution
 How will we solve it?
 
-### Requirements
+## Requirements
 - [ ] Requirement 1
 - [ ] Requirement 2
 - [ ] Requirement 3
 
-### Technical Notes
+## Technical Notes
 Any specific tech requirements or constraints.
 
-### Acceptance Criteria
+## Acceptance Criteria
 - [ ] Criteria 1
 - [ ] Criteria 2
 ```
@@ -3134,10 +3138,10 @@ ralph-starter config set figma.token <your-token>
 #### Basic Usage
 
 ```bash
-## Fetch design spec from a Figma file
+# Fetch design spec from a Figma file
 ralph-starter run --from figma --project "https://figma.com/file/ABC123/MyDesign"
 
-## Using file key directly
+# Using file key directly
 ralph-starter run --from figma --project "ABC123"
 ```
 
@@ -3146,10 +3150,10 @@ ralph-starter run --from figma --project "ABC123"
 Converts Figma frames into markdown specifications for AI coding loops:
 
 ```bash
-## Fetch entire file
+# Fetch entire file
 ralph-starter integrations fetch figma "ABC123"
 
-## Fetch specific frames by node ID
+# Fetch specific frames by node ID
 ralph-starter integrations fetch figma "ABC123" --figma-nodes "1:23,1:45"
 ```
 
@@ -3166,16 +3170,16 @@ Output includes:
 Extract design tokens for your codebase:
 
 ```bash
-## CSS custom properties (default)
+# CSS custom properties (default)
 ralph-starter integrations fetch figma "ABC123" --figma-mode tokens
 
-## SCSS variables
+# SCSS variables
 ralph-starter integrations fetch figma "ABC123" --figma-mode tokens --figma-format scss
 
-## JSON
+# JSON
 ralph-starter integrations fetch figma "ABC123" --figma-mode tokens --figma-format json
 
-## Tailwind config
+# Tailwind config
 ralph-starter integrations fetch figma "ABC123" --figma-mode tokens --figma-format tailwind
 ```
 
@@ -3191,25 +3195,25 @@ Extracted tokens:
 Generate framework-specific component code:
 
 ```bash
-## React (default)
+# React (default)
 ralph-starter integrations fetch figma "ABC123" --figma-mode components
 
-## Vue SFC
+# Vue SFC
 ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework vue
 
-## Svelte
+# Svelte
 ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework svelte
 
-## Astro
+# Astro
 ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework astro
 
-## Next.js (with 'use client')
+# Next.js (with 'use client')
 ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework nextjs
 
-## Nuxt (Vue 3 with CSS modules)
+# Nuxt (Vue 3 with CSS modules)
 ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework nuxt
 
-## HTML + CSS
+# HTML + CSS
 ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-framework html
 ```
 
@@ -3218,10 +3222,10 @@ ralph-starter integrations fetch figma "ABC123" --figma-mode components --figma-
 Export icons and images:
 
 ```bash
-## SVG (default)
+# SVG (default)
 ralph-starter integrations fetch figma "ABC123" --figma-mode assets
 
-## PNG at 2x scale
+# PNG at 2x scale
 ralph-starter integrations fetch figma "ABC123" --figma-mode assets --figma-format png --figma-scale 2
 ```
 
@@ -3236,16 +3240,16 @@ Export URLs expire after 30 days. Re-run the fetch to get fresh URLs.
 Extract text content from Figma designs and apply it directly to your existing templates:
 
 ```bash
-## Extract content and apply to existing project
+# Extract content and apply to existing project
 ralph-starter run --from figma --project "ABC123" --figma-mode content
 
-## Preview changes without applying
+# Preview changes without applying
 ralph-starter run --from figma --project "ABC123" --figma-mode content --figma-preview
 
-## Target specific directory
+# Target specific directory
 ralph-starter run --from figma --project "ABC123" --figma-mode content --figma-target "src/pages"
 
-## Use custom content mapping
+# Use custom content mapping
 ralph-starter run --from figma --project "ABC123" --figma-mode content --figma-mapping mapping.json
 ```
 
@@ -3303,16 +3307,16 @@ Create a custom mapping file to control how Figma content maps to your component
 The integration accepts various URL formats:
 
 ```bash
-## Full file URL
+# Full file URL
 https://www.figma.com/file/ABC123/MyDesign
 
-## Design URL (new format)
+# Design URL (new format)
 https://www.figma.com/design/ABC123/MyDesign
 
-## With node selection
+# With node selection
 https://www.figma.com/file/ABC123/MyDesign?node-id=1:23
 
-## File key only
+# File key only
 ABC123
 ```
 
@@ -3321,7 +3325,7 @@ ABC123
 #### Design-to-Code with AI Loop
 
 ```bash
-## Use Figma design as task specification
+# Use Figma design as task specification
 ralph-starter run --from figma \
   --project "https://figma.com/file/ABC123/LoginPage" \
   --preset feature
@@ -3330,7 +3334,7 @@ ralph-starter run --from figma \
 #### Generate Theme File
 
 ```bash
-## Extract tokens and redirect to file
+# Extract tokens and redirect to file
 ralph-starter integrations fetch figma "ABC123" \
   --figma-mode tokens \
   --figma-format css > theme.css
@@ -3339,10 +3343,10 @@ ralph-starter integrations fetch figma "ABC123" \
 #### Export All Icons
 
 ```bash
-## Get icon manifest with download script
+# Get icon manifest with download script
 ralph-starter integrations fetch figma "ABC123" --figma-mode assets
 
-## Run the generated curl commands to download
+# Run the generated curl commands to download
 ```
 
 ### Test Connection
@@ -3775,16 +3779,16 @@ The `completionPromise` is a specific string the agent must output for the loop 
 CLI flags always override preset values. This lets you use a preset as a starting point and customize specific settings.
 
 ```bash
-## Use feature preset but increase iterations
+# Use feature preset but increase iterations
 ralph-starter run "implement complex auth flow" --preset feature --max-iterations 50
 
-## Use tdd-red-green but skip commits
+# Use tdd-red-green but skip commits
 ralph-starter run "add unit tests" --preset tdd-red-green --no-commit
 
-## Use debug preset but enable validation
+# Use debug preset but enable validation
 ralph-starter run "fix the flaky test" --preset debug --validate
 
-## Use review preset with a specific agent
+# Use review preset with a specific agent
 ralph-starter run "review the auth module" --preset review --agent cursor
 ```
 
@@ -3793,66 +3797,66 @@ ralph-starter run "review the auth module" --preset review --agent cursor
 #### Workflow: TDD Feature Development
 
 ```bash
-## Start with TDD preset
+# Start with TDD preset
 ralph-starter run "add password reset functionality" \
   --preset tdd-red-green \
   --validate \
   --commit
 
-## Agent will:
-## 1. Write a failing test for password reset
-## 2. Run tests to confirm failure
-## 3. Implement the minimum code to make the test pass
-## 4. Commit
-## 5. Repeat for the next test case
+# Agent will:
+# 1. Write a failing test for password reset
+# 2. Run tests to confirm failure
+# 3. Implement the minimum code to make the test pass
+# 4. Commit
+# 5. Repeat for the next test case
 ```
 
 #### Workflow: Incident Response
 
 ```bash
-## Production is down -- use incident-response preset
+# Production is down -- use incident-response preset
 ralph-starter run "fix: 500 errors on /api/orders after deploy" \
   --preset incident-response \
   --push \
   --pr
 
-## Agent will:
-## 1. Identify the root cause (limited to 15 iterations)
-## 2. Apply the minimal fix
-## 3. Validate that tests pass
-## 4. Commit, push, and create a PR
-## Circuit breaker trips fast (2 failures) to avoid wasting time
+# Agent will:
+# 1. Identify the root cause (limited to 15 iterations)
+# 2. Apply the minimal fix
+# 3. Validate that tests pass
+# 4. Commit, push, and create a PR
+# Circuit breaker trips fast (2 failures) to avoid wasting time
 ```
 
 #### Workflow: Adversarial Security Review
 
 ```bash
-## Run a security audit
+# Run a security audit
 ralph-starter run "audit all API endpoints for OWASP Top 10" \
   --preset adversarial-review
 
-## Agent will:
-## 1. Enumerate all API endpoints
-## 2. Check for injection vulnerabilities
-## 3. Test authentication and authorization
-## 4. Look for data leaks
-## 5. Produce a security report (no code changes, no commits)
+# Agent will:
+# 1. Enumerate all API endpoints
+# 2. Check for injection vulnerabilities
+# 3. Test authentication and authorization
+# 4. Look for data leaks
+# 5. Produce a security report (no code changes, no commits)
 ```
 
 #### Workflow: Spec-Driven Implementation
 
 ```bash
-## Place your spec files in specs/ and an IMPLEMENTATION_PLAN.md
+# Place your spec files in specs/ and an IMPLEMENTATION_PLAN.md
 ralph-starter run "implement the payment module per spec" \
   --preset spec-driven \
   --validate \
   --commit
 
-## Agent will:
-## 1. Read specs/ directory
-## 2. Implement each requirement
-## 3. Check off tasks in IMPLEMENTATION_PLAN.md
-## 4. Output <promise>COMPLETE</promise> when done
+# Agent will:
+# 1. Read specs/ directory
+# 2. Implement each requirement
+# 3. Check off tasks in IMPLEMENTATION_PLAN.md
+# 4. Output <promise>COMPLETE</promise> when done
 ```
 
 ### Listing Available Presets
@@ -3942,18 +3946,18 @@ ralph-starter run --prd ./PRD.md
 A PRD file follows this structure:
 
 ```markdown
-## Project Title
+# Project Title
 
 Optional description paragraph that explains the overall goal.
 This text is captured as the PRD description and included in the agent prompt.
 
-### Section Name
+## Section Name
 
 - [ ] First task in this section
 - [ ] Second task in this section
 - [x] Already completed task (will be skipped)
 
-### Another Section
+## Another Section
 
 - [ ] Task in another section
 - [ ] Another task
@@ -4002,27 +4006,27 @@ The parser reads the file and filters to only **incomplete** tasks (`- [ ]`). Al
 Ralph-starter generates a structured prompt for the agent that includes:
 
 ```markdown
-## Project Title
+# Project Title
 
 Description from the PRD...
 
-### Task Progress
+## Task Progress
 
 - Completed: 3/10
 - Remaining: 7
 
-### Tasks to Complete
+## Tasks to Complete
 
-#### Section Name
+### Section Name
 
 - [ ] First task
 - [ ] Second task
 
-#### Another Section
+### Another Section
 
 - [ ] Third task
 
-### Instructions
+## Instructions
 
 Work through the tasks above one by one. Focus on completing each task
 fully before moving to the next.
@@ -4100,36 +4104,36 @@ ralph-starter run --prd ./PRD.md --max-iterations 20
 #### Example: New Feature
 
 ```markdown
-## User Authentication System
+# User Authentication System
 
 Implement a complete authentication system with email/password login,
 registration, and session management.
 
-### Database
+## Database
 
 - [ ] Create users table migration with email, password_hash, created_at
 - [ ] Create sessions table migration with user_id, token, expires_at
 - [ ] Add database indexes for email and session token lookups
 
-### API Endpoints
+## API Endpoints
 
 - [ ] POST /api/auth/register - Create new user account
 - [ ] POST /api/auth/login - Authenticate and return session token
 - [ ] POST /api/auth/logout - Invalidate current session
 - [ ] GET /api/auth/me - Return current user profile
 
-### Middleware
+## Middleware
 
 - [ ] Create authentication middleware that validates session tokens
 - [ ] Add rate limiting to auth endpoints (5 attempts per minute)
 
-### Validation
+## Validation
 
 - [ ] Validate email format on registration
 - [ ] Enforce password minimum length (8 characters)
 - [ ] Return proper error messages for duplicate emails
 
-### Tests
+## Tests
 
 - [ ] Unit tests for password hashing
 - [ ] Integration tests for registration flow
@@ -4140,23 +4144,23 @@ registration, and session management.
 #### Example: Bug Fix Checklist
 
 ```markdown
-## Fix: Shopping Cart Race Condition
+# Fix: Shopping Cart Race Condition
 
 Users report items disappearing from their cart during concurrent updates.
 
-### Investigation
+## Investigation
 
 - [ ] Add logging to cart update endpoint to capture request timing
 - [ ] Reproduce the race condition with concurrent API calls
 - [ ] Document the exact sequence that causes the bug
 
-### Fix
+## Fix
 
 - [ ] Add optimistic locking to cart_items table (version column)
 - [ ] Update cart update endpoint to use compare-and-swap
 - [ ] Handle version conflict with retry logic (max 3 retries)
 
-### Verification
+## Verification
 
 - [ ] Write test that simulates concurrent cart updates
 - [ ] Verify no data loss under concurrent modification
@@ -4166,31 +4170,31 @@ Users report items disappearing from their cart during concurrent updates.
 #### Example: Refactoring Plan
 
 ```markdown
-## Refactor: Extract Payment Processing Module
+# Refactor: Extract Payment Processing Module
 
 The payment logic is scattered across multiple controllers. Extract it
 into a dedicated module with a clean interface.
 
-### Preparation
+## Preparation
 
 - [x] Map all files that contain payment-related code
 - [x] Document the current payment flow
 
-### Extraction
+## Extraction
 
 - [ ] Create src/payments/types.ts with payment interfaces
 - [ ] Create src/payments/processor.ts with core payment logic
 - [ ] Create src/payments/validators.ts for payment validation
 - [ ] Move Stripe integration code to src/payments/providers/stripe.ts
 
-### Migration
+## Migration
 
 - [ ] Update OrderController to use new payment module
 - [ ] Update SubscriptionController to use new payment module
 - [ ] Update WebhookHandler to use new payment module
 - [ ] Remove duplicate payment code from old locations
 
-### Cleanup
+## Cleanup
 
 - [ ] Update imports across the codebase
 - [ ] Run full test suite and fix any failures
@@ -4231,11 +4235,11 @@ Running autonomous AI loops consumes tokens, and tokens cost money. Ralph-starte
 Cost tracking is **enabled by default**. You can explicitly control it with CLI flags:
 
 ```bash
-## Enabled by default -- these are equivalent:
+# Enabled by default -- these are equivalent:
 ralph-starter run "add user dashboard" --preset feature
 ralph-starter run "add user dashboard" --preset feature --track-cost
 
-## Disable cost tracking:
+# Disable cost tracking:
 ralph-starter run "add user dashboard" --preset feature --no-track-cost
 ```
 
@@ -4280,7 +4284,7 @@ When cost tracking is enabled and progress tracking is active, ralph-starter wri
 The summary looks like this:
 
 ```markdown
-### Cost Summary
+## Cost Summary
 
 | Metric | Value |
 |--------|-------|
@@ -4347,7 +4351,7 @@ Presets with lower `maxIterations` naturally cap spending:
 Override any preset's iteration cap:
 
 ```bash
-## Cap at 10 iterations regardless of preset
+# Cap at 10 iterations regardless of preset
 ralph-starter run "add feature" --preset feature --max-iterations 10
 ```
 
@@ -4435,11 +4439,11 @@ The `skills.sh` file is parsed for skill declarations using the comment format `
 
 ```bash
 #!/bin/bash
-## Skill: react-best-practices
-## Skill: nextjs-app-router
-## Skill: vercel-deployment
+# Skill: react-best-practices
+# Skill: nextjs-app-router
+# Skill: vercel-deployment
 
-## Installation logic below...
+# Installation logic below...
 npx add-skill vercel-labs/agent-skills
 ```
 
@@ -4448,23 +4452,23 @@ npx add-skill vercel-labs/agent-skills
 A skill file is a standard markdown document. The first heading becomes the display name, and the first paragraph after the heading becomes the description.
 
 ```markdown
-## React Best Practices
+# React Best Practices
 
 Guidelines for writing clean, performant React components.
 
-### Component Structure
+## Component Structure
 
 - Use functional components with hooks
 - Keep components small and focused (under 200 lines)
 - Extract custom hooks for shared logic
 
-### State Management
+## State Management
 
 - Use `useState` for local component state
 - Use `useReducer` for complex state logic
 - Lift state up only when needed by sibling components
 
-### Performance
+## Performance
 
 - Wrap expensive computations in `useMemo`
 - Use `useCallback` for event handlers passed as props
@@ -4517,7 +4521,7 @@ A skill named `react-best-practices` matches on `react`. A skill named `typed-ap
 When skills are detected, ralph-starter formats them into a prompt section using `formatSkillsForPrompt`:
 
 ```markdown
-### Available Claude Code Skills
+## Available Claude Code Skills
 
 - **react-best-practices**: Guidelines for writing clean, performant React components.
 - **typescript-patterns**: TypeScript patterns and idioms for large codebases.
@@ -4535,10 +4539,10 @@ Ralph-starter provides a `skill` command for managing skills:
 #### Install a Skill
 
 ```bash
-## Install from a GitHub repository
+# Install from a GitHub repository
 ralph-starter skill add vercel-labs/agent-skills
 
-## Install globally (available to all projects)
+# Install globally (available to all projects)
 ralph-starter skill add vercel-labs/agent-skills --global
 ```
 
@@ -4597,17 +4601,17 @@ mkdir -p ~/.claude/skills
 Create a markdown file with your domain knowledge:
 
 ```markdown
-## Our API Conventions
+# Our API Conventions
 
 REST API patterns and conventions for the Acme project.
 
-### URL Structure
+## URL Structure
 
 - Use kebab-case for URL segments: `/api/user-profiles`
 - Version the API in the URL: `/api/v1/users`
 - Use plural nouns for collections: `/api/v1/orders`
 
-### Request/Response Format
+## Request/Response Format
 
 - Always return JSON with a consistent envelope:
   ```json
@@ -4618,19 +4622,19 @@ REST API patterns and conventions for the Acme project.
   }
   ```
 
-### Error Handling
+## Error Handling
 
 - Use standard HTTP status codes
 - Include error code, message, and field for validation errors
 - Log all 5xx errors with request context
 
-### Authentication
+## Authentication
 
 - Use Bearer tokens in the Authorization header
 - Tokens expire after 24 hours
 - Refresh tokens are issued alongside access tokens
 
-### Database Queries
+## Database Queries
 
 - Always use parameterized queries
 - Include pagination for list endpoints (default: 20, max: 100)
@@ -4656,18 +4660,18 @@ Detected skills:
 Create `.claude/skills/team-standards.md`:
 
 ```markdown
-## Team Coding Standards
+# Team Coding Standards
 
 Coding standards for the engineering team.
 
-### General Rules
+## General Rules
 
 - Maximum file length: 300 lines
 - Maximum function length: 50 lines
 - All public functions must have JSDoc comments
 - No `any` types in TypeScript -- use `unknown` and narrow
 
-### Naming Conventions
+## Naming Conventions
 
 - Components: PascalCase (e.g., `UserProfile`)
 - Hooks: camelCase with `use` prefix (e.g., `useUserData`)
@@ -4675,7 +4679,7 @@ Coding standards for the engineering team.
 - Constants: SCREAMING_SNAKE_CASE (e.g., `MAX_RETRY_COUNT`)
 - Files: kebab-case (e.g., `user-profile.tsx`)
 
-### Testing
+## Testing
 
 - Every new function needs at least one test
 - Use `describe` blocks to group related tests
@@ -4688,23 +4692,23 @@ Coding standards for the engineering team.
 Create `.claude/skills/database-patterns.md`:
 
 ```markdown
-## Database Patterns
+# Database Patterns
 
 Database access patterns for our PostgreSQL setup.
 
-### Migrations
+## Migrations
 
 - Use sequential numbering: `001_create_users.sql`
 - Always include a down migration
 - Never modify a migration that has been applied to production
 
-### Queries
+## Queries
 
 - Use the query builder, not raw SQL
 - Always include `WHERE` clauses on UPDATE and DELETE
 - Use transactions for multi-table operations
 
-### Indexing
+## Indexing
 
 - Add indexes for all foreign keys
 - Add indexes for columns used in WHERE clauses
@@ -4716,11 +4720,11 @@ Database access patterns for our PostgreSQL setup.
 Skills are automatically detected and injected regardless of which preset you use:
 
 ```bash
-## Skills are injected into the agent prompt automatically
+# Skills are injected into the agent prompt automatically
 ralph-starter run "add user profile endpoint" --preset api-design
 
-## The agent will see both the api-design preset instructions AND
-## any relevant skills (like api-conventions.md and database-patterns.md)
+# The agent will see both the api-design preset instructions AND
+# any relevant skills (like api-conventions.md and database-patterns.md)
 ```
 
 ### Skill Precedence
@@ -4773,30 +4777,30 @@ Choose a discovery method and see AI-generated project ideas.
 Fetch specs from any public markdown or HTML page:
 
 ```bash
-## Public GitHub raw file
+# Public GitHub raw file
 ralph-starter run --from https://raw.githubusercontent.com/multivmlabs/ralph-starter/main/README.md
 
-## Public gist
+# Public gist
 ralph-starter run --from https://gist.githubusercontent.com/user/id/raw/spec.md
 
-## Any public webpage
+# Any public webpage
 ralph-starter run --from https://example.com/docs/feature-spec
 ```
 
 #### 4. Test with Local Files
 
 ```bash
-## Create a simple spec
+# Create a simple spec
 echo "Build a counter app with React that increments and decrements" > test-spec.md
 
-## Run with local file
+# Run with local file
 ralph-starter run --from ./test-spec.md
 ```
 
 #### 5. Test with PDF Files
 
 ```bash
-## If you have a PDF spec
+# If you have a PDF spec
 ralph-starter run --from ./requirements.pdf
 ```
 
@@ -4809,14 +4813,14 @@ GitHub uses the `gh` CLI, which doesn't require a separate API key if you're log
 #### Setup
 
 ```bash
-## Install GitHub CLI (if not installed)
-## macOS
+# Install GitHub CLI (if not installed)
+# macOS
 brew install gh
 
-## Linux
+# Linux
 sudo apt install gh
 
-## Windows
+# Windows
 winget install GitHub.cli
 ```
 
@@ -4824,7 +4828,7 @@ winget install GitHub.cli
 
 ```bash
 gh auth login
-## Follow prompts to authenticate via browser
+# Follow prompts to authenticate via browser
 ```
 
 #### Test Connection
@@ -4836,10 +4840,10 @@ ralph-starter source test github
 #### Test Fetching Issues
 
 ```bash
-## Preview issues from any public repo
+# Preview issues from any public repo
 ralph-starter source preview github --project multivmlabs/ralph-starter --limit 5
 
-## Run with a public repo
+# Run with a public repo
 ralph-starter run --from github --project multivmlabs/ralph-starter --label "enhancement"
 ```
 
@@ -4883,13 +4887,13 @@ ralph-starter source test linear
 #### Test Fetching Issues
 
 ```bash
-## Preview issues
+# Preview issues
 ralph-starter source preview linear --limit 5
 
-## Filter by label
+# Filter by label
 ralph-starter source preview linear --label "bug" --limit 3
 
-## Filter by project
+# Filter by project
 ralph-starter source preview linear --project "My Project"
 ```
 
@@ -4945,7 +4949,7 @@ ralph-starter source test notion
 #### Test Fetching Pages
 
 ```bash
-## Preview pages from a database
+# Preview pages from a database
 ralph-starter source preview notion --project "My Database Name" --limit 5
 ```
 
@@ -4973,10 +4977,10 @@ ralph-starter source preview notion --project "My Database Name" --limit 5
 #### Check All Sources
 
 ```bash
-## List available sources
+# List available sources
 ralph-starter source list
 
-## Test each configured source
+# Test each configured source
 ralph-starter source test github
 ralph-starter source test linear
 ralph-starter source test notion
@@ -5007,7 +5011,7 @@ ralph-starter config get github
 3. Ensure you have the right permissions
 
 ```bash
-## Re-enter the API key
+# Re-enter the API key
 ralph-starter config set linear.apiKey <new-key>
 ```
 
@@ -5045,10 +5049,10 @@ You can manually edit this file if needed.
 #### Removing Credentials
 
 ```bash
-## Remove a specific key
+# Remove a specific key
 ralph-starter config delete linear.apiKey
 
-## Remove all config for a source
+# Remove all config for a source
 ralph-starter config delete linear
 ```
 
@@ -5059,20 +5063,20 @@ ralph-starter config delete linear
 Once integrations are set up, test the full workflow:
 
 ```bash
-## 1. Initialize a new project
+# 1. Initialize a new project
 mkdir test-project && cd test-project
 git init
 
-## 2. Fetch a spec from your favorite source
+# 2. Fetch a spec from your favorite source
 ralph-starter run --from linear --label "ralph-test" --commit
 
-## 3. Watch the magic happen!
+# 3. Watch the magic happen!
 ```
 
 Or use the wizard:
 ```bash
 ralph-starter
-## Follow prompts...
+# Follow prompts...
 ```
 
 
@@ -5211,11 +5215,11 @@ Source: Trello Card
 Board: ${card.idBoard}
 Labels: ${card.labels.map((l: any) => l.name).join(', ')}
 
-### Description
+## Description
 
 ${card.desc || 'No description provided.'}
 
-### Checklist Items
+## Checklist Items
 
 ${card.checklists?.map((cl: any) =>
   cl.checkItems.map((item: any) =>
@@ -5465,17 +5469,17 @@ export const tools = [
 #### Development Setup
 
 ```bash
-## Clone the repo
+# Clone the repo
 git clone https://github.com/multivmlabs/ralph-starter.git
 cd ralph-starter
 
-## Install dependencies
+# Install dependencies
 npm install
 
-## Build
+# Build
 npm run build
 
-## Run locally
+# Run locally
 npm link
 ralph-starter --version
 ```
@@ -5496,13 +5500,13 @@ ralph-starter --version
 #### Testing
 
 ```bash
-## Run tests
+# Run tests
 npm test
 
-## Type check
+# Type check
 npm run typecheck
 
-## Lint
+# Lint
 npm run lint
 ```
 
@@ -5955,7 +5959,7 @@ ralph-starter looks for validation commands in two places:
 #### 1. AGENTS.md
 
 ```markdown
-#### Validation Commands
+### Validation Commands
 - test: npm test
 - lint: npm run lint
 - build: npm run build
@@ -6000,9 +6004,9 @@ If any command fails, validation stops and the AI receives the error output.
 When validation fails, the AI receives:
 
 ```markdown
-### Validation Failed
+## Validation Failed
 
-#### npm run test
+### npm run test
 ```
 FAIL src/components/Dashboard.test.tsx
   ● Dashboard › renders habits
@@ -6020,21 +6024,21 @@ The AI then attempts to fix the issues before continuing.
 #### With Commit
 
 ```bash
-## Validate and commit if passed
+# Validate and commit if passed
 ralph-starter run "add tests" --validate --commit
 ```
 
 #### Full Automation
 
 ```bash
-## Auto mode with validation and commit
+# Auto mode with validation and commit
 ralph-starter run --auto --validate --commit
 ```
 
 #### Maximum Iterations
 
 ```bash
-## Limit iterations to prevent infinite fix loops
+# Limit iterations to prevent infinite fix loops
 ralph-starter run --validate --max-iterations 20
 ```
 
@@ -6043,7 +6047,7 @@ ralph-starter run --validate --max-iterations 20
 #### In AGENTS.md
 
 ```markdown
-#### Validation Commands
+### Validation Commands
 - test: npm test -- --coverage --watchAll=false
 - lint: npm run lint -- --max-warnings 0
 - build: npm run build
@@ -6055,7 +6059,7 @@ ralph-starter run --validate --max-iterations 20
 You can specify multiple validation steps:
 
 ```markdown
-#### Validation Commands
+### Validation Commands
 - typecheck: npm run typecheck
 - lint: npm run lint
 - test: npm test
@@ -6173,18 +6177,18 @@ After pushing:
 #### PR Format
 
 ```markdown
-### Summary
+## Summary
 - Added user authentication
 - Created login and registration forms
 - Implemented session management
 
-### Changes
+## Changes
 - src/components/LoginForm.tsx
 - src/components/RegisterForm.tsx
 - src/lib/auth.ts
 - src/pages/login.tsx
 
-### Testing
+## Testing
 - [x] Tests pass
 - [x] Lint passes
 - [x] Build succeeds
@@ -6195,16 +6199,16 @@ After pushing:
 #### Feature Development
 
 ```bash
-## Create feature branch
+# Create feature branch
 git checkout -b feature/user-auth
 
-## Run with full automation
+# Run with full automation
 ralph-starter run "add user authentication" --commit --push --pr --validate
 
-## Result:
-## - Multiple commits as tasks complete
-## - Pushed to feature/user-auth
-## - PR created against main
+# Result:
+# - Multiple commits as tasks complete
+# - Pushed to feature/user-auth
+# - PR created against main
 ```
 
 #### Bug Fix
@@ -6214,19 +6218,19 @@ git checkout -b fix/login-bug
 
 ralph-starter run "fix login redirect bug" --commit --push --pr
 
-## Single commit, PR created
+# Single commit, PR created
 ```
 
 #### Incremental Work
 
 ```bash
-## Commit each task but don't push yet
+# Commit each task but don't push yet
 ralph-starter run --commit
 
-## Review changes
+# Review changes
 git log --oneline
 
-## Push manually when ready
+# Push manually when ready
 git push
 ```
 
@@ -6235,7 +6239,7 @@ git push
 #### Branch Strategy
 
 ```bash
-## Always work on feature branches
+# Always work on feature branches
 git checkout -b feature/my-feature
 ralph-starter run --commit --pr
 ```
@@ -6259,13 +6263,13 @@ Bad:
 #### Review Before Push
 
 ```bash
-## Commit locally first
+# Commit locally first
 ralph-starter run --commit
 
-## Review
+# Review
 git log -p
 
-## Then push
+# Then push
 git push
 ```
 
@@ -6293,10 +6297,10 @@ gh: command not found
 Solution: Install GitHub CLI
 
 ```bash
-## macOS
+# macOS
 brew install gh
 
-## Then authenticate
+# Then authenticate
 gh auth login
 ```
 
@@ -6352,7 +6356,7 @@ With defaults: 3 failures in a row trips the breaker, or seeing the same error 5
 Set the maximum consecutive failures before tripping:
 
 ```bash
-## Trip after 5 consecutive failures instead of 3
+# Trip after 5 consecutive failures instead of 3
 ralph-starter run "add feature" --circuit-breaker-failures 5
 ```
 
@@ -6361,7 +6365,7 @@ ralph-starter run "add feature" --circuit-breaker-failures 5
 Set the maximum same-error repetitions before tripping:
 
 ```bash
-## Trip after the same error occurs 3 times instead of 5
+# Trip after the same error occurs 3 times instead of 5
 ralph-starter run "add feature" --circuit-breaker-errors 3
 ```
 
@@ -6449,10 +6453,10 @@ Presets that do not specify a circuit breaker (like `debug`, `review`, `docs`) u
 When you use a preset, its circuit breaker config is applied automatically:
 
 ```bash
-## Uses migration-safety's 1/2 circuit breaker
+# Uses migration-safety's 1/2 circuit breaker
 ralph-starter run "add email column" --preset migration-safety
 
-## Override the preset's circuit breaker
+# Override the preset's circuit breaker
 ralph-starter run "add email column" --preset migration-safety --circuit-breaker-failures 3
 ```
 
@@ -6591,7 +6595,7 @@ With defaults, the agent can make at most 10 calls in any given minute and 100 c
 Use the `--rate-limit` flag to set the maximum calls per hour:
 
 ```bash
-## Allow only 30 API calls per hour
+# Allow only 30 API calls per hour
 ralph-starter run "add feature" --rate-limit 30
 ```
 
@@ -6700,7 +6704,7 @@ Minute: 10/10 (100%) | Hour: 85/100 (85%) | Blocked - retry in 12s
 When using expensive models like GPT-4 or Claude 3 Opus, limit the rate to control costs:
 
 ```bash
-## Only 20 calls per hour with an expensive model
+# Only 20 calls per hour with an expensive model
 ralph-starter run "implement feature" \
   --preset feature \
   --rate-limit 20 \
@@ -6778,30 +6782,30 @@ The Ralph Playbook is a set of conventions for organizing projects so AI coding 
 The main configuration file for AI agents.
 
 ```markdown
-## AGENTS.md
+# AGENTS.md
 
-### Project: my-app
+## Project: my-app
 
-#### Overview
+### Overview
 Brief description of the project.
 
-#### Tech Stack
+### Tech Stack
 - Frontend: React with TypeScript
 - Backend: Node.js with Express
 - Database: PostgreSQL
 
-#### Validation Commands
+### Validation Commands
 - test: npm test
 - lint: npm run lint
 - build: npm run build
 - typecheck: npm run typecheck
 
-#### Coding Standards
+### Coding Standards
 - Use TypeScript strict mode
 - Follow ESLint rules
 - Write tests for new features
 
-#### File Structure
+### File Structure
 src/
 ├── components/    # React components
 ├── pages/         # Page components
@@ -6815,17 +6819,17 @@ src/
 Instructions for planning mode.
 
 ```markdown
-## Planning Mode
+# Planning Mode
 
 You are analyzing specifications to create an implementation plan.
 
-### Instructions
+## Instructions
 1. Read all specs in `specs/`
 2. Identify dependencies between features
 3. Prioritize tasks (setup → core → polish)
 4. Create detailed task breakdowns
 
-### Output
+## Output
 Write to IMPLEMENTATION_PLAN.md with:
 - Overview section
 - Phased task list with checkboxes
@@ -6838,18 +6842,18 @@ Write to IMPLEMENTATION_PLAN.md with:
 Instructions for building mode.
 
 ```markdown
-## Building Mode
+# Building Mode
 
 You are implementing tasks from the implementation plan.
 
-### Instructions
+## Instructions
 1. Read IMPLEMENTATION_PLAN.md
 2. Find the next unchecked task
 3. Implement it completely
 4. Run validation commands
 5. Mark task as complete
 
-### Guidelines
+## Guidelines
 - Follow coding standards in AGENTS.md
 - Write tests for new features
 - Keep commits atomic and descriptive
@@ -6860,25 +6864,25 @@ You are implementing tasks from the implementation plan.
 The prioritized task list.
 
 ```markdown
-## Implementation Plan
+# Implementation Plan
 
-### Overview
+## Overview
 Building a habit tracking application.
 
-### Tasks
+## Tasks
 
-#### Phase 1: Setup
+### Phase 1: Setup
 - [x] Initialize React project
 - [x] Set up TypeScript
 - [ ] Configure ESLint and Prettier
 
-#### Phase 2: Core Features
+### Phase 2: Core Features
 - [ ] Create habit list component
 - [ ] Add habit creation form
 - [ ] Implement habit tracking logic
 - [ ] Add streak calculation
 
-#### Phase 3: Polish
+### Phase 3: Polish
 - [ ] Add animations
 - [ ] Improve error handling
 - [ ] Write tests
@@ -6919,23 +6923,23 @@ specs/
 #### Writing Good Specs
 
 ```markdown
-## Feature: User Dashboard
+# Feature: User Dashboard
 
-### Description
+## Description
 A dashboard showing user's habits and progress.
 
-### Requirements
+## Requirements
 - [ ] Display list of habits
 - [ ] Show completion status for today
 - [ ] Display streak counts
 - [ ] Weekly progress chart
 
-### Technical Notes
+## Technical Notes
 - Use React Query for data fetching
 - Chart.js for visualizations
 - Mobile-responsive design
 
-### Acceptance Criteria
+## Acceptance Criteria
 - Dashboard loads in under 2 seconds
 - Works on mobile devices
 - Shows accurate streak counts
@@ -7336,16 +7340,16 @@ ralph-starter/
 #### Running Locally
 
 ```bash
-## Build the project
+# Build the project
 pnpm build
 
-## Run in development
+# Run in development
 pnpm dev
 
-## Run tests
+# Run tests
 pnpm test
 
-## Run linting
+# Run linting
 pnpm lint
 ```
 
