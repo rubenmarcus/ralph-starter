@@ -82,7 +82,7 @@ export async function fixCommand(customTask: string | undefined, options: FixOpt
     const results = await runAllValidations(cwd, commands);
     const failures = results.filter((r) => !r.success);
 
-    if (failures.length === 0 && !customTask) {
+    if (failures.length === 0 && !customTask && !options.design) {
       spinner.succeed(chalk.green('All checks passed — nothing to fix!'));
       return;
     }
@@ -99,7 +99,7 @@ export async function fixCommand(customTask: string | undefined, options: FixOpt
       spinner.succeed(chalk.green('Build passing'));
     }
     console.log();
-  } else if (!customTask) {
+  } else if (!customTask && !options.design) {
     console.log(chalk.yellow('No build/lint/test commands detected in this project.'));
     return;
   }
