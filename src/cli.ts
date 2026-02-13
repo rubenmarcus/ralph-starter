@@ -114,6 +114,7 @@ program
   .option('--commit', 'Auto-commit the fix')
   .option('--max-iterations <n>', 'Max fix iterations (default: 3)')
   .option('--output-dir <dir>', 'Project directory (default: cwd)')
+  .option('--design', 'Visual-first design fix: screenshot, analyze, plan, and fix design issues')
   .action(fixCommand);
 
 // ralph-starter init - Initialize Ralph in a project

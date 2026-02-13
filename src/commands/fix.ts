@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import chalk from 'chalk';
 import ora from 'ora';
@@ -19,6 +19,7 @@ interface FixOptions {
   maxIterations?: string;
   outputDir?: string;
   scan?: boolean;
+  design?: boolean;
 }
 
 /**
@@ -149,6 +150,44 @@ export async function fixCommand(customTask: string | undefined, options: FixOpt
       'Fix all project issues found by the scan below. Prioritize: build errors first, then type errors, then lint violations, then test failures. Make minimal, focused fixes.';
   }
 
+  // Include original spec context so the agent knows what "correct" looks like
+  const specsDir = join(cwd, 'specs');
+  const planPath = join(cwd, 'IMPLEMENTATION_PLAN.md');
+  let specContext = '';
+
+  if (existsSync(specsDir)) {
+    try {
+      const specFiles = readdirSync(specsDir).filter((f) => f.endsWith('.md'));
+      for (const file of specFiles) {
+        const content = readFileSync(join(specsDir, file), 'utf-8');
+        const truncated =
+          content.length > 3000
+            ? `${content.slice(0, 3000)}\n\n[... spec truncated for brevity ...]`
+            : content;
+        specContext += `\n### Spec: ${file}\n${truncated}\n`;
+      }
+    } catch {
+      // Specs directory unreadable
+    }
+  }
+
+  if (existsSync(planPath)) {
+    try {
+      const planContent = readFileSync(planPath, 'utf-8');
+      const planSummary =
+        planContent.length > 2000
+          ? `${planContent.slice(0, 2000)}\n\n[... plan truncated ...]`
+          : planContent;
+      specContext += `\n### Implementation Plan\n${planSummary}\n`;
+    } catch {
+      // Plan file unreadable
+    }
+  }
+
+  if (specContext) {
+    fixTask = `${fixTask}\n\n## Original Design Specification\n\nIMPORTANT: Use the following specification as the source of truth for what the design should look like. Match the described colors, spacing, layout, and styling exactly.\n${specContext}`;
+  }
+
   // For design/visual tasks, add instructions to visually verify with screenshots
   const DESIGN_KEYWORDS = [
     'css',
@@ -176,20 +215,53 @@ export async function fixCommand(customTask: string | undefined, options: FixOpt
     'visual',
   ];
   const isDesignTask =
-    customTask && DESIGN_KEYWORDS.some((kw) => customTask.toLowerCase().includes(kw));
-  if (isDesignTask) {
-    fixTask += `\n\nVisual verification (IMPORTANT):
+    options.design ||
+    (customTask && DESIGN_KEYWORDS.some((kw) => customTask.toLowerCase().includes(kw)));
+
+  // --design flag: structured visual-first fix flow
+  if (options.design) {
+    fixTask = `You are fixing design and visual issues in this project. Follow this structured methodology:
+
+## Phase 1: Visual Audit
+1. Start the dev server (e.g. \`npm run dev\` or \`npx vite\`) — this OVERRIDES the "no dev server" rule
+2. Take full-page screenshots at 3 viewports: desktop (1440px), tablet (768px), mobile (375px)
+3. Analyze each screenshot carefully against the spec below
+
+## Phase 2: Issue Identification
+List ALL design issues you find:
+- Layout/spacing problems (misalignment, excess whitespace, overflow)
+- Typography issues (wrong fonts, sizes, weights, line-heights)
+- Color mismatches (wrong palette, poor contrast, inconsistent usage)
+- Responsive breakage (elements overlapping, content clipping, bad stacking)
+- Component styling (borders, shadows, padding, margins)
+
+## Phase 3: Fix Plan
+Create a DESIGN_FIX_PLAN.md with prioritized issues and specific CSS/component fixes for each.
+
+## Phase 4: Execute & Verify
+1. Fix issues one by one, starting with layout/structure, then typography, then colors
+2. After each major fix, re-screenshot to verify improvement
+3. Final verification: screenshot all 3 viewports and confirm all issues are resolved
+
+## Phase 5: Cleanup
+CRITICAL: Stop the dev server (kill the process) when done — do NOT leave it running.
+
+${customTask ? `\nUser notes: ${customTask}\n` : ''}${specContext ? `\n## Original Design Specification\n${specContext}` : ''}${feedback ? `\n\n## Build Errors (also fix these)\n${feedback}` : ''}`;
+  } else if (isDesignTask) {
+    fixTask += `\n\nVisual verification (IMPORTANT — OVERRIDES the "no dev server" rule):
 This is a visual/design task. After making your CSS and styling changes, you MUST visually verify the result:
-1. Start a local dev server briefly (exception to the "no dev server" rule for visual checks)
-2. Use the /web-design-reviewer skill to take browser screenshots at desktop and mobile viewports
-3. Review the screenshots and fix any visual issues you spot (spacing, colors, alignment, contrast)
-4. Stop the dev server when done verifying`;
+1. Start a local dev server (e.g. npm run dev) — this is the ONE exception to the "never start a dev server" rule
+2. Take browser screenshots at desktop (1440px) and mobile (375px) viewports
+3. Compare screenshots against the spec above — check colors, spacing, layout, and typography match
+4. Fix any visual issues you spot (spacing, colors, alignment, contrast)
+5. CRITICAL: Stop the dev server (kill the process) when done — do NOT leave it running`;
   }
 
   // Install relevant skills so the agent has design/quality context
   await autoInstallSkillsFromTask(fixTask, cwd);
 
-  const maxIter = options.maxIterations ? Number.parseInt(options.maxIterations, 10) : 3;
+  const defaultIter = options.design ? 7 : isDesignTask ? 5 : 3;
+  const maxIter = options.maxIterations ? Number.parseInt(options.maxIterations, 10) : defaultIter;
 
   const result = await runLoop({
     task: fixTask,
