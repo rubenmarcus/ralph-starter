@@ -12,22 +12,16 @@ permissions:
 
 jobs:
   # NOTE: Auto-labeling (including candidate-release) is handled by auto-label.yml
-  # This workflow aggregates ALL merged candidate-release/release PRs since the last release
-  #
-  # Labels:
-  #   candidate-release → beta bump (0.1.1-beta.16 → 0.1.1-beta.17)
-  #   release    → stable bump (0.1.1-beta.16 → 0.2.0)
+  # This workflow aggregates ALL merged candidate-release PRs since the last release
+  # and creates a stable release PR with the appropriate semver bump.
 
-  # Create/update release PR when a PR with candidate-release or release label is merged
+  # Create/update release PR when a PR with candidate-release label is merged
   create-release-pr:
     name: Create Release PR
     if: |
       github.event.action == 'closed' &&
       github.event.pull_request.merged == true &&
-      (
-        contains(github.event.pull_request.labels.*.name, 'candidate-release') ||
-        contains(github.event.pull_request.labels.*.name, 'release')
-      ) &&
+      contains(github.event.pull_request.labels.*.name, 'candidate-release') &&
       !startsWith(github.event.pull_request.head.ref, 'release/')
     runs-on: ubuntu-latest
     steps:
@@ -64,9 +58,9 @@ jobs:
             echo "No release tags found, collecting all candidate-release PRs"
           fi
 
-          # Query all merged PRs with candidate-release or release label since the tag date
+          # Query all merged PRs with candidate-release label since the tag date
           # Exclude release branch PRs
-          CANDIDATE_JSON=$(gh pr list \
+          PR_JSON=$(gh pr list \
             --state merged \
             --label "candidate-release" \
             --base main \
@@ -74,16 +68,6 @@ jobs:
             --limit 100 \
             --jq "[.[] | select(.mergedAt > \"$TAG_DATE\" and (.headRefName | startswith(\"release/\") | not))]"
           )
-          STABLE_JSON=$(gh pr list \
-            --state merged \
-            --label "release" \
-            --base main \
-            --json number,title,mergedAt,headRefName \
-            --limit 100 \
-            --jq "[.[] | select(.mergedAt > \"$TAG_DATE\" and (.headRefName | startswith(\"release/\") | not))]"
-          )
-          # Merge and deduplicate by PR number
-          PR_JSON=$(echo "$CANDIDATE_JSON $STABLE_JSON" | jq -s 'add | unique_by(.number)')
 
           PR_COUNT=$(echo "$PR_JSON" | jq length)
           echo "Found $PR_COUNT merged PRs since $LATEST_TAG"
@@ -142,63 +126,28 @@ jobs:
           echo "Version bump: $BUMP (current: $CURRENT_VERSION)"
           echo "Changes: $(echo "$CHANGES" | jq -r '.[] | "  - #\(.pr): \(.rawTitle)"')"
 
-      - name: Check if stable release
-        if: steps.collect.outputs.skip != 'true'
-        id: stable
-        run: |
-          IS_STABLE="${{ contains(github.event.pull_request.labels.*.name, 'release') }}"
-          echo "is_stable=$IS_STABLE" >> $GITHUB_OUTPUT
-          echo "Stable release: $IS_STABLE"
-
       - name: Calculate new version
         if: steps.collect.outputs.skip != 'true'
         id: version
         env:
           CURRENT: ${{ steps.bump.outputs.current }}
           BUMP: ${{ steps.bump.outputs.bump }}
-          IS_STABLE: ${{ steps.stable.outputs.is_stable }}
         run: |
-          if [ "$IS_STABLE" = "true" ]; then
-            # Stable release: strip prerelease suffix, apply semver bump to base
-            BASE=$(echo "$CURRENT" | sed 's/-.*$//')
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE"
+          # Strip any prerelease suffix (transition from old beta versions)
+          BASE=$(echo "$CURRENT" | sed 's/-.*$//')
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE"
 
-            case "$BUMP" in
-              major)
-                NEW_VERSION="$((MAJOR + 1)).0.0"
-                ;;
-              minor)
-                NEW_VERSION="${MAJOR}.$((MINOR + 1)).0"
-                ;;
-              patch)
-                NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
-                ;;
-            esac
-
-            echo "Stable release: $CURRENT -> $NEW_VERSION (bump: $BUMP)"
-          elif [[ "$CURRENT" == *"-"* ]]; then
-            # Beta release: bump the prerelease number
-            BASE=$(echo "$CURRENT" | sed 's/-.*$//')
-            PRE_TYPE=$(echo "$CURRENT" | sed 's/.*-\([a-z]*\).*/\1/')
-            PRE_NUM=$(echo "$CURRENT" | sed 's/.*\.\([0-9]*\)$/\1/')
-            NEW_PRE_NUM=$((PRE_NUM + 1))
-            NEW_VERSION="${BASE}-${PRE_TYPE}.${NEW_PRE_NUM}"
-          else
-            # Already stable, apply semver bump
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
-
-            case "$BUMP" in
-              major)
-                NEW_VERSION="$((MAJOR + 1)).0.0"
-                ;;
-              minor)
-                NEW_VERSION="${MAJOR}.$((MINOR + 1)).0"
-                ;;
-              patch)
-                NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
-                ;;
-            esac
-          fi
+          case "$BUMP" in
+            major)
+              NEW_VERSION="$((MAJOR + 1)).0.0"
+              ;;
+            minor)
+              NEW_VERSION="${MAJOR}.$((MINOR + 1)).0"
+              ;;
+            patch)
+              NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+              ;;
+          esac
 
           echo "new=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "New version will be: $NEW_VERSION (bump: $BUMP)"
@@ -244,7 +193,6 @@ jobs:
           EXISTING_NUMBER: ${{ steps.check.outputs.number }}
           EXISTING_BRANCH: ${{ steps.check.outputs.branch }}
           EXISTING_VERSION: ${{ steps.check.outputs.version }}
-          IS_STABLE: ${{ steps.stable.outputs.is_stable }}
         run: |
           TODAY=$(date +%Y-%m-%d)
           RELEASE_BRANCH="release/v${NEW_VERSION}"
@@ -300,18 +248,10 @@ jobs:
           # Build PR body with all included changes
           PR_CHANGES_LIST=$(echo "$CHANGES_JSON" | jq -r '.[] | "- #\(.pr): \(.rawTitle)"')
 
-          if [ "$IS_STABLE" = "true" ]; then
-            RELEASE_LABEL="Stable Release"
-            NPM_TAG_INFO="Package will be published to npm with \`latest\` tag"
-          else
-            RELEASE_LABEL="Release"
-            NPM_TAG_INFO="Package will be published to npm"
-          fi
-
           PR_BODY=$(cat <<EOF
-          ## ${RELEASE_LABEL} v${NEW_VERSION}
+          ## Release v${NEW_VERSION}
 
-          This PR was automatically created to prepare ${RELEASE_LABEL,,} v${NEW_VERSION}.
+          This PR was automatically created to prepare release v${NEW_VERSION}.
 
           ### Changes included
           ${PR_CHANGES_LIST}
@@ -324,7 +264,7 @@ jobs:
           ### What happens when this PR is merged
           1. Git tag \`v${NEW_VERSION}\` will be created
           2. GitHub Release will be published
-          3. ${NPM_TAG_INFO}
+          3. Package will be published to npm with \`latest\` tag
 
           ---
           This PR was auto-generated by the release workflow.
@@ -337,13 +277,8 @@ jobs:
             echo "Updated existing release PR #${EXISTING_NUMBER}"
           else
             # Create new PR
-            if [ "$IS_STABLE" = "true" ]; then
-              PR_TITLE="chore(release): v${NEW_VERSION} (stable)"
-            else
-              PR_TITLE="chore(release): v${NEW_VERSION}"
-            fi
             gh pr create \
-              --title "$PR_TITLE" \
+              --title "chore(release): v${NEW_VERSION}" \
               --body "$PR_BODY" \
               --label "release" \
               --base main

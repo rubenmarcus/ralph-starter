@@ -16,9 +16,6 @@ jobs:
     # Skip this workflow for bot-pushed tags to avoid duplicate publish races.
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -40,15 +37,6 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-          if [[ "$VERSION" == *"-"* ]]; then
-            echo "is_prerelease=true" >> $GITHUB_OUTPUT
-            echo "npm_tag=$(echo $VERSION | sed 's/.*-\([a-z]*\).*/\1/')" >> $GITHUB_OUTPUT
-          else
-            echo "is_prerelease=false" >> $GITHUB_OUTPUT
-            echo "npm_tag=latest" >> $GITHUB_OUTPUT
-          fi
-
           echo "Version: $VERSION"
 
       - name: Install dependencies
@@ -61,15 +49,10 @@ jobs:
         run: pnpm test:run
 
       - name: Generate release notes
-        id: release_notes
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          IS_PRERELEASE=${{ steps.version.outputs.is_prerelease }}
-
-          # Get previous tag
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
 
-          # Build release notes
           {
             echo "## What's Changed"
             echo ""
@@ -82,23 +65,9 @@ jobs:
             echo ""
             echo "## Installation"
             echo ""
-
-            if [ "$IS_PRERELEASE" == "true" ]; then
-              PRERELEASE_TYPE=$(echo "$VERSION" | sed 's/.*-\([a-z]*\).*/\1/')
-              echo "\`\`\`bash"
-              echo "npm install -g ralph-starter@$PRERELEASE_TYPE"
-              echo "\`\`\`"
-              echo ""
-              echo "Or install this specific version:"
-              echo ""
-              echo "\`\`\`bash"
-              echo "npm install -g ralph-starter@$VERSION"
-              echo "\`\`\`"
-            else
-              echo "\`\`\`bash"
-              echo "npm install -g ralph-starter"
-              echo "\`\`\`"
-            fi
+            echo "\`\`\`bash"
+            echo "npm install -g ralph-starter"
+            echo "\`\`\`"
           } > release_notes.md
 
       - name: Create GitHub Release
@@ -107,23 +76,11 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }}
           body_path: release_notes.md
-          prerelease: ${{ steps.version.outputs.is_prerelease }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to npm
-        run: |
-          NPM_TAG=${{ steps.version.outputs.npm_tag }}
-          pnpm publish --tag $NPM_TAG --no-git-checks --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Add additional npm tags for prereleases
-        if: steps.version.outputs.is_prerelease == 'true'
-        run: |
-          VERSION=${{ steps.version.outputs.version }}
-          # Also tag as the specific prerelease type (e.g., beta, alpha)
-          npm dist-tag add ralph-starter@$VERSION ${{ steps.version.outputs.npm_tag }}
+        run: pnpm publish --tag latest --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

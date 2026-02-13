@@ -149,12 +149,7 @@ jobs:
         run: pnpm build
 
       - name: Publish to npm
-        run: |
-          VERSION=${{ needs.release.outputs.version }}
-          # Publish with latest tag
-          pnpm publish --tag latest --no-git-checks
-          # Also add beta tag (latest and beta point to same version)
-          npm dist-tag add ralph-starter@$VERSION beta
+        run: pnpm publish --tag latest --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

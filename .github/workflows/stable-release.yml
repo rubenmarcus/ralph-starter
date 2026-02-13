@@ -1,14 +1,14 @@
-name: Stable Release
+name: Manual Release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Target stable version (e.g. 1.0.0, 0.2.0)'
+        description: 'Target version (e.g. 1.0.0, 0.3.0)'
         required: true
         type: string
       release_notes:
-        description: 'Curated release notes (markdown). Leave empty to auto-generate from beta changelogs.'
+        description: 'Curated release notes (markdown). Leave empty to auto-generate from changelog.'
         required: false
         type: string
 
@@ -17,8 +17,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  create-stable-release-pr:
-    name: Create Stable Release PR
+  create-release-pr:
+    name: Create Release PR
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,129 +39,20 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          # Must not contain prerelease suffix
-          if [[ "$VERSION" == *"-"* ]]; then
-            echo "Error: Stable releases must not contain prerelease suffix (got: $VERSION)"
-            echo "Use the automated prepare-release workflow for beta releases."
-            exit 1
-          fi
-
-          # Must be valid semver
+          # Must be valid semver (no prerelease suffix)
           if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Error: Version must be valid semver (e.g. 1.0.0), got: $VERSION"
             exit 1
           fi
-
-          echo "Target stable version: $VERSION"
-
-      - name: Consolidate beta changelog entries
-        id: changelog
-        env:
-          VERSION: ${{ inputs.version }}
-          CUSTOM_NOTES: ${{ inputs.release_notes }}
-        run: |
-          TODAY=$(date +%Y-%m-%d)
-          echo "today=$TODAY" >> $GITHUB_OUTPUT
-
-          if [ -n "$CUSTOM_NOTES" ]; then
-            # User provided curated release notes — use them directly
-            echo "Using custom release notes"
-            echo "custom=true" >> $GITHUB_OUTPUT
-          else
-            # Auto-generate by collecting all beta entries from CHANGELOG.md
-            echo "Auto-generating consolidated changelog from beta entries"
-
-            # Find the last stable version in the changelog (a version without prerelease suffix).
-            # CHANGELOG.md entries are in descending chronological order, so the first match
-            # is the most recent stable version. Use || true to prevent grep exit code 1
-            # from aborting under set -eo pipefail when no stable version exists.
-            LAST_STABLE=$(grep -oP '## \[\K[0-9]+\.[0-9]+\.[0-9]+(?=\])' CHANGELOG.md | head -1 || true)
-
-            if [ -n "$LAST_STABLE" ]; then
-              echo "Last stable version: $LAST_STABLE"
-            else
-              echo "No previous stable version found, consolidating all entries"
-            fi
-
-            export LAST_STABLE
-
-            # Extract all Added/Fixed/Changed/Documentation items from beta entries since last stable
-            node -e "
-              const fs = require('fs');
-              const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
-              const lines = changelog.split('\n');
-
-              const lastStable = process.env.LAST_STABLE || '';
-              const items = { Added: [], Fixed: [], Changed: [], Documentation: [] };
-              let currentType = null;
-              let inBetaSection = false;
-
-              for (const line of lines) {
-                const versionMatch = line.match(/^## \[([^\]]+)\]/);
-                if (versionMatch) {
-                  const ver = versionMatch[1];
-                  if (ver === lastStable) break;
-                  inBetaSection = ver.includes('-');
-                  currentType = null;
-                  continue;
-                }
-
-                if (!inBetaSection) continue;
-
-                const typeMatch = line.match(/^### (Added|Fixed|Changed|Documentation)/);
-                if (typeMatch) {
-                  currentType = typeMatch[1];
-                  continue;
-                }
-
-                if (currentType && line.startsWith('- ')) {
-                  const item = line.substring(2).trim();
-                  if (!items[currentType].includes(item)) {
-                    items[currentType].push(item);
-                  }
-                }
-              }
-
-              const changes = [];
-              for (const [type, entries] of Object.entries(items)) {
-                for (const entry of entries) {
-                  const prMatch = entry.match(/#(\d+)/);
-                  changes.push({
-                    type,
-                    title: entry.replace(/\s*\(#\d+\)\s*$/, ''),
-                    pr: prMatch ? parseInt(prMatch[1]) : 0,
-                    rawTitle: entry
-                  });
-                }
-              }
-
-              const b64 = Buffer.from(JSON.stringify(changes)).toString('base64');
-              fs.writeFileSync('/tmp/changes_b64', b64);
-              fs.writeFileSync('/tmp/changes_count', String(changes.length));
-            "
-
-            CHANGES_B64=$(cat /tmp/changes_b64)
-            COUNT=$(cat /tmp/changes_count)
-
-            if [ "$COUNT" -eq 0 ]; then
-              echo "No beta changelog entries found to consolidate"
-              exit 1
-            fi
-
-            echo "changes=$CHANGES_B64" >> $GITHUB_OUTPUT
-            echo "custom=false" >> $GITHUB_OUTPUT
-            echo "Collected $COUNT changelog items from beta entries"
-          fi
+          echo "Target version: $VERSION"
 
       - name: Create release branch and PR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ inputs.version }}
-          TODAY: ${{ steps.changelog.outputs.today }}
-          IS_CUSTOM: ${{ steps.changelog.outputs.custom }}
           CUSTOM_NOTES: ${{ inputs.release_notes }}
-          CHANGES_B64: ${{ steps.changelog.outputs.changes }}
         run: |
+          TODAY=$(date +%Y-%m-%d)
           RELEASE_BRANCH="release/v${VERSION}"
 
           # Configure git
@@ -179,9 +70,8 @@ jobs:
           # Sync pnpm-lock.yaml with the updated package.json version
           pnpm install --lockfile-only
 
-          # Update CHANGELOG.md
-          if [ "$IS_CUSTOM" = "true" ]; then
-            # For custom notes, write directly to changelog
+          # Update CHANGELOG.md if custom notes provided
+          if [ -n "$CUSTOM_NOTES" ]; then
             node -e "
               const fs = require('fs');
               const version = process.env.VERSION;
@@ -202,54 +92,42 @@ jobs:
               fs.writeFileSync(changelogPath, changelog);
               console.log('Updated CHANGELOG.md with custom notes for v' + version);
             "
-          else
-            # Use the changelog script with consolidated changes
-            CHANGES_JSON=$(echo "$CHANGES_B64" | base64 -d)
-            NEW_VERSION="$VERSION" \
-            TODAY="$TODAY" \
-            CHANGES_JSON="$CHANGES_JSON" \
-            node .github/scripts/update-changelog.cjs
           fi
 
           # Commit changes
           git add package.json pnpm-lock.yaml CHANGELOG.md
-          git commit -m "chore(release): prepare stable release v${VERSION}"
+          git commit -m "chore(release): prepare release v${VERSION}"
 
           # Push branch
           git push origin "$RELEASE_BRANCH"
 
-          # Build PR body to a temp file to avoid heredoc quoting issues
+          # Build PR body
           TMPFILE=$(mktemp)
-
-          if [ "$IS_CUSTOM" = "true" ]; then
+          if [ -n "$CUSTOM_NOTES" ]; then
             CHANGES_SECTION="$CUSTOM_NOTES"
           else
-            CHANGES_JSON=$(echo "$CHANGES_B64" | base64 -d)
-            CHANGES_SECTION=$(echo "$CHANGES_JSON" | jq -r '
-              group_by(.type) | .[] |
-              "**\(.[0].type)**\n\([ .[].title ] | map("- " + .) | join("\n"))"
-            ' 2>/dev/null || echo "See CHANGELOG.md for full details")
+            CHANGES_SECTION="See CHANGELOG.md for full details."
           fi
 
           cat > "$TMPFILE" <<PRBODY
-          ## Stable Release v${VERSION}
+          ## Release v${VERSION}
 
-          This PR was manually triggered to prepare **stable** release v${VERSION}.
+          This PR was manually triggered to prepare release v${VERSION}.
 
-          ### Changes consolidated from beta releases
+          ### Changes
           ${CHANGES_SECTION}
 
           ### What happens when this PR is merged
           1. Git tag \`v${VERSION}\` will be created
-          2. GitHub Release will be published (as **latest**)
+          2. GitHub Release will be published
           3. Package will be published to npm with \`latest\` tag
 
           ---
-          This PR was generated by the stable release workflow.
+          This PR was generated by the manual release workflow.
           PRBODY
 
           gh pr create \
-            --title "chore(release): v${VERSION} (stable)" \
+            --title "chore(release): v${VERSION}" \
             --body-file "$TMPFILE" \
             --label "release" \
             --base main

@@ -28,7 +28,6 @@
     "release": "pnpm version patch && git push origin main --tags && pnpm publish",
     "release:minor": "pnpm version minor && git push origin main --tags && pnpm publish",
     "release:major": "pnpm version major && git push origin main --tags && pnpm publish",
-    "release:beta": "pnpm version prerelease --preid=beta && git push origin main --tags && pnpm publish --tag beta",
     "docs:dev": "pnpm --dir docs run start",
     "docs:build": "pnpm --dir docs run build",
     "docs:serve": "pnpm --dir docs run serve"
