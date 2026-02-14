@@ -228,7 +228,7 @@ ${planRules}
 - Implement completely — no placeholders or stubs
 - Create files before importing them — never import components or modules that don't exist yet
 - Do NOT run build or dev server commands yourself — the loop automatically runs lint checks between iterations and a full build on the final iteration. NEVER start a dev server (\`npm run dev\`, \`npx vite\`, etc.) — it blocks forever and wastes resources. (Exception: if explicitly told to do visual verification, you may briefly start a dev server and MUST kill it when done.)
-- When ALL tasks are complete, explicitly state "All tasks completed"
+${skipPlanInstructions ? '- Follow the completion instructions in the task below' : '- When ALL tasks are complete, explicitly state "All tasks completed"'}
 - If you learn how to run/build the project, update AGENTS.md
 
 Technology gotchas (CRITICAL — follow these exactly):

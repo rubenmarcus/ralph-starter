@@ -900,8 +900,13 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     const tasksProgressedThisIteration = postIterationTaskInfo.completed > previousCompletedTasks;
     // Build/validation failures are NOT idle — agent is actively debugging
     const hadValidationFailure = !!lastValidationFeedback;
+    // Design mode: screenshot analysis is productive even without file changes
+    const outputLower = result.output.toLowerCase();
+    const hasDesignActivity =
+      options.fixMode === 'design' &&
+      (outputLower.includes('screenshot') || outputLower.includes('viewport'));
     const hasProductiveProgress =
-      hasChanges || tasksProgressedThisIteration || hadValidationFailure;
+      hasChanges || tasksProgressedThisIteration || hadValidationFailure || hasDesignActivity;
 
     if (!hasProductiveProgress) {
       consecutiveIdleIterations++;
