@@ -64,6 +64,7 @@ export function showRefinedSummary(
     backend?: string;
     database?: string;
     styling?: string;
+    uiLibrary?: string;
     language?: string;
   },
   features: string[],
@@ -89,6 +90,11 @@ export function showRefinedSummary(
       css: 'CSS',
       scss: 'SCSS',
       'styled-components': 'styled-components',
+      shadcn: 'shadcn/ui',
+      'shadcn-vue': 'shadcn-vue',
+      'shadcn-svelte': 'shadcn-svelte',
+      mui: 'Material UI',
+      chakra: 'Chakra UI',
       typescript: 'TypeScript',
       javascript: 'JavaScript',
     };
@@ -103,7 +109,14 @@ export function showRefinedSummary(
   console.log(`  ${chalk.white('Type:')} ${projectType}`);
   console.log();
 
-  if (stack.frontend || stack.backend || stack.database || stack.styling || stack.language) {
+  if (
+    stack.frontend ||
+    stack.backend ||
+    stack.database ||
+    stack.styling ||
+    stack.uiLibrary ||
+    stack.language
+  ) {
     console.log(`  ${chalk.white('Tech Stack:')}`);
     if (stack.frontend)
       console.log(`    ${chalk.dim('Frontend:')} ${formatTechLabel(stack.frontend)}`);
@@ -113,6 +126,8 @@ export function showRefinedSummary(
       console.log(`    ${chalk.dim('Database:')} ${formatTechLabel(stack.database)}`);
     if (stack.styling)
       console.log(`    ${chalk.dim('Styling:')} ${formatTechLabel(stack.styling)}`);
+    if (stack.uiLibrary)
+      console.log(`    ${chalk.dim('UI Library:')} ${formatTechLabel(stack.uiLibrary)}`);
     if (stack.language)
       console.log(`    ${chalk.dim('Language:')} ${formatTechLabel(stack.language)}`);
     console.log();

@@ -64,6 +64,7 @@ function normalizeTechStack(stack: WizardAnswers['techStack']): WizardAnswers['t
     backend: normalizeTechStackValue(stack.backend),
     database: normalizeTechStackValue(stack.database),
     styling: normalizeTechStackValue(stack.styling),
+    uiLibrary: normalizeTechStackValue(stack.uiLibrary),
     language: normalizeTechStackValue(stack.language),
   };
 }

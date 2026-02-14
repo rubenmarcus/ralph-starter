@@ -193,7 +193,14 @@ export function generateAgentsMd(answers: WizardAnswers): string {
  * Check if tech stack has any values
  */
 function hasTechStack(stack: TechStack): boolean {
-  return !!(stack.frontend || stack.backend || stack.database || stack.styling || stack.language);
+  return !!(
+    stack.frontend ||
+    stack.backend ||
+    stack.database ||
+    stack.styling ||
+    stack.uiLibrary ||
+    stack.language
+  );
 }
 
 /**

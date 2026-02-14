@@ -8,6 +8,7 @@ export interface TechStack {
   backend?: string;
   database?: string;
   styling?: string;
+  uiLibrary?: string;
   language?: string;
 }
 
