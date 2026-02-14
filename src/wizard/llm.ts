@@ -106,6 +106,7 @@ Return ONLY valid JSON (no markdown, no explanation) in this exact format:
     "backend": "nodejs|express|fastify|hono|python|django|flask|fastapi|go|gin|rust|null",
     "database": "sqlite|postgres|mysql|mongodb|redis|supabase|firebase|prisma|drizzle|null",
     "styling": "tailwind|css|scss|styled-components|null",
+    "uiLibrary": "shadcn|shadcn-vue|shadcn-svelte|mui|chakra|null",
     "language": "typescript|javascript|python|go|rust"
   },
   "coreFeatures": ["feature1", "feature2", "feature3"],
@@ -124,6 +125,7 @@ Guidelines:
   - Language: TypeScript, Python, Go, Rust, etc.
 - NEVER substitute a user-specified technology with a different one
 - Only suggest defaults when the user doesn't specify (e.g., TypeScript + React for unspecified web apps)
+- For web projects, default to Tailwind CSS + shadcn/ui (or framework variant) + motion-primitives unless the user explicitly specifies different styling/UI libraries. Use shadcn for React/Next.js, shadcn-vue for Vue, shadcn-svelte for Svelte.
 - coreFeatures are essential features implied by the idea
 - suggestedFeatures are nice-to-haves that would enhance the project
 - estimatedComplexity is based on scope (prototype=hours, mvp=day, full=days/weeks)`;
@@ -456,6 +458,19 @@ function getTemplateSuggestions(idea: string): RefinedIdea {
       detectedBackend || (detectedFrontend === 'astro' ? undefined : 'nodejs');
     suggestedStack.database =
       detectedDatabase || (detectedFrontend === 'astro' ? undefined : 'sqlite');
+
+    // Default UI stack: Tailwind + shadcn (framework-appropriate variant) + motion-primitives
+    if (!detectedStyling) {
+      suggestedStack.styling = 'tailwind';
+      const frontend = suggestedStack.frontend;
+      if (frontend === 'vue') {
+        suggestedStack.uiLibrary = 'shadcn-vue';
+      } else if (frontend === 'svelte') {
+        suggestedStack.uiLibrary = 'shadcn-svelte';
+      } else if (frontend && frontend !== 'vanilla' && frontend !== 'astro') {
+        suggestedStack.uiLibrary = 'shadcn';
+      }
+    }
   } else if (projectType === 'api') {
     suggestedStack.backend = detectedBackend || 'nodejs';
     suggestedStack.database = detectedDatabase || 'postgres';
