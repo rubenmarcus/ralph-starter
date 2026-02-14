@@ -46,9 +46,11 @@ Once you describe your idea (e.g., "a habit tracker app"), the AI:
 You can then customize:
 
 - **Project Type** - Web, API, CLI, Mobile, Library, Automation
-- **Tech Stack** - Frontend, backend, database choices
+- **Tech Stack** - Frontend, backend, database, styling, UI library choices
 - **Features** - Select which features to include
 - **Complexity** - Prototype, MVP, or Full-featured
+
+**Smart UI defaults**: For web projects, if you don't specify a styling or UI library, ralph-starter defaults to **Tailwind CSS + shadcn/ui + motion-primitives**. The shadcn variant is framework-aware: shadcn/ui for React/Next.js, shadcn-vue for Vue, and shadcn-svelte for Svelte. These defaults produce richer specs with Tailwind v4 setup notes that prevent common CSS cascade conflicts.
 
 ### Step 4: Execution Options
 
@@ -95,9 +97,11 @@ $ ralph-starter
   Type: Web Application
 
   Tech Stack:
-    Frontend: react
-    Backend: nodejs
-    Database: sqlite
+    Frontend: React
+    Backend: Node.js
+    Database: SQLite
+    Styling: Tailwind CSS
+    UI Library: shadcn/ui
 
   Key Features:
     • Transaction tracking

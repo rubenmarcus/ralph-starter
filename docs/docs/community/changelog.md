@@ -11,6 +11,24 @@ All notable changes to ralph-starter are documented here. This project follows [
 
 ---
 
+## [0.1.1-beta.17] - 2026-02-14
+
+### Added
+- **`fix --design` mode**: Structured 5-phase visual fix workflow with screenshot verification, CSS cascade conflict detection, and `DESIGN_VERIFIED` completion token
+- **Smart UI defaults**: Web projects now default to Tailwind CSS + shadcn/ui + motion-primitives when no styling is specified (framework-aware: shadcn-vue for Vue, shadcn-svelte for Svelte)
+- **`uiLibrary` field** in TechStack for explicit UI component library selection
+- **Rich spec generation**: Specs and AGENTS.md now include Tailwind v4 setup notes, CSS cascade layer warnings, and shadcn component setup instructions
+
+### Fixed
+- Design loop premature exit — `fix --design` now requires explicit `DESIGN_VERIFIED` token after visual confirmation (prevents 1-iteration false completions)
+- Design loop stall detection — screenshot/viewport analysis no longer falsely triggers idle detection
+- Default design iterations increased from 5 to 7 for more thorough visual fixes
+
+### Changed
+- Completion instruction in agent preamble is now conditional — design mode uses task-specific completion flow instead of generic "All tasks completed"
+
+---
+
 ## [0.1.1-beta.16] - 2026-02-07
 
 ### Added
