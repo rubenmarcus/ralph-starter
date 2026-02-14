@@ -5,7 +5,7 @@
   "description": "Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically with autonomous loops.",
   "url": "https://ralphstarter.ai",
   "version": "1.0.0",
-  "generatedAt": "2026-02-13T21:19:43.300Z",
+  "generatedAt": "2026-02-14T01:31:22.675Z",
   "summary": {
     "purpose": "ralph-starter is an AI-powered CLI tool that fetches specs from tools like Figma, GitHub, Linear, and Notion, then runs autonomous AI coding loops to build production-ready code.",
     "primaryUseCase": "Developers use ralph-starter to automate coding tasks by providing natural language specs or importing requirements from external tools.",
@@ -217,7 +217,9 @@
             "command",
             "build errors",
             "lint",
-            "design"
+            "design",
+            "visual",
+            "css"
           ]
         },
         {
@@ -655,6 +657,6 @@
   "stats": {
     "totalDocuments": 40,
     "totalCategories": 8,
-    "lastUpdated": "2026-02-13T21:19:43.300Z"
+    "lastUpdated": "2026-02-14T01:31:22.675Z"
   }
 }

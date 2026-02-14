@@ -2,7 +2,7 @@
   "name": "ralph-starter - AI-Powered Autonomous Coding from Specs to Production",
   "description": "Connect your tools like GitHub, Linear, and Notion. Fetch specs from anywhere and let AI coding agents build production-ready code automatically with autonomous loops.",
   "baseUrl": "https://ralphstarter.ai",
-  "generatedAt": "2026-02-13T21:19:43.299Z",
+  "generatedAt": "2026-02-14T01:31:22.674Z",
   "totalDocs": 40,
   "access": {
     "llmsTxt": "https://ralphstarter.ai/llms.txt",
@@ -168,7 +168,9 @@
         "command",
         "build errors",
         "lint",
-        "design"
+        "design",
+        "visual",
+        "css"
       ]
     },
     {
