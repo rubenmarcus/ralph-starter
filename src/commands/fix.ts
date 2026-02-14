@@ -233,6 +233,7 @@ IMPORTANT: Your VERY FIRST action must be to start the dev server and take scree
 Look at the screenshots and identify CONCRETE issues you can actually see. Do NOT list generic improvements — only list problems visible in the screenshots.
 
 Check in this priority order:
+0. **CSS cascade conflicts** — If spacing/margin/padding from Tailwind classes aren't working but colors/fonts/grid work fine, check the main CSS file (e.g. index.css, globals.css) for unlayered rules like \`* { margin: 0; padding: 0; }\` that override Tailwind's @layer-based utilities. Remove any such rules — Tailwind v4's preflight already provides proper resets.
 1. **Page structure** — Is content centered? Are sections contained in a max-width wrapper? Is anything stuck to the left/right edge when it shouldn't be? Are there huge empty gaps between sections?
 2. **Layout & positioning** — Are grid/flex layouts rendering correctly? Are columns balanced? Is the hero section properly structured? Are elements overlapping or misaligned?
 3. **Responsive issues** — Does the layout break at any viewport? Do elements overflow or get clipped?
@@ -253,9 +254,13 @@ Prioritize: page structure > layout positioning > responsive > spacing > cosmeti
 1. Fix structural issues FIRST (containers, centering, grid layout), then work down to cosmetic
 2. After fixing each structural issue, re-screenshot to verify the layout improved
 3. Final verification: screenshot all 3 viewports and confirm the page looks properly structured
+4. CRITICAL: After confirming fixes look correct in final screenshots, output DESIGN_VERIFIED on its own line. Do NOT output this until you have taken verification screenshots and confirmed the design is correct.
 
 ## Phase 5: Cleanup
-CRITICAL: Stop the dev server (kill the process) when done — do NOT leave it running.
+1. Stop the dev server (kill the process) when done — do NOT leave it running
+2. If you have NOT already output DESIGN_VERIFIED, do it now after visual confirmation
+
+IMPORTANT: The loop will NOT accept completion without the exact token DESIGN_VERIFIED. Do NOT say "All tasks completed" — it will be ignored.
 
 ${customTask ? `\nUser notes: ${customTask}\n` : ''}${specContext ? `\n## Original Design Specification\n${specContext}` : ''}${feedback ? `\n\n## Build Errors (also fix these)\n${feedback}` : ''}`;
   } else if (isDesignTask) {
@@ -273,7 +278,7 @@ This is a visual/design task. After making your CSS and styling changes, you MUS
   // that triggers excessive skill searches from the design prompt boilerplate
   await autoInstallSkillsFromTask(customTask || (options.design ? 'design fix' : 'fix'), cwd);
 
-  const defaultIter = options.design ? 5 : isDesignTask ? 4 : 3;
+  const defaultIter = options.design ? 7 : isDesignTask ? 4 : 3;
   const maxIter = options.maxIterations ? Number.parseInt(options.maxIterations, 10) : defaultIter;
 
   const result = await runLoop({
@@ -290,6 +295,11 @@ This is a visual/design task. After making your CSS and styling changes, you MUS
     maxSkills: options.design ? 4 : undefined,
     skipPlanInstructions: options.design,
     fixMode: options.design ? 'design' : customTask ? 'custom' : 'scan',
+    // Design mode: require explicit DESIGN_VERIFIED token after visual verification
+    ...(options.design && {
+      completionPromise: 'DESIGN_VERIFIED',
+      requireExitSignal: true,
+    }),
   });
 
   // --- Step 5: Verify fix by re-running validations ---
