@@ -289,6 +289,7 @@ This is a visual/design task. After making your CSS and styling changes, you MUS
     validate: mode === 'scan',
     maxSkills: options.design ? 4 : undefined,
     skipPlanInstructions: options.design,
+    fixMode: options.design ? 'design' : customTask ? 'custom' : 'scan',
   });
 
   // --- Step 5: Verify fix by re-running validations ---

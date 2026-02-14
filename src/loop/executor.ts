@@ -239,6 +239,7 @@ export interface LoopOptions {
   initialValidationFeedback?: string; // Pre-populate with errors (used by `fix` command)
   maxSkills?: number; // Cap skills included in prompt (default: 5)
   skipPlanInstructions?: boolean; // Skip IMPLEMENTATION_PLAN.md rules in preamble (fix --design)
+  fixMode?: 'design' | 'scan' | 'custom'; // Display mode for fix command headers
 }
 
 export interface LoopResult {
@@ -736,11 +737,26 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
         chalk.dim(truncateToFit(`  ${options.agent.name} │ Iter ${i}/${maxIterations}`, innerWidth))
       );
     } else {
-      const fallbackLine = `  ${sourceIcon} Loop ${i}/${maxIterations} │ Running ${options.agent.name}`;
+      const modeLabel =
+        options.fixMode === 'design'
+          ? 'Design Fix'
+          : options.fixMode
+            ? 'Fix'
+            : `Running ${options.agent.name}`;
+      const fallbackLine = `  ${sourceIcon} Loop ${i}/${maxIterations} │ ${modeLabel}`;
       headerLines.push(chalk.white.bold(truncateToFit(fallbackLine, innerWidth)));
     }
     console.log();
     console.log(drawBox(headerLines, { color: chalk.cyan, width: boxWidth }));
+
+    // Show subtask tree if current task has subtasks
+    if (currentTask?.subtasks && currentTask.subtasks.length > 0) {
+      for (const st of currentTask.subtasks) {
+        const icon = st.completed ? chalk.green('  [x]') : chalk.dim('  [ ]');
+        const name = truncateToFit(cleanTaskName(st.name), innerWidth - 8);
+        console.log(`${icon} ${chalk.dim(name)}`);
+      }
+    }
     console.log();
 
     // Create progress renderer for this iteration
