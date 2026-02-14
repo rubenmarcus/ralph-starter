@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.4.0] - 2026-02-14
+
+### Added
+- v0.3.0 — smart UI defaults, fix --design mode, loop engine overhaul (#189)
+
 ## [0.2.1] - 2026-02-12
 
 ### Fixed
